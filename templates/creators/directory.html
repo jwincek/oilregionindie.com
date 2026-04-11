@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Creators — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Browse independent musicians, visual artists, jewelers, and makers in the Oil Region Creative Hub.{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-ink-800">Creator Directory</h1>
+    <p class="mt-2 text-ink-500">Musicians, visual artists, jewelers, makers, and more.</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow-sm p-4 mb-8">
+    <form hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML" hx-push-url="true"
+          class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label for="q" class="block text-sm font-medium text-ink-600 mb-1">Search</label>
+            <input type="text" name="q" id="q" value="{{ query }}"
+                   class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                   placeholder="Name, location, or keyword...">
+        </div>
+        <div class="min-w-[140px]">
+            <label for="profile_type" class="block text-sm font-medium text-ink-600 mb-1">Type</label>
+            <select name="profile_type" id="profile_type"
+                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">Everyone</option>
+                {% for value, label in profile_types %}
+                <option value="{{ value }}" {% if current_profile_type == value %}selected{% endif %}>{{ label }}s</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label for="discipline" class="block text-sm font-medium text-ink-600 mb-1">Discipline</label>
+            <select name="discipline" id="discipline"
+                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">All Disciplines</option>
+                {% for d in disciplines %}
+                <option value="{{ d.slug }}" {% if current_discipline == d.slug %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label for="skill" class="block text-sm font-medium text-ink-600 mb-1">Skill</label>
+            <select name="skill" id="skill"
+                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">All Skills</option>
+                {% for s in available_skills %}
+                <option value="{{ s.slug }}" {% if current_skill == s.slug %}selected{% endif %}>
+                    {{ s.name }}{% if not current_discipline %} ({{ s.discipline.name }}){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
+            <input type="text" name="location" id="location" value="{{ current_location }}"
+                   class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                   placeholder="City or region...">
+        </div>
+        <div class="min-w-[160px]">
+            <label for="availability" class="block text-sm font-medium text-ink-600 mb-1">Availability</label>
+            <select name="availability" id="availability"
+                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">Any Status</option>
+                {% for at in availability_types %}
+                <option value="{{ at.slug }}" {% if current_availability == at.slug %}selected{% endif %}>{{ at.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit"
+                class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+            Filter
+        </button>
+    </form>
+</div>
+
+<!-- Creator grid -->
+<div id="creator-grid">
+    {% include "creators/_creator_list.html" %}
+</div>
+{% endblock %}

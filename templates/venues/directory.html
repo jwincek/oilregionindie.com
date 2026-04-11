@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Venues — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Browse venues, galleries, cafes, and spaces in the Oil Region Creative Hub.{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-ink-800">Venue Directory</h1>
+    <p class="mt-2 text-ink-500">Bars, cafes, galleries, theaters, and community spaces.</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow-sm p-4 mb-8">
+    <form hx-get="{% url 'venues:directory' %}" hx-target="#venue-grid" hx-swap="innerHTML" hx-push-url="true"
+          class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label for="q" class="block text-sm font-medium text-ink-600 mb-1">Search</label>
+            <input type="text" name="q" id="q" value="{{ query }}"
+                   class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                   placeholder="Venue name or keyword...">
+        </div>
+        <div class="min-w-[160px]">
+            <label for="type" class="block text-sm font-medium text-ink-600 mb-1">Type</label>
+            <select name="type" id="type"
+                    hx-get="{% url 'venues:directory' %}" hx-target="#venue-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">All Types</option>
+                {% for value, label in venue_types %}
+                <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[180px]">
+            <label for="availability" class="block text-sm font-medium text-ink-600 mb-1">Availability</label>
+            <select name="availability" id="availability"
+                    hx-get="{% url 'venues:directory' %}" hx-target="#venue-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">Any Status</option>
+                {% for at in availability_types %}
+                <option value="{{ at.slug }}" {% if current_availability == at.slug %}selected{% endif %}>{{ at.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit"
+                class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+            Filter
+        </button>
+    </form>
+</div>
+
+<div id="venue-grid">
+    {% include "venues/_venue_list.html" %}
+</div>
+{% endblock %}

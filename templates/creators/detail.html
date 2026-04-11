@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load embed_tags %}
+
+{% block title %}{{ creator.display_name }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ creator.display_name }} — {{ creator.discipline_list }}. {{ creator.location }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+    {% if creator.header_image %}
+    <div class="h-48 md:h-64 overflow-hidden">
+        <img src="{{ creator.header_image.url }}" alt="" class="w-full h-full object-cover">
+    </div>
+    {% else %}
+    <div class="h-48 md:h-64 bg-gradient-to-br from-ink-700 to-ink-800"></div>
+    {% endif %}
+
+    <div class="px-6 py-6 md:flex md:items-end md:-mt-16 md:relative">
+        {% if creator.profile_image %}
+        <img src="{{ creator.profile_image.url }}" alt="{{ creator.display_name }}"
+             class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-lg">
+        {% endif %}
+        <div class="mt-4 md:mt-0 md:ml-6 md:mb-2">
+            <h1 class="text-2xl md:text-3xl font-display font-bold text-ink-800">{{ creator.display_name }}</h1>
+            <p class="text-brand-600 font-medium mt-1">{{ creator.discipline_list }}</p>
+            <div class="flex flex-wrap gap-4 mt-2 text-sm text-ink-500">
+                {% if creator.location %}
+                <span>{{ creator.location }}</span>
+                {% endif %}
+                {% if creator.home_region %}
+                <span>From {{ creator.home_region }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-4 md:mt-0 md:ml-auto md:mb-2 flex gap-3">
+            {% if creator.website %}
+            <a href="{{ creator.website }}" target="_blank" rel="noopener"
+               class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
+                Website
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main content -->
+    <div class="lg:col-span-2 space-y-8">
+        {% if creator.bio %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-3">About</h2>
+            <div class="prose prose-ink max-w-none">{{ creator.bio|safe }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Media -->
+        {% if creator.media_items.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-4">Work</h2>
+            <div class="space-y-6">
+                {% for item in creator.media_items.all %}
+                <div class="border-b border-ink-100 pb-4 last:border-0 last:pb-0">
+                    <h3 class="font-medium text-ink-700">{{ item.title }}</h3>
+                    {% if item.embed_html or item.embed_url %}
+                    <div class="mt-2">
+                        {{ item|render_embed }}
+                    </div>
+                    {% elif item.media_type == "image" and item.file %}
+                    <img src="{{ item.file.url }}" alt="{{ item.title }}" class="mt-2 rounded-md max-w-full">
+                    {% elif item.media_type == "audio" and item.file %}
+                    <audio controls class="mt-2 w-full">
+                        <source src="{{ item.file.url }}">
+                    </audio>
+                    {% elif item.media_type == "video" and item.file %}
+                    <video controls class="mt-2 w-full rounded-md">
+                        <source src="{{ item.file.url }}">
+                    </video>
+                    {% endif %}
+                    {% if item.description %}
+                    <p class="text-sm text-ink-500 mt-2">{{ item.description }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Products -->
+        {% if creator.products.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-4">Shop</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for product in creator.products.all %}
+                {% if product.is_active %}
+                <a href="{{ product.get_absolute_url }}"
+                   class="border border-ink-100 rounded-lg p-4 hover:border-brand-300 transition">
+                    <h3 class="font-medium text-ink-700">{{ product.title }}</h3>
+                    <p class="text-sm text-ink-400">{{ product.get_product_type_display }}</p>
+                    <p class="text-brand-600 font-semibold mt-2">{{ product.price_display }}</p>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Availability -->
+        {% with availabilities=creator.active_availabilities %}
+        {% if availabilities %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Availability</h3>
+            <ul class="space-y-3">
+                {% for avail in availabilities %}
+                <li class="flex items-start gap-2">
+                    <span class="mt-0.5 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                    <div>
+                        <p class="text-sm font-medium text-ink-700">{{ avail.availability_type.name }}</p>
+                        {% if avail.note %}
+                        <p class="text-xs text-ink-400 mt-0.5">{{ avail.note }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Members (for bands/collectives) -->
+        {% if creator.is_group and creator.active_members %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Members</h3>
+            <ul class="space-y-3">
+                {% for membership in creator.active_members %}
+                <li class="flex items-center gap-3">
+                    {% if membership.member.profile_image %}
+                    <img src="{{ membership.member.profile_image.url }}" alt=""
+                         class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                    <div class="w-8 h-8 rounded-full bg-ink-200 flex-shrink-0"></div>
+                    {% endif %}
+                    <div>
+                        <a href="{{ membership.member.get_absolute_url }}"
+                           class="text-sm font-medium text-ink-700 hover:text-brand-600 transition">
+                            {{ membership.member.display_name }}
+                        </a>
+                        {% if membership.role %}
+                        <p class="text-xs text-ink-400">{{ membership.role }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Member of (for individuals in bands/collectives) -->
+        {% if not creator.is_group and creator.active_memberships %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Member Of</h3>
+            <ul class="space-y-3">
+                {% for membership in creator.active_memberships %}
+                <li class="flex items-center gap-3">
+                    {% if membership.group.profile_image %}
+                    <img src="{{ membership.group.profile_image.url }}" alt=""
+                         class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                    <div class="w-8 h-8 rounded-full bg-ink-200 flex-shrink-0"></div>
+                    {% endif %}
+                    <div>
+                        <a href="{{ membership.group.get_absolute_url }}"
+                           class="text-sm font-medium text-ink-700 hover:text-brand-600 transition">
+                            {{ membership.group.display_name }}
+                        </a>
+                        {% if membership.role %}
+                        <p class="text-xs text-ink-400">{{ membership.role }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Skills (grouped by discipline) -->
+        {% if creator.skills.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Skills</h3>
+            {% for disc_name, skill_names in creator.skills_by_discipline.items %}
+            <div class="{% if not forloop.first %}mt-3{% endif %}">
+                <p class="text-xs font-medium text-ink-400 uppercase tracking-wide mb-1.5">{{ disc_name }}</p>
+                <div class="flex flex-wrap gap-1.5">
+                    {% for skill_name in skill_names %}
+                    <span class="bg-ink-100 text-ink-600 text-xs font-medium px-2 py-0.5 rounded">{{ skill_name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Genres -->
+        {% if creator.genres.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Genres</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for genre in creator.genres.all %}
+                <span class="bg-brand-50 text-brand-700 text-xs font-medium px-2.5 py-1 rounded-full">{{ genre.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Social links -->
+        {% if creator.social_links.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Find Them Online</h3>
+            <ul class="space-y-2">
+                {% for link in creator.social_links.all %}
+                <li>
+                    <a href="{{ link.url }}" target="_blank" rel="noopener"
+                       class="text-sm text-ink-600 hover:text-brand-600 transition">
+                        {{ link.get_platform_display }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Upcoming events -->
+        {% if creator.events.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Upcoming Events</h3>
+            <ul class="space-y-3">
+                {% for event in creator.events.all|slice:":5" %}
+                <li>
+                    <a href="{{ event.get_absolute_url }}" class="text-sm text-ink-600 hover:text-brand-600 transition">
+                        <span class="font-medium">{{ event.title }}</span>
+                        <span class="block text-ink-400 text-xs">{{ event.start_datetime|date:"M d, Y" }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

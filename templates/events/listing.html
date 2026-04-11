@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Events — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-ink-800">Upcoming Events</h1>
+    <p class="mt-2 text-ink-500">Concerts, art shows, maker markets, and more.</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow-sm p-4 mb-8">
+    <form hx-get="{% url 'events:listing' %}" hx-target="#event-list" hx-swap="innerHTML" hx-push-url="true"
+          class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label for="q" class="block text-sm font-medium text-ink-600 mb-1">Search</label>
+            <input type="text" name="q" id="q" value="{{ query }}"
+                   class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                   placeholder="Event name or keyword...">
+        </div>
+        <div class="min-w-[160px]">
+            <label for="type" class="block text-sm font-medium text-ink-600 mb-1">Type</label>
+            <select name="type" id="type"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">All Types</option>
+                {% for value, label in event_types %}
+                <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit"
+                class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+            Filter
+        </button>
+    </form>
+</div>
+
+<div class="flex justify-end mb-4">
+    <a href="{% url 'events:past' %}" class="text-sm text-ink-500 hover:text-brand-600 transition">View past events &rarr;</a>
+</div>
+
+<div id="event-list">
+    {% include "events/_event_list.html" %}
+</div>
+{% endblock %}

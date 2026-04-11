@@ -1,0 +1,43 @@
+<div id="social-links-container">
+    {% if links %}
+    <ul class="space-y-2 mb-4">
+        {% for link in links %}
+        <li class="flex items-center justify-between bg-ink-50 rounded-md px-3 py-2 group">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="text-sm font-medium text-ink-700">{{ link.get_platform_display }}</span>
+                <a href="{{ link.url }}" target="_blank" rel="noopener"
+                   class="text-sm text-ink-400 truncate hover:text-brand-600 transition">
+                    {{ link.url }}
+                </a>
+            </div>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                <button hx-get="{% url 'creators:edit_social_link' pk=link.pk %}"
+                        hx-target="#social-link-form-area"
+                        hx-swap="innerHTML"
+                        class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">
+                    Edit
+                </button>
+                <button hx-post="{% url 'creators:delete_social_link' pk=link.pk %}"
+                        hx-target="#social-links-container"
+                        hx-swap="outerHTML"
+                        hx-confirm="Remove this link?"
+                        class="text-xs text-ink-400 hover:text-red-600 px-2 py-1 transition">
+                    Remove
+                </button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-ink-400 mb-4">No social links yet.</p>
+    {% endif %}
+
+    <button hx-get="{% url 'creators:add_social_link' %}"
+            hx-target="#social-link-form-area"
+            hx-swap="innerHTML"
+            class="text-sm text-brand-600 hover:text-brand-700 font-medium transition">
+        + Add Social Link
+    </button>
+
+    <div id="social-link-form-area" class="mt-3"></div>
+</div>

@@ -1,0 +1,68 @@
+<nav class="bg-ink-800 text-white" x-data="{ mobileOpen: false }">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Logo / Brand -->
+            <div class="flex items-center">
+                <a href="/" class="font-display font-bold text-xl text-brand-300 hover:text-brand-200 transition">
+                    {{ SITE_NAME }}
+                </a>
+            </div>
+
+            <!-- Desktop nav -->
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="{% url 'creators:directory' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Creators</a>
+                <a href="{% url 'venues:directory' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Venues</a>
+                <a href="{% url 'events:listing' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Events</a>
+                <a href="{% url 'community:index' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Community</a>
+
+                {% if user.is_authenticated %}
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center text-sm font-medium text-ink-100 hover:text-brand-300 transition">
+                        {{ user.get_short_name|default:user.email }}
+                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" @click.away="open = false" x-transition
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                        {% if user.creator_profile %}
+                        <a href="{% url 'creators:edit' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Edit Profile</a>
+                        {% else %}
+                        <a href="{% url 'creators:setup' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Create Profile</a>
+                        {% endif %}
+                        <a href="{% url 'events:create' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Create Event</a>
+                        <a href="{% url 'account_logout' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Sign Out</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'account_login' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Sign In</a>
+                <a href="{% url 'account_signup' %}" class="bg-brand-300 text-ink-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-brand-400 transition">Join</a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile menu button -->
+            <button @click="mobileOpen = !mobileOpen" class="md:hidden text-ink-100 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path x-show="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    <path x-show="mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div x-show="mobileOpen" x-transition class="md:hidden bg-ink-900">
+        <div class="px-4 py-3 space-y-2">
+            <a href="{% url 'creators:directory' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Creators</a>
+            <a href="{% url 'venues:directory' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Venues</a>
+            <a href="{% url 'events:listing' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Events</a>
+            <a href="{% url 'community:index' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Community</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'account_logout' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Sign Out</a>
+            {% else %}
+            <a href="{% url 'account_login' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Sign In</a>
+            <a href="{% url 'account_signup' %}" class="block text-brand-300 hover:text-brand-200 text-sm font-medium py-1">Join</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        {% if event.poster_image %}
+        <div class="h-64 md:h-80 overflow-hidden">
+            <img src="{{ event.poster_image.url }}" alt="{{ event.title }}" class="w-full h-full object-cover">
+        </div>
+        {% endif %}
+
+        <div class="p-6 md:p-8">
+            <span class="inline-block bg-ink-100 text-ink-600 text-xs font-medium px-2.5 py-1 rounded">
+                {{ event.get_event_type_display }}
+            </span>
+            <h1 class="text-3xl font-display font-bold text-ink-800 mt-3">{{ event.title }}</h1>
+
+            <!-- Key details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 p-4 bg-brand-50 rounded-lg">
+                <div>
+                    <p class="text-sm font-medium text-ink-600">Date & Time</p>
+                    <p class="text-ink-800">{{ event.start_datetime|date:"l, F d, Y" }}</p>
+                    <p class="text-ink-800">
+                        {{ event.start_datetime|date:"g:i A" }}
+                        {% if event.end_datetime %} — {{ event.end_datetime|date:"g:i A" }}{% endif %}
+                    </p>
+                    {% if event.doors_time %}
+                    <p class="text-sm text-ink-500">Doors at {{ event.doors_time|date:"g:i A" }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if event.venue %}
+                    <p class="text-sm font-medium text-ink-600">Venue</p>
+                    <p>
+                        <a href="{{ event.venue.get_absolute_url }}" class="text-brand-600 hover:underline">
+                            {{ event.venue.name }}
+                        </a>
+                    </p>
+                    <p class="text-sm text-ink-500">{{ event.venue.full_address }}</p>
+                    {% elif event.is_virtual %}
+                    <p class="text-sm font-medium text-ink-600">Virtual Event</p>
+                    {% if event.stream_url %}
+                    <a href="{{ event.stream_url }}" target="_blank" class="text-brand-600 hover:underline">
+                        Join Stream
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-ink-600">Admission</p>
+                    <p class="text-lg font-semibold text-ink-800">{{ event.ticket_price_display }}</p>
+                    {% if event.ticket_url %}
+                    <a href="{{ event.ticket_url }}" target="_blank"
+                       class="inline-block mt-2 bg-brand-300 text-ink-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-brand-400 transition">
+                        Get Tickets
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if event.description %}
+            <div class="prose prose-ink max-w-none mt-8">
+                {{ event.description|safe }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lineup -->
+    {% if event.lineup %}
+    <div class="bg-white rounded-lg shadow-sm p-6 md:p-8 mt-6">
+        <h2 class="text-xl font-display font-bold text-ink-800 mb-6">Lineup</h2>
+        <div class="space-y-4">
+            {% for slot in event.lineup %}
+            <div class="flex items-center gap-4 p-3 rounded-lg {% if slot.status == 'cancelled' %}opacity-50{% endif %} hover:bg-brand-50 transition">
+                {% if slot.creator.profile_image %}
+                <img src="{{ slot.creator.profile_image.url }}" alt=""
+                     class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+                {% else %}
+                <div class="w-12 h-12 rounded-full bg-ink-200 flex-shrink-0"></div>
+                {% endif %}
+                <div class="flex-1">
+                    <a href="{{ slot.creator.get_absolute_url }}" class="font-medium text-ink-800 hover:text-brand-600 transition">
+                        {{ slot.creator.display_name }}
+                    </a>
+                    <p class="text-sm text-ink-500">{{ slot.creator.discipline_list }}</p>
+                </div>
+                <div class="text-right text-sm text-ink-500">
+                    {% if slot.start_time %}
+                    <p>{{ slot.start_time|date:"g:i A" }}{% if slot.end_time %} — {{ slot.end_time|date:"g:i A" }}{% endif %}</p>
+                    {% endif %}
+                    {% if slot.venue_area %}
+                    <p class="text-ink-400">{{ slot.venue_area.name }}</p>
+                    {% endif %}
+                    {% if slot.set_description %}
+                    <p class="text-ink-400 italic">{{ slot.set_description }}</p>
+                    {% endif %}
+                </div>
+                {% if slot.status == "cancelled" %}
+                <span class="text-xs text-red-500 font-medium">Cancelled</span>
+                {% elif slot.status == "pending" %}
+                <span class="text-xs text-yellow-600 font-medium">TBC</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

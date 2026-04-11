@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}{{ venue.name }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ venue.name }} — {{ venue.get_venue_type_display }} in {{ venue.city }}, {{ venue.state }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+        {% if venue.header_image %}
+        <div class="h-48 md:h-64 overflow-hidden">
+            <img src="{{ venue.header_image.url }}" alt="" class="w-full h-full object-cover">
+        </div>
+        {% else %}
+        <div class="h-48 md:h-64 bg-gradient-to-br from-ink-600 to-ink-700"></div>
+        {% endif %}
+
+        <div class="px-6 py-6">
+            <span class="inline-block bg-ink-100 text-ink-600 text-xs font-medium px-2.5 py-1 rounded mb-3">
+                {{ venue.get_venue_type_display }}
+            </span>
+            <h1 class="text-2xl md:text-3xl font-display font-bold text-ink-800">{{ venue.name }}</h1>
+            <p class="text-ink-500 mt-1">{{ venue.full_address }}</p>
+            {% if venue.capacity %}
+            <p class="text-sm text-ink-400 mt-1">Capacity: {{ venue.capacity }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main content -->
+        <div class="lg:col-span-2 space-y-8">
+            {% if venue.description %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="font-semibold text-ink-800 mb-3">About</h2>
+                <div class="prose prose-ink max-w-none">{{ venue.description|safe }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Upcoming events at this venue -->
+            {% if venue.events.exists %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="font-semibold text-ink-800 mb-4">Upcoming Events</h2>
+                <div class="space-y-3">
+                    {% for event in venue.events.all|slice:":10" %}
+                    {% if event.is_published %}
+                    <a href="{{ event.get_absolute_url }}" class="block p-3 rounded-lg hover:bg-brand-50 transition">
+                        <h3 class="font-medium text-ink-700">{{ event.title }}</h3>
+                        <div class="flex gap-4 mt-1 text-sm text-ink-500">
+                            <span>{{ event.start_datetime|date:"l, M d" }}</span>
+                            <span>{{ event.start_datetime|date:"g:i A" }}</span>
+                            <span class="text-brand-600">{{ event.ticket_price_display }}</span>
+                        </div>
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Venue areas -->
+            {% if venue.areas.exists %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="font-semibold text-ink-800 mb-4">Spaces</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {% for area in venue.areas.all %}
+                    <div class="border border-ink-100 rounded-lg p-3">
+                        <h3 class="font-medium text-ink-700">{{ area.name }}</h3>
+                        {% if area.description %}
+                        <p class="text-sm text-ink-500 mt-1">{{ area.description }}</p>
+                        {% endif %}
+                        {% if area.capacity %}
+                        <p class="text-xs text-ink-400 mt-1">Capacity: {{ area.capacity }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Availability -->
+            {% with availabilities=venue.active_availabilities %}
+            {% if availabilities %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-ink-800 text-sm mb-3">Availability</h3>
+                <ul class="space-y-3">
+                    {% for avail in availabilities %}
+                    <li class="flex items-start gap-2">
+                        <span class="mt-0.5 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                        <div>
+                            <p class="text-sm font-medium text-ink-700">{{ avail.availability_type.name }}</p>
+                            {% if avail.note %}
+                            <p class="text-xs text-ink-400 mt-0.5">{{ avail.note }}</p>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Amenities -->
+            {% if venue.amenities.exists %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-ink-800 text-sm mb-3">Amenities</h3>
+                <div class="flex flex-wrap gap-1.5">
+                    {% for amenity in venue.amenities.all %}
+                    <span class="bg-ink-100 text-ink-600 text-xs font-medium px-2 py-0.5 rounded">{{ amenity.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Contact -->
+            {% if venue.public_contacts or venue.website %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-ink-800 text-sm mb-3">Contact</h3>
+                {% for contact in venue.public_contacts %}
+                <div class="{% if not forloop.first %}mt-3 pt-3 border-t border-ink-100{% endif %}">
+                    <p class="text-xs font-medium text-ink-400 uppercase tracking-wide">{{ contact.get_contact_type_display }}</p>
+                    <div class="mt-1">
+                        {% if contact.method == "email" %}
+                        <a href="mailto:{{ contact.value }}" class="text-sm text-brand-600 hover:underline">{{ contact.value }}</a>
+                        {% elif contact.method == "phone" %}
+                        <a href="tel:{{ contact.value }}" class="text-sm text-brand-600 hover:underline">{{ contact.value }}</a>
+                        {% elif contact.method == "form" %}
+                        <a href="{{ contact.value }}" target="_blank" rel="noopener" class="text-sm text-brand-600 hover:underline">Contact Form</a>
+                        {% endif %}
+                        {% if contact.name %}
+                        <p class="text-xs text-ink-400 mt-0.5">{{ contact.name }}</p>
+                        {% endif %}
+                        {% if contact.notes %}
+                        <p class="text-xs text-ink-400 italic mt-0.5">{{ contact.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% if venue.website %}
+                <div class="{% if venue.public_contacts %}mt-3 pt-3 border-t border-ink-100{% endif %}">
+                    <p class="text-xs font-medium text-ink-400 uppercase tracking-wide">Website</p>
+                    <a href="{{ venue.website }}" target="_blank" rel="noopener" class="text-sm text-brand-600 hover:underline mt-1 block">{{ venue.website }}</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Social links -->
+            {% if venue.social_links.exists %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-ink-800 text-sm mb-3">Online</h3>
+                <ul class="space-y-2">
+                    {% for link in venue.social_links.all %}
+                    <li>
+                        <a href="{{ link.url }}" target="_blank" rel="noopener"
+                           class="text-sm text-ink-600 hover:text-brand-600 transition">
+                            {{ link.get_platform_display }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+# Core
+Django>=6.0.3,<6.1
+wagtail>=7.3,<7.4
+Pillow>=10.0
+
+# Authentication
+django-allauth>=65.0
+
+# Frontend interactivity
+django-htmx>=1.19
+
+# Configuration
+django-environ>=0.11
+
+# Payments
+stripe>=10.0
+
+# Storage
+django-storages>=1.14
+boto3>=1.35
+
+# Database
+psycopg[binary]>=3.2
+
+# Task queue
+django-q2>=1.7
+
+# Cache & sessions
+django-redis>=5.4
+
+# Production server
+gunicorn>=23.0
+
+# Development
+django-debug-toolbar>=4.4
+django-extensions>=3.2
+
+# Media processing
+easy-thumbnails>=2.10
+
+# Rich text & sanitization
+bleach>=6.1

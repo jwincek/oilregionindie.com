@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Edit Your Profile</h1>
+    <p class="text-ink-500 mb-8">
+        <a href="{{ profile.get_absolute_url }}" class="text-brand-600 hover:underline">View your public profile</a>
+    </p>
+
+    <!-- Profile form -->
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div>
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
+            {% endif %}
+            {% if field.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="flex justify-between items-center pt-4 border-t border-ink-100">
+            <div>
+                {% if profile.can_accept_payments %}
+                <a href="{% url 'commerce:stripe_dashboard' %}" class="text-sm text-brand-600 hover:underline">
+                    Stripe Dashboard
+                </a>
+                {% else %}
+                <a href="{% url 'commerce:connect_onboarding' %}" class="text-sm text-brand-600 hover:underline">
+                    Set Up Payments
+                </a>
+                {% endif %}
+            </div>
+            <div class="flex gap-3">
+                <a href="{{ profile.get_absolute_url }}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
+                <button type="submit"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Social links (managed via HTMX, outside the profile form) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Social Links</h2>
+        <div hx-get="{% url 'creators:social_links' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading social links...</p>
+        </div>
+    </div>
+
+    <!-- Media management (HTMX-powered, outside the profile form) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Media</h2>
+        <div hx-get="{% url 'creators:media_items' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading media items...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

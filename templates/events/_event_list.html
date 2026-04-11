@@ -1,0 +1,46 @@
+{% if events %}
+<div class="space-y-4">
+    {% for event in events %}
+    <a href="{{ event.get_absolute_url }}"
+       class="block bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition">
+        <div class="md:flex">
+            {% if event.poster_image %}
+            <div class="md:w-48 h-32 md:h-auto overflow-hidden flex-shrink-0">
+                <img src="{{ event.poster_image.url }}" alt="" class="w-full h-full object-cover">
+            </div>
+            {% endif %}
+            <div class="p-4 flex-1">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-semibold text-ink-800 text-lg">{{ event.title }}</h3>
+                        <span class="inline-block bg-ink-100 text-ink-600 text-xs font-medium px-2 py-0.5 rounded mt-1">
+                            {{ event.get_event_type_display }}
+                        </span>
+                    </div>
+                    <span class="text-brand-600 font-semibold text-sm whitespace-nowrap ml-4">
+                        {{ event.ticket_price_display }}
+                    </span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-4 text-sm text-ink-500">
+                    <span>{{ event.start_datetime|date:"l, M d, Y" }}</span>
+                    <span>{{ event.start_datetime|date:"g:i A" }}</span>
+                    {% if event.venue %}
+                    <span>{{ event.venue.name }}, {{ event.venue.city }}</span>
+                    {% elif event.is_virtual %}
+                    <span>Virtual Event</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-ink-400">
+    <p class="text-lg">No upcoming events found.</p>
+    <p class="mt-2">
+        <a href="{% url 'events:create' %}" class="text-brand-600 hover:underline">Post an event</a> or
+        <a href="{% url 'events:past' %}" class="text-brand-600 hover:underline">browse past events</a>.
+    </p>
+</div>
+{% endif %}

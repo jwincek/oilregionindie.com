@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block title %}{{ SITE_NAME }}{% endblock %}
+
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="bg-ink-800 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <h1 class="text-4xl md:text-5xl font-display font-bold mb-4">{{ page.title }}</h1>
+        {% if page.subtitle %}
+        <p class="text-xl text-ink-200 max-w-2xl mx-auto mb-8">{{ page.subtitle }}</p>
+        {% endif %}
+        {% if page.hero_text %}
+        <div class="prose prose-invert mx-auto">{{ page.hero_text|richtext }}</div>
+        {% endif %}
+        <div class="flex flex-wrap justify-center gap-4 mt-8">
+            <a href="{% url 'creators:directory' %}"
+               class="bg-brand-300 text-ink-900 px-6 py-3 rounded-md font-medium hover:bg-brand-400 transition">
+                Explore Creators
+            </a>
+            <a href="{% url 'events:listing' %}"
+               class="border border-ink-400 text-white px-6 py-3 rounded-md font-medium hover:bg-ink-700 transition">
+                Upcoming Events
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Creators -->
+{% if page.featured_creators.exists %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <h2 class="text-2xl font-display font-bold text-ink-800 mb-8 text-center">Featured Creators</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for feature in page.featured_creators.all %}
+        <a href="{{ feature.creator.get_absolute_url }}"
+           class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition text-center">
+            {% if feature.creator.profile_image %}
+            <img src="{{ feature.creator.profile_image.url }}" alt="{{ feature.creator.display_name }}"
+                 class="w-20 h-20 rounded-full object-cover mx-auto mb-3">
+            {% endif %}
+            <h3 class="font-semibold text-ink-800 text-lg">{{ feature.creator.display_name }}</h3>
+            <p class="text-sm text-brand-600 mt-1">{{ feature.creator.discipline_list }}</p>
+            {% if feature.blurb %}
+            <p class="text-ink-500 text-sm mt-2">{{ feature.blurb }}</p>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- StreamField body -->
+{% if page.body %}
+<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    {% for block in page.body %}
+    {% if block.block_type == "heading" %}
+    <h2 class="text-2xl font-display font-bold text-ink-800 mt-8 mb-4">{{ block.value }}</h2>
+    {% elif block.block_type == "paragraph" %}
+    <div class="prose prose-ink max-w-none mb-6">{{ block.value|richtext }}</div>
+    {% elif block.block_type == "image" %}
+    <figure class="my-8">
+        {% image block.value width-800 class="rounded-lg shadow-sm" %}
+    </figure>
+    {% elif block.block_type == "featured_section" %}
+    <div class="bg-white rounded-lg shadow-sm p-8 my-8">
+        <h3 class="text-xl font-semibold text-ink-800 mb-3">{{ block.value.title }}</h3>
+        <div class="prose prose-ink">{{ block.value.text|richtext }}</div>
+        {% if block.value.link_url %}
+        <a href="{{ block.value.link_url }}" class="inline-block mt-4 text-brand-600 hover:underline font-medium">
+            {{ block.value.link_text|default:"Learn more" }}
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% endfor %}
+</section>
+{% endif %}
+
+<!-- CTA -->
+<section class="bg-ink-800 text-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <h2 class="text-2xl font-display font-bold mb-4">Join the Community</h2>
+        <p class="text-ink-200 max-w-lg mx-auto mb-8">
+            Whether you're a musician, visual artist, jeweler, venue owner, or fan — there's a place for you here.
+        </p>
+        <a href="{% url 'account_signup' %}"
+           class="bg-brand-300 text-ink-900 px-8 py-3 rounded-md font-medium hover:bg-brand-400 transition inline-block">
+            Create Your Free Profile
+        </a>
+    </div>
+</section>
+{% endblock %}

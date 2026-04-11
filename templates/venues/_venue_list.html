@@ -1,0 +1,40 @@
+{% if venues %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for venue in venues %}
+    <a href="{{ venue.get_absolute_url }}"
+       class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition group">
+        {% if venue.header_image %}
+        <div class="h-32 bg-ink-100 overflow-hidden">
+            <img src="{{ venue.header_image.url }}" alt=""
+                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+        </div>
+        {% elif venue.profile_image %}
+        <div class="h-32 bg-ink-100 overflow-hidden">
+            <img src="{{ venue.profile_image.url }}" alt=""
+                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+        </div>
+        {% else %}
+        <div class="h-32 bg-gradient-to-br from-ink-600 to-ink-700"></div>
+        {% endif %}
+        <div class="p-4">
+            <h3 class="font-semibold text-ink-800">{{ venue.name }}</h3>
+            <span class="text-xs text-brand-600 font-medium">{{ venue.get_venue_type_display }}</span>
+            <p class="text-sm text-ink-500 mt-1">{{ venue.city }}, {{ venue.state }}</p>
+            {% if venue.capacity %}
+            <p class="text-xs text-ink-400 mt-1">Capacity: {{ venue.capacity }}</p>
+            {% endif %}
+            {% for avail in venue.active_availabilities %}
+            {% if forloop.first %}<div class="flex flex-wrap gap-1 mt-2">{% endif %}
+            <span class="bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">{{ avail.availability_type.name }}</span>
+            {% if forloop.last %}</div>{% endif %}
+            {% endfor %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-ink-400">
+    <p class="text-lg">No venues found matching your filters.</p>
+    <p class="mt-2">Try broadening your search or <a href="{% url 'venues:directory' %}" class="text-brand-600 hover:underline">view all venues</a>.</p>
+</div>
+{% endif %}

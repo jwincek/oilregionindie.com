@@ -1,0 +1,43 @@
+{% if creators %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for creator in creators %}
+    <a href="{{ creator.get_absolute_url }}"
+       class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition group">
+        {% if creator.header_image %}
+        <div class="h-32 bg-ink-100 overflow-hidden">
+            <img src="{{ creator.header_image.url }}" alt=""
+                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+        </div>
+        {% else %}
+        <div class="h-32 bg-gradient-to-br from-ink-700 to-ink-800"></div>
+        {% endif %}
+        <div class="p-4 {% if creator.profile_image %}-mt-8 relative{% endif %}">
+            {% if creator.profile_image %}
+            <img src="{{ creator.profile_image.url }}" alt="{{ creator.display_name }}"
+                 class="w-16 h-16 rounded-full border-4 border-white object-cover shadow-sm">
+            {% endif %}
+            <h3 class="font-semibold text-ink-800 mt-2">{{ creator.display_name }}</h3>
+            <div class="flex items-center gap-2 mt-0.5">
+                <p class="text-sm text-brand-600 font-medium">{{ creator.discipline_list }}</p>
+                {% if creator.is_group %}
+                <span class="bg-ink-100 text-ink-500 text-xs px-1.5 py-0.5 rounded">{{ creator.get_profile_type_display }}</span>
+                {% endif %}
+            </div>
+            {% if creator.location %}
+            <p class="text-sm text-ink-400 mt-1">{{ creator.location }}</p>
+            {% endif %}
+            {% for avail in creator.active_availabilities %}
+            {% if forloop.first %}<div class="flex flex-wrap gap-1 mt-2">{% endif %}
+            <span class="bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">{{ avail.availability_type.name }}</span>
+            {% if forloop.last %}</div>{% endif %}
+            {% endfor %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-ink-400">
+    <p class="text-lg">No creators found matching your filters.</p>
+    <p class="mt-2">Try broadening your search or <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline">view all creators</a>.</p>
+</div>
+{% endif %}

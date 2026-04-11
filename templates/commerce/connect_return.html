@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Setup — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto text-center py-12">
+    {% if profile.stripe_onboarded %}
+    <div class="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+    </div>
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Payments Enabled!</h1>
+    <p class="text-ink-500 mb-6">
+        Your Stripe account is connected. You can now sell music, artwork, merch, and more through your profile.
+    </p>
+    <div class="flex flex-col gap-3">
+        <a href="{% url 'creators:edit' %}" class="text-brand-600 hover:underline font-medium">Go to your profile</a>
+        <a href="{% url 'commerce:stripe_dashboard' %}" class="text-ink-500 hover:underline text-sm">Open Stripe Dashboard</a>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+    </div>
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Almost There</h1>
+    <p class="text-ink-500 mb-6">
+        Your Stripe account setup isn't complete yet. Please finish the onboarding process to start accepting payments.
+    </p>
+    <a href="{% url 'commerce:connect_onboarding' %}"
+       class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition inline-block">
+        Continue Setup
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Email — {{ SITE_NAME }}{% endblock %}
+{% block main_class %}min-h-screen flex items-center justify-center px-4 py-12{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-md text-center">
+    <div class="bg-white rounded-xl shadow-sm border border-ink-100 p-8">
+        {% if confirmation %}
+        <h1 class="text-xl font-semibold text-ink-800 mb-2">Confirm your email</h1>
+        <p class="text-sm text-ink-500 mb-6">
+            Please confirm that <strong class="text-ink-700">{{ confirmation.email_address.email }}</strong>
+            is your email address.
+        </p>
+
+        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="w-full bg-ink-800 text-white py-2.5 rounded-lg text-sm font-semibold
+                           hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-ink-500 focus:ring-offset-2
+                           transition">
+                Confirm Email
+            </button>
+        </form>
+        {% else %}
+        <div class="mx-auto w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-5">
+            <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+        </div>
+
+        <h1 class="text-xl font-semibold text-ink-800 mb-2">Invalid confirmation link</h1>
+        <p class="text-sm text-ink-500 mb-6">
+            This confirmation link is invalid or has expired.
+        </p>
+        <a href="{% url 'account_login' %}"
+           class="inline-block bg-ink-800 text-white py-2.5 px-6 rounded-lg text-sm font-semibold
+                  hover:bg-ink-700 transition">
+            Go to Sign In
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

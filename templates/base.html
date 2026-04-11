@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}An open-source hub for independent musicians, visual artists, makers, venues, and fans.{% endblock %}">
+
+    <!-- Tailwind CSS (CDN for dev; build for production) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f1eb',
+                            100: '#e8e0d4',
+                            200: '#d4c4a8',
+                            300: '#d4a843',
+                            400: '#c49a35',
+                            500: '#b08a2a',
+                            600: '#8a6c1f',
+                            700: '#654e15',
+                            800: '#3f310d',
+                            900: '#1a1306',
+                        },
+                        ink: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            200: '#bcccdc',
+                            300: '#9fb3c8',
+                            400: '#829ab1',
+                            500: '#627d98',
+                            600: '#486581',
+                            700: '#334e68',
+                            800: '#1a3a5c',
+                            900: '#0d1f2d',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    {% block extra_head %}{% endblock %}
+
+    <style>
+        /* Responsive embed containers */
+        .embed-video iframe,
+        .embed-video object,
+        .embed-video embed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .embed-audio iframe {
+            width: 100%;
+            max-height: 166px;  /* SoundCloud single track height */
+        }
+        .embed-audio iframe[src*="bandcamp"] {
+            max-height: 120px;  /* Bandcamp single track */
+        }
+    </style>
+</head>
+<body class="h-full bg-brand-50 text-ink-800" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+    {% include "includes/nav.html" %}
+
+    <!-- Flash messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="rounded-md p-4 mb-3 {% if message.tags == 'error' %}bg-red-50 text-red-800{% elif message.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}"
+             x-data="{ show: true }" x-show="show" x-transition>
+            <div class="flex justify-between items-center">
+                <p class="text-sm">{{ message }}</p>
+                <button @click="show = false" class="ml-4 text-sm font-medium opacity-60 hover:opacity-100">&times;</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="{% block main_class %}max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include "includes/footer.html" %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

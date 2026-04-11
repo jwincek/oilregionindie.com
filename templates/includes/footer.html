@@ -1,0 +1,34 @@
+<footer class="bg-ink-800 text-ink-200 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="font-display font-bold text-brand-300 text-lg mb-3">{{ SITE_NAME }}</h3>
+                <p class="text-ink-300 text-sm leading-relaxed">
+                    A community platform for independent musicians, visual artists, makers,
+                    venues, and fans. Born from the Oil Region Indie Music Festival.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-semibold text-white text-sm mb-3">Explore</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="{% url 'creators:directory' %}" class="hover:text-brand-300 transition">Creator Directory</a></li>
+                    <li><a href="{% url 'venues:directory' %}" class="hover:text-brand-300 transition">Venues</a></li>
+                    <li><a href="{% url 'events:listing' %}" class="hover:text-brand-300 transition">Upcoming Events</a></li>
+                    <li><a href="{% url 'community:index' %}" class="hover:text-brand-300 transition">Community</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-white text-sm mb-3">For Creators</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="{% url 'account_signup' %}" class="hover:text-brand-300 transition">Join the Hub</a></li>
+                    <li><a href="{% url 'creators:setup' %}" class="hover:text-brand-300 transition">Create a Profile</a></li>
+                    <li><a href="{% url 'venues:setup' %}" class="hover:text-brand-300 transition">Register a Venue</a></li>
+                    <li><a href="{% url 'events:create' %}" class="hover:text-brand-300 transition">Post an Event</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-ink-700 mt-8 pt-8 text-center text-sm text-ink-400">
+            <p>&copy; {% now "Y" %} {{ SITE_NAME }}. Open source under AGPL-3.0.</p>
+        </div>
+    </div>
+</footer>
