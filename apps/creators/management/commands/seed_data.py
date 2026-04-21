@@ -226,7 +226,7 @@ class Command(BaseCommand):
         users = {}
         for username in [
             "alice", "bob", "carol", "dave", "eve",
-            "frank", "grace", "venue_billy", "venue_mosaic", "venue_pipeline",
+            "frank", "grace", "venue_belize", "venue_midtown", "venue_petrol",
         ]:
             u = User.objects.create_user(
                 username=username,
@@ -414,7 +414,7 @@ class Command(BaseCommand):
 
         # --- Media items ---
         MediaItem.objects.create(
-            creator=alice, title="Reckoning (Live at Mosaic)",
+            creator=alice, title="Reckoning (Live at Mid-Town)",
             media_type=MediaItem.MediaType.AUDIO,
             embed_url="https://soundcloud.com/example/reckoning-live",
             is_featured=True, sort_order=1,
@@ -432,7 +432,7 @@ class Command(BaseCommand):
             is_featured=True, sort_order=1,
         )
         MediaItem.objects.create(
-            creator=band, title="Static Characters (Full Set, Pipeline Alley 2019)",
+            creator=band, title="Static Characters (Full Set, Petrol Alley 2019)",
             media_type=MediaItem.MediaType.EMBED,
             embed_url="https://youtube.com/watch?v=example",
             is_featured=True, sort_order=1,
@@ -446,78 +446,78 @@ class Command(BaseCommand):
         # =================================================================
         self.stdout.write("  Creating sample venues...")
 
-        billy_addr = Address.objects.create(
+        belize_addr = Address.objects.create(
             street="210 Seneca St", city="Oil City", state="PA", zip_code="16301",
             latitude=41.4340, longitude=-79.7025,
         )
-        billy = VenueProfile.objects.create(
-            user=users["venue_billy"],
-            name="Billy's",
+        belize = VenueProfile.objects.create(
+            user=users["venue_belize"],
+            name="Belize's",
             venue_type=VenueProfile.VenueType.BAR,
             description="<p>Dive bar with live music. The heart of Oil City's North Side music scene since the 90s.</p>",
-            address=billy_addr, city="Oil City", state="PA",
+            address=belize_addr, city="Oil City", state="PA",
             capacity=75, publish_status="published",
         )
-        billy.amenities.add(amenity("PA System"), amenity("Stage"), amenity("Full Bar"), amenity("21+"))
-        VenueArea.objects.create(venue=billy, name="Main Room", capacity=75, sort_order=1)
-        VenueArea.objects.create(venue=billy, name="Back Patio", capacity=30, sort_order=2)
+        belize.amenities.add(amenity("PA System"), amenity("Stage"), amenity("Full Bar"), amenity("21+"))
+        VenueArea.objects.create(venue=belize, name="Main Room", capacity=75, sort_order=1)
+        VenueArea.objects.create(venue=belize, name="Back Patio", capacity=30, sort_order=2)
         VenueContact.objects.create(
-            venue=billy, contact_type=VenueContact.ContactType.BOOKING,
-            method=VenueContact.Method.EMAIL, value="booking@billys-oilcity.example",
+            venue=belize, contact_type=VenueContact.ContactType.BOOKING,
+            method=VenueContact.Method.EMAIL, value="booking@belizes-oilcity.example",
             name="Mike", notes="Email preferred. Best response on weekdays.",
         )
         VenueContact.objects.create(
-            venue=billy, contact_type=VenueContact.ContactType.BOOKING,
+            venue=belize, contact_type=VenueContact.ContactType.BOOKING,
             method=VenueContact.Method.PHONE, value="814-555-0101",
             name="Mike", notes="Call after 2pm.",
         )
 
-        mosaic_addr = Address.objects.create(
+        midtown_addr = Address.objects.create(
             street="218 Seneca St", city="Oil City", state="PA", zip_code="16301",
             latitude=41.4342, longitude=-79.7022,
         )
-        mosaic = VenueProfile.objects.create(
-            user=users["venue_mosaic"],
-            name="Mosaic Cafe",
+        midtown = VenueProfile.objects.create(
+            user=users["venue_midtown"],
+            name="Mid-Town Cafe",
             venue_type=VenueProfile.VenueType.CAFE,
             description="<p>Coffee shop and community gathering space. Acoustic shows, open mics, and art on the walls.</p>",
-            address=mosaic_addr, city="Oil City", state="PA",
+            address=midtown_addr, city="Oil City", state="PA",
             capacity=40, publish_status="published",
         )
-        mosaic.amenities.add(
+        midtown.amenities.add(
             amenity("PA System"), amenity("All Ages"), amenity("Wi-Fi"),
             amenity("Gallery Walls"), amenity("Seating"),
         )
-        VenueArea.objects.create(venue=mosaic, name="Performance Corner", capacity=40, sort_order=1)
+        VenueArea.objects.create(venue=midtown, name="Performance Corner", capacity=40, sort_order=1)
         VenueContact.objects.create(
-            venue=mosaic, contact_type=VenueContact.ContactType.BOOKING,
-            method=VenueContact.Method.EMAIL, value="music@mosaiccafe.example",
+            venue=midtown, contact_type=VenueContact.ContactType.BOOKING,
+            method=VenueContact.Method.EMAIL, value="music@midtowncafe.example",
         )
         VenueContact.objects.create(
-            venue=mosaic, contact_type=VenueContact.ContactType.GENERAL,
-            method=VenueContact.Method.EMAIL, value="hello@mosaiccafe.example",
+            venue=midtown, contact_type=VenueContact.ContactType.GENERAL,
+            method=VenueContact.Method.EMAIL, value="hello@midtowncafe.example",
         )
 
-        pipeline_addr = Address.objects.create(
+        petrol_addr = Address.objects.create(
             street="Seneca St (outdoor)", city="Oil City", state="PA", zip_code="16301",
             latitude=41.4338, longitude=-79.7028,
         )
-        pipeline = VenueProfile.objects.create(
-            user=users["venue_pipeline"],
-            name="Pipeline Alley",
+        petrol = VenueProfile.objects.create(
+            user=users["venue_petrol"],
+            name="Petrol Alley",
             venue_type=VenueProfile.VenueType.OUTDOOR,
             description="<p>Outdoor performance space next to the National Transit Building. Home of the summer concert series.</p>",
-            address=pipeline_addr, city="Oil City", state="PA",
+            address=petrol_addr, city="Oil City", state="PA",
             capacity=150, publish_status="published",
         )
-        pipeline.amenities.add(
+        petrol.amenities.add(
             amenity("PA System"), amenity("Stage"), amenity("All Ages"),
             amenity("Outdoor Space"), amenity("Accessible"),
         )
-        VenueArea.objects.create(venue=pipeline, name="Main Stage", capacity=150, sort_order=1)
+        VenueArea.objects.create(venue=petrol, name="Main Stage", capacity=150, sort_order=1)
         VenueContact.objects.create(
-            venue=pipeline, contact_type=VenueContact.ContactType.BOOKING,
-            method=VenueContact.Method.EMAIL, value="events@pipeline-alley.example",
+            venue=petrol, contact_type=VenueContact.ContactType.BOOKING,
+            method=VenueContact.Method.EMAIL, value="events@petrol-alley.example",
         )
 
         self.stdout.write(f"  Created {VenueProfile.objects.count()} venues")
@@ -529,40 +529,40 @@ class Command(BaseCommand):
 
         now = timezone.now()
 
-        # Upcoming: Friday Night at Billy's
+        # Upcoming: Friday Night at Belize's
         friday_show = Event.objects.create(
-            created_by=users["venue_billy"],
-            title="Friday Night at Billy's",
+            created_by=users["venue_belize"],
+            title="Friday Night at Belize's",
             event_type=Event.EventType.CONCERT,
-            venue=billy,
-            organizing_venue=billy,
+            venue=belize,
+            organizing_venue=belize,
             start_datetime=now + timedelta(days=10, hours=2),
             doors_time=time(20, 0),
             is_free=False,
             ticket_price_cents=500,
             is_published=True,
         )
-        billy_main = billy.areas.get(name="Main Room")
+        belize_main = belize.areas.get(name="Main Room")
         EventSlot.objects.create(
             event=friday_show, creator=alice,
             start_time=time(20, 30), end_time=time(21, 15),
-            venue_area=billy_main, set_description="Acoustic Set",
+            venue_area=belize_main, set_description="Acoustic Set",
             sort_order=1, status=EventSlot.Status.CONFIRMED,
         )
         EventSlot.objects.create(
             event=friday_show, creator=band,
             start_time=time(21, 30), end_time=time(23, 0),
-            venue_area=billy_main, set_description="Full Band",
+            venue_area=belize_main, set_description="Full Band",
             sort_order=2, status=EventSlot.Status.CONFIRMED,
         )
 
-        # Upcoming: Open Mic at Mosaic
+        # Upcoming: Open Mic at Mid-Town
         open_mic = Event.objects.create(
-            created_by=users["venue_mosaic"],
+            created_by=users["venue_midtown"],
             title="Thursday Open Mic",
             event_type=Event.EventType.OPEN_MIC,
-            venue=mosaic,
-            organizing_venue=mosaic,
+            venue=midtown,
+            organizing_venue=midtown,
             start_datetime=now + timedelta(days=5, hours=1),
             doors_time=time(18, 30),
             is_free=True,
@@ -599,26 +599,26 @@ class Command(BaseCommand):
 
         # Past: Last Month's Show
         past_show = Event.objects.create(
-            created_by=users["venue_pipeline"],
-            title="Summer Kickoff at Pipeline Alley",
+            created_by=users["venue_petrol"],
+            title="Summer Kickoff at Petrol Alley",
             event_type=Event.EventType.CONCERT,
-            venue=pipeline,
-            organizing_venue=pipeline,
+            venue=petrol,
+            organizing_venue=petrol,
             start_datetime=now - timedelta(days=30),
             is_free=True,
             is_published=True,
         )
-        pipeline_stage = pipeline.areas.get(name="Main Stage")
+        petrol_stage = petrol.areas.get(name="Main Stage")
         EventSlot.objects.create(
             event=past_show, creator=alice,
             start_time=time(18, 0), end_time=time(19, 0),
-            venue_area=pipeline_stage,
+            venue_area=petrol_stage,
             sort_order=1, status=EventSlot.Status.CONFIRMED,
         )
         EventSlot.objects.create(
             event=past_show, creator=band,
             start_time=time(19, 30), end_time=time(21, 0),
-            venue_area=pipeline_stage,
+            venue_area=petrol_stage,
             sort_order=2, status=EventSlot.Status.CONFIRMED,
         )
 
@@ -627,9 +627,9 @@ class Command(BaseCommand):
             created_by=collective_user,
             title="Holiday Maker Market",
             event_type=Event.EventType.MARKET,
-            venue=mosaic,
+            venue=midtown,
             organizing_creator=collective,
-            organizing_venue=mosaic,
+            organizing_venue=midtown,
             start_datetime=now - timedelta(days=90),
             is_free=True,
             is_published=True,
@@ -653,12 +653,12 @@ class Command(BaseCommand):
         # --- Sample booking request ---
         BookingRequest.objects.create(
             creator=alice,
-            venue=mosaic,
+            venue=midtown,
             initiated_by=users["alice"],
             direction=BookingRequest.Direction.CREATOR_TO_VENUE,
             event_type=Event.EventType.CONCERT,
             preferred_dates="Any Saturday in August",
-            message="Hi! I'd love to do a solo acoustic set at Mosaic. I've played there during the festival before and it's a great room for my sound.",
+            message="Hi! I'd love to do a solo acoustic set at Mid-Town. I've played there during the festival before and it's a great room for my sound.",
             status=BookingRequest.Status.PENDING,
         )
 
@@ -704,21 +704,21 @@ class Command(BaseCommand):
 
         # Venue availability
         ProfileAvailability.objects.create(
-            venue=billy, availability_type=avail_venue_booking,
+            venue=belize, availability_type=avail_venue_booking,
         )
         ProfileAvailability.objects.create(
-            venue=billy, availability_type=avail_seeking,
+            venue=belize, availability_type=avail_seeking,
             note="Looking for acoustic acts for Wednesday residency",
         )
         ProfileAvailability.objects.create(
-            venue=mosaic, availability_type=avail_venue_booking,
+            venue=midtown, availability_type=avail_venue_booking,
         )
         ProfileAvailability.objects.create(
-            venue=mosaic, availability_type=avail_gallery,
-            note="Rotating monthly exhibits \u2014 submit portfolio to music@mosaiccafe.example",
+            venue=midtown, availability_type=avail_gallery,
+            note="Rotating monthly exhibits \u2014 submit portfolio to music@midtowncafe.example",
         )
         ProfileAvailability.objects.create(
-            venue=pipeline, availability_type=avail_venue_booking,
+            venue=petrol, availability_type=avail_venue_booking,
             note="Summer season only (June\u2013September)",
         )
 

@@ -34,7 +34,7 @@ class EventListingViewTest(TestCase):
         cls.url = reverse("events:listing")
         cls.user = make_user()
 
-        cls.venue_oc = make_venue(name="Billy's", city="Oil City", state="PA")
+        cls.venue_oc = make_venue(name="Belize's", city="Oil City", state="PA")
         cls.venue_franklin = make_venue(name="The Brewhouse", city="Franklin", state="PA")
 
         cls.concert = make_event(

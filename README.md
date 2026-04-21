@@ -31,7 +31,7 @@ python manage.py runserver
 
 Visit **http://localhost:8000**. Wagtail admin: **http://localhost:8000/cms/**.
 
-The `seed_data --full` command populates the database with sample creators, venues, events, availability flags, and Wagtail pages so you can see the platform working immediately. Sample accounts use password `testpass123`.
+The `seed_data --full` command populates the database with sample creators, venues, events, availability flags, and Wagtail pages so you can see the platform working immediately. Sample accounts use `@oilregion-demo.example` emails with password `testpass123`.
 
 For a more detailed walkthrough, see [GETTING-STARTED.md](GETTING-STARTED.md).
 
@@ -143,7 +143,7 @@ python manage.py test apps.core.tests apps.creators.tests apps.venues.tests apps
 
 `seed_data --pages` additionally creates Wagtail CMS pages (home, about, blog with a welcome post). Ideal for production deployments where you want the page structure without sample profiles.
 
-`seed_data --full` additionally creates: 9 creator profiles (individuals, a band with memberships, a collective), 3 venues modeled on Oil City locations with contacts and areas, 5 events with slots, a booking request, availability flags, media items, social links, and Wagtail pages.
+`seed_data --full` additionally creates: 9 creator profiles (individuals, a band with memberships, a collective), 3 venues inspired by Oil City locations with contacts and areas, 5 events with slots, a booking request, availability flags, media items, social links, and Wagtail pages. All sample accounts use `@oilregion-demo.example` emails with password `testpass123`.
 
 ## Environment Variables
 

@@ -54,14 +54,14 @@ class AmenityModelTest(TestCase):
 
 class VenueSlugTest(TestCase):
     def test_auto_generates_slug(self):
-        venue = make_venue(name="Mosaic Cafe")
-        self.assertEqual(venue.slug, "mosaic-cafe")
+        venue = make_venue(name="Mid-Town Cafe")
+        self.assertEqual(venue.slug, "mid-town-cafe")
 
     def test_slug_uniqueness(self):
-        v1 = make_venue(name="Billy's")
-        v2 = make_venue(name="Billy's")
-        self.assertEqual(v1.slug, "billys")
-        self.assertEqual(v2.slug, "billys-1")
+        v1 = make_venue(name="Belize's")
+        v2 = make_venue(name="Belize's")
+        self.assertEqual(v1.slug, "belizes")
+        self.assertEqual(v2.slug, "belizes-1")
 
     def test_third_duplicate_slug(self):
         make_venue(name="The Nickel")
@@ -88,8 +88,8 @@ class VenueSlugTest(TestCase):
 
 class VenueAbsoluteUrlTest(TestCase):
     def test_url_uses_slug(self):
-        venue = make_venue(name="Pipeline Alley")
-        self.assertEqual(venue.get_absolute_url(), "/venues/pipeline-alley/")
+        venue = make_venue(name="Petrol Alley")
+        self.assertEqual(venue.get_absolute_url(), "/venues/petrol-alley/")
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +283,7 @@ class VenueAreaTest(TestCase):
 
 class VenueContactTest(TestCase):
     def test_str(self):
-        venue = make_venue(name="Billy's")
+        venue = make_venue(name="Belize's")
         contact = make_venue_contact(venue, name="Joe")
         self.assertIn("Booking", str(contact))
         self.assertIn("Email", str(contact))

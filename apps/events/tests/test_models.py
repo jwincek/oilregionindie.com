@@ -61,8 +61,8 @@ class EventSlugTest(TestCase):
 
 class EventBasicsTest(TestCase):
     def test_str(self):
-        event = make_event(title="Pipeline Alley Concert")
-        self.assertEqual(str(event), "Pipeline Alley Concert")
+        event = make_event(title="Petrol Alley Concert")
+        self.assertEqual(str(event), "Petrol Alley Concert")
 
     def test_get_absolute_url(self):
         event = make_event(title="Test Show")
@@ -113,15 +113,15 @@ class OrganizerDisplayTest(TestCase):
         self.assertEqual(event.organizer_display, "Jerome Wincek")
 
     def test_venue_organizer(self):
-        venue = make_venue(name="Mosaic Cafe")
+        venue = make_venue(name="Mid-Town Cafe")
         event = make_event(organizing_venue=venue)
-        self.assertEqual(event.organizer_display, "Mosaic Cafe")
+        self.assertEqual(event.organizer_display, "Mid-Town Cafe")
 
     def test_both_organizers(self):
         creator = make_creator(display_name="The Old Hats")
-        venue = make_venue(name="Billy's")
+        venue = make_venue(name="Belize's")
         event = make_event(organizing_creator=creator, organizing_venue=venue)
-        self.assertEqual(event.organizer_display, "The Old Hats & Billy's")
+        self.assertEqual(event.organizer_display, "The Old Hats & Belize's")
 
 
 # ---------------------------------------------------------------------------
@@ -304,18 +304,18 @@ class EventSlotTest(TestCase):
 class BookingRequestBasicsTest(TestCase):
     def test_str_creator_to_venue(self):
         creator = make_creator(display_name="Alice")
-        venue = make_venue(name="Billy's")
+        venue = make_venue(name="Belize's")
         req = make_booking_request(creator, venue)
-        self.assertEqual(str(req), "Alice → Billy's (Pending)")
+        self.assertEqual(str(req), "Alice → Belize's (Pending)")
 
     def test_str_venue_to_creator(self):
         creator = make_creator(display_name="Alice")
-        venue = make_venue(name="Billy's")
+        venue = make_venue(name="Belize's")
         req = make_booking_request(
             creator, venue,
             direction=BookingRequest.Direction.VENUE_TO_CREATOR,
         )
-        self.assertEqual(str(req), "Alice ← Billy's (Pending)")
+        self.assertEqual(str(req), "Alice ← Belize's (Pending)")
 
     def test_is_creator_initiated(self):
         creator = make_creator()

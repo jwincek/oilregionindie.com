@@ -104,12 +104,14 @@ Visit http://localhost (nginx proxies to the app).
 
 1. User signs up (email + password via django-allauth)
 2. Email verification is required (`ACCOUNT_EMAIL_VERIFICATION = "mandatory"`)
-3. After verification, user is redirected to `/creators/setup/`
+3. After verification, user lands on `/welcome/` — a choice of creating a creator profile, registering a venue, or just browsing
 4. User fills out their profile (starts as **draft**)
 5. User clicks "Submit for Review" — status moves to **pending**
 6. Admin gets an email notification
 7. Admin approves in Django admin (bulk action) — status becomes **published**
 8. Profile appears in the public directory
+
+Profile owners can preview their unpublished profile at its normal URL. Other users get a 404 for unpublished profiles.
 
 ### Running tests
 
@@ -123,10 +125,10 @@ python manage.py test apps.core.tests apps.creators.tests apps.venues.tests apps
 
 | Email | Role | Profile |
 |-------|------|---------|
-| alice@example.com | Creator | Singer-songwriter (published) |
-| bob@example.com | Creator | Painter + silversmith (published) |
-| venue_billy@example.com | Venue owner | Billy's Bar (published) |
-| eve@example.com | Creator | Draft profile (unpublished) |
+| alice@oilregion-demo.example | Creator | Singer-songwriter (published) |
+| bob@oilregion-demo.example | Creator | Painter + silversmith (published) |
+| venue_belize@oilregion-demo.example | Venue owner | Belize's Bar (published) |
+| eve@oilregion-demo.example | Creator | Draft profile (unpublished) |
 
 All use password `testpass123`.
 

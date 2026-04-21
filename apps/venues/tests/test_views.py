@@ -51,7 +51,7 @@ class VenueDirectoryViewTest(TestCase):
         )
 
         cls.bar = make_venue(
-            name="Billy's Bar",
+            name="Belize's Bar",
             venue_type=VenueProfile.VenueType.BAR,
             city="Oil City",
             state="PA",
@@ -70,7 +70,7 @@ class VenueDirectoryViewTest(TestCase):
         cls.gallery.amenities.add(cls.parking)
 
         cls.cafe = make_venue(
-            name="Mosaic Cafe",
+            name="Mid-Town Cafe",
             venue_type=VenueProfile.VenueType.CAFE,
             city="Oil City",
             state="PA",
@@ -92,48 +92,48 @@ class VenueDirectoryViewTest(TestCase):
 
     def test_shows_published_venues(self):
         response = self.client.get(self.url)
-        self.assertContains(response, "Billy")
+        self.assertContains(response, "Belize")
         self.assertContains(response, "Graffiti Gallery")
-        self.assertContains(response, "Mosaic Cafe")
+        self.assertContains(response, "Mid-Town Cafe")
 
     def test_filter_by_venue_type(self):
         response = self.client.get(self.url, {"type": "bar"})
-        self.assertContains(response, "Billy")
+        self.assertContains(response, "Belize")
         self.assertNotContains(response, "Graffiti Gallery")
-        self.assertNotContains(response, "Mosaic Cafe")
+        self.assertNotContains(response, "Mid-Town Cafe")
 
     def test_filter_by_gallery_type(self):
         response = self.client.get(self.url, {"type": "gallery"})
         self.assertContains(response, "Graffiti Gallery")
-        self.assertNotContains(response, "Billy")
+        self.assertNotContains(response, "Belize")
 
     def test_filter_by_amenity(self):
         response = self.client.get(self.url, {"amenity": "pa-system"})
-        self.assertContains(response, "Billy")
+        self.assertContains(response, "Belize")
         self.assertNotContains(response, "Graffiti Gallery")
-        self.assertNotContains(response, "Mosaic Cafe")
+        self.assertNotContains(response, "Mid-Town Cafe")
 
     def test_filter_by_location(self):
         response = self.client.get(self.url, {"location": "Franklin"})
         self.assertContains(response, "Graffiti Gallery")
-        self.assertNotContains(response, "Billy")
+        self.assertNotContains(response, "Belize")
 
     def test_search_by_name(self):
-        response = self.client.get(self.url, {"q": "Mosaic"})
-        self.assertContains(response, "Mosaic Cafe")
-        self.assertNotContains(response, "Billy")
+        response = self.client.get(self.url, {"q": "Mid-Town"})
+        self.assertContains(response, "Mid-Town Cafe")
+        self.assertNotContains(response, "Belize")
         self.assertNotContains(response, "Graffiti")
 
     def test_combined_filters(self):
         response = self.client.get(self.url, {"type": "bar", "location": "Oil City"})
-        self.assertContains(response, "Billy")
-        self.assertNotContains(response, "Mosaic Cafe")
+        self.assertContains(response, "Belize")
+        self.assertNotContains(response, "Mid-Town Cafe")
 
     def test_filter_by_availability(self):
         response = self.client.get(self.url, {"availability": "accepting-booking-requests"})
-        self.assertContains(response, "Billy")
+        self.assertContains(response, "Belize")
         self.assertNotContains(response, "Graffiti Gallery")
-        self.assertNotContains(response, "Mosaic Cafe")
+        self.assertNotContains(response, "Mid-Town Cafe")
 
     def test_empty_results(self):
         response = self.client.get(self.url, {"q": "zzzznonexistent"})
