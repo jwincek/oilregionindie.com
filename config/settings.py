@@ -151,6 +151,13 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_SIGNUP_REDIRECT_URL = "/creators/setup/"
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_FORMS = {"signup": "apps.core.forms.TurnstileSignupForm"}
+
+# ---------------------------------------------------------------------------
+# Cloudflare Turnstile
+# ---------------------------------------------------------------------------
+TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY", default="")
+TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", default="")
 
 # ---------------------------------------------------------------------------
 # Email

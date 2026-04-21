@@ -40,3 +40,6 @@ easy-thumbnails>=2.10
 
 # Rich text & sanitization
 bleach>=6.1
+
+# HTTP client (Turnstile verification)
+httpx>=0.27

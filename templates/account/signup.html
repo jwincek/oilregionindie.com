@@ -1,7 +1,12 @@
 {% extends "base.html" %}
+{% load turnstile %}
 
 {% block title %}Join — {{ SITE_NAME }}{% endblock %}
 {% block main_class %}min-h-screen flex items-center justify-center px-4 py-12{% endblock %}
+
+{% block extra_head %}
+{% turnstile_script %}
+{% endblock %}
 
 {% block content %}
 <div class="w-full max-w-md">
@@ -66,6 +71,12 @@
 
             {% if redirect_field_value %}
             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+            {% endif %}
+
+            {% turnstile_widget %}
+
+            {% if form.cf_turnstile_response.errors %}
+            <p class="text-xs text-red-600">{{ form.cf_turnstile_response.errors.0 }}</p>
             {% endif %}
 
             <button type="submit"
