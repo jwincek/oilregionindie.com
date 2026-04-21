@@ -41,10 +41,14 @@ def initials_avatar(name, size=64):
     bg, fg = _pick_color(name)
     font_size = round(size * 0.4)
 
+    r = size // 2
+
     return mark_safe(
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">'
-        f'<rect width="{size}" height="{size}" rx="{size // 2}" fill="{bg}"/>'
-        f'<text x="50%" y="50%" dy=".1em" fill="{fg}" font-family="system-ui, sans-serif" '
-        f'font-size="{font_size}" font-weight="600" text-anchor="middle" dominant-baseline="central">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" '
+        f'style="display:block;width:100%;height:100%;box-sizing:content-box">'
+        f'<circle cx="{r}" cy="{r}" r="{r}" fill="{bg}" style="box-sizing:content-box"/>'
+        f'<text x="{r}" y="{r}" fill="{fg}" font-family="system-ui, sans-serif" '
+        f'font-size="{font_size}" font-weight="600" text-anchor="middle" dy=".35em" '
+        f'style="box-sizing:content-box">'
         f'{initials}</text></svg>'
     )

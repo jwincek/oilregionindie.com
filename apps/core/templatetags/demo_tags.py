@@ -11,7 +11,7 @@ def is_demo(profile):
     Only returns True when SOFT_LAUNCH mode is active."""
     if not getattr(settings, "SOFT_LAUNCH", False):
         return False
-    return hasattr(profile, "user") and profile.user.email.endswith("@example.com")
+    return hasattr(profile, "user") and profile.user.email.endswith(".example")
 
 
 @register.simple_tag
