@@ -5,7 +5,15 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Create Your Profile</h1>
-    <p class="text-ink-500 mb-8">Tell us about yourself and your creative work.</p>
+    <p class="text-ink-500 mb-4">Tell us about yourself and your creative work.</p>
+
+    <div class="mb-8 p-4 rounded-md bg-blue-50 border border-blue-200">
+        <p class="text-sm text-blue-800">
+            <span class="font-medium">How it works:</span>
+            Fill out your profile below, then submit it for review. We'll review and publish it within 48 hours.
+            You can continue editing at any time.
+        </p>
+    </div>
 
     <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
         {% csrf_token %}
