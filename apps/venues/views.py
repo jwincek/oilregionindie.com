@@ -64,13 +64,21 @@ def directory(request):
 
 @require_GET
 def detail(request, slug):
-    """Individual venue profile page."""
+    """Individual venue profile page. Owners can preview unpublished profiles."""
     venue = get_object_or_404(
         VenueProfile.objects.prefetch_related("events", "amenities", "social_links"),
         slug=slug,
-        publish_status="published",
     )
-    return render(request, "venues/detail.html", {"venue": venue})
+
+    # Only published profiles are visible to the public
+    if not venue.is_published and not venue.can_be_edited_by(request.user):
+        from django.http import Http404
+        raise Http404
+
+    return render(request, "venues/detail.html", {
+        "venue": venue,
+        "is_preview": not venue.is_published,
+    })
 
 
 @login_required

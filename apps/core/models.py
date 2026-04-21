@@ -150,6 +150,8 @@ class PublishableProfile(models.Model):
         Check if a user has permission to edit this profile.
         Requires child models to define `user` and `managers` fields.
         """
+        if not user or not user.is_authenticated:
+            return False
         return user == self.user or self.managers.filter(pk=user.pk).exists()
 
 

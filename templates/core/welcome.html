@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome — {{ SITE_NAME }}{% endblock %}
+{% block main_class %}min-h-screen flex items-center justify-center px-4 py-12{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-lg">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Welcome to {{ SITE_NAME }}</h1>
+        <p class="mt-2 text-ink-500">What would you like to do first?</p>
+    </div>
+
+    <div class="space-y-4">
+        <!-- Creator profile -->
+        <a href="{% url 'creators:setup' %}"
+           class="block bg-white rounded-lg shadow-sm border border-ink-100 p-6 hover:shadow-md hover:border-brand-200 transition">
+            <h2 class="font-semibold text-ink-800">Create a creator profile</h2>
+            <p class="text-sm text-ink-500 mt-1">
+                For musicians, visual artists, makers, and other creatives. Showcase your work, list your skills, and get discovered.
+            </p>
+        </a>
+
+        <!-- Venue -->
+        <a href="{% url 'venues:setup' %}"
+           class="block bg-white rounded-lg shadow-sm border border-ink-100 p-6 hover:shadow-md hover:border-brand-200 transition">
+            <h2 class="font-semibold text-ink-800">Register a venue</h2>
+            <p class="text-sm text-ink-500 mt-1">
+                For bars, galleries, cafes, and community spaces that host events or display work. List your space and connect with creators.
+            </p>
+        </a>
+
+        <!-- Just browse -->
+        <a href="{% url 'creators:directory' %}"
+           class="block bg-white rounded-lg shadow-sm border border-ink-100 p-6 hover:shadow-md hover:border-brand-200 transition">
+            <h2 class="font-semibold text-ink-800">Just browse for now</h2>
+            <p class="text-sm text-ink-500 mt-1">
+                Explore the creator and venue directories. You can always set up a profile later.
+            </p>
+        </a>
+    </div>
+</div>
+{% endblock %}

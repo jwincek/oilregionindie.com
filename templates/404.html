@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found — {{ SITE_NAME }}{% endblock %}
+{% block main_class %}min-h-screen flex items-center justify-center px-4 py-12{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <p class="text-6xl font-display font-bold text-ink-200">404</p>
+    <h1 class="mt-4 text-xl font-semibold text-ink-800">Page not found</h1>
+    <p class="mt-2 text-ink-500">The page you're looking for doesn't exist or has been moved.</p>
+    <div class="mt-8 flex justify-center gap-4">
+        <a href="{% url 'creators:directory' %}"
+           class="px-4 py-2 bg-ink-800 text-white rounded-md text-sm font-medium hover:bg-ink-700 transition">
+            Browse Creators
+        </a>
+        <a href="/"
+           class="px-4 py-2 text-ink-600 border border-ink-200 rounded-md text-sm font-medium hover:text-ink-800 transition">
+            Go Home
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -89,7 +89,7 @@ def directory(request):
 
 @require_GET
 def detail(request, slug):
-    """Individual creator profile page."""
+    """Individual creator profile page. Owners can preview unpublished profiles."""
     creator = get_object_or_404(
         CreatorProfile.objects.prefetch_related(
             "disciplines", "genres", "skills__discipline",
@@ -98,9 +98,17 @@ def detail(request, slug):
             "memberships__group",
         ),
         slug=slug,
-        publish_status="published",
     )
-    return render(request, "creators/detail.html", {"creator": creator})
+
+    # Only published profiles are visible to the public
+    if not creator.is_published and not creator.can_be_edited_by(request.user):
+        from django.http import Http404
+        raise Http404
+
+    return render(request, "creators/detail.html", {
+        "creator": creator,
+        "is_preview": not creator.is_published,
+    })
 
 
 @login_required

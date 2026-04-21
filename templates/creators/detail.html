@@ -1,10 +1,19 @@
 {% extends "base.html" %}
-{% load embed_tags demo_tags %}
+{% load embed_tags demo_tags initials %}
 
 {% block title %}{{ creator.display_name }} — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{{ creator.display_name }} — {{ creator.discipline_list }}. {{ creator.location }}{% endblock %}
 
 {% block content %}
+{% if is_preview %}
+<div class="mb-4 p-4 rounded-md bg-amber-50 border border-amber-200">
+    <p class="text-sm text-amber-800">
+        <span class="font-medium">Preview</span> — this is how your profile will appear once published. It is not yet visible to others.
+        <a href="{% url 'creators:edit' %}" class="underline ml-1">Back to editing</a>
+    </p>
+</div>
+{% endif %}
+
 <!-- Header -->
 <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
     {% if creator.header_image %}
@@ -19,6 +28,10 @@
         {% if creator.profile_image %}
         <img src="{{ creator.profile_image.url }}" alt="{{ creator.display_name }}"
              class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-lg">
+        {% else %}
+        <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg overflow-hidden">
+            {% initials_avatar creator.display_name 128 %}
+        </div>
         {% endif %}
         <div class="mt-4 md:mt-0 md:ml-6 md:mb-2">
             <h1 class="text-2xl md:text-3xl font-display font-bold text-ink-800">

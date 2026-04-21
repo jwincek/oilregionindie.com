@@ -149,7 +149,7 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_SIGNUP_REDIRECT_URL = "/creators/setup/"
+ACCOUNT_SIGNUP_REDIRECT_URL = "/welcome/"
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_FORMS = {"signup": "apps.core.forms.TurnstileSignupForm"}
@@ -166,19 +166,28 @@ TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", default="")
 # Use filebased backend in dev to avoid quoted-printable line wrapping
 # that mangles confirmation URLs in the console backend.
 # Emails are written to /tmp/oilregion-emails/ as plain text files.
+# In production, use django.core.mail.backends.smtp.EmailBackend with
+# your Modoboa SMTP credentials.
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND",
     default="django.core.mail.backends.filebased.EmailBackend" if DEBUG
-    else "django.core.mail.backends.console.EmailBackend",
+    else "django.core.mail.backends.smtp.EmailBackend",
 )
 if EMAIL_BACKEND == "django.core.mail.backends.filebased.EmailBackend":
     EMAIL_FILE_PATH = BASE_DIR / "tmp_emails"
     EMAIL_FILE_PATH.mkdir(exist_ok=True)
-EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@oilregionindie.com")
+SERVER_EMAIL = env("SERVER_EMAIL", default="errors@oilregionindie.com")
+
+# Site admins — receive profile submission notifications and error emails
+# Format: "Name:email,Name:email" e.g. "Jerome:jerome@oilregionindie.com"
+_admins_raw = env.list("DJANGO_ADMINS", default=[])
+ADMINS = [tuple(a.split(":")) for a in _admins_raw if ":" in a]
 
 # ---------------------------------------------------------------------------
 # Static & Media

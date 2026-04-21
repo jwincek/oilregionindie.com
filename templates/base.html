@@ -6,6 +6,19 @@
     <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}An open-source hub for independent musicians, visual artists, makers, venues, and fans.{% endblock %}">
 
+    <!-- Favicon -->
+    <link rel="icon" href="/static/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}{{ SITE_NAME }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}A community platform for independent musicians, visual artists, makers, venues, and fans.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}/static/og-image.png{% endblock %}">
+    <meta property="og:site_name" content="{{ SITE_NAME }}">
+    <meta name="twitter:card" content="summary_large_image">
+
     <!-- Tailwind CSS (CDN for dev; build for production) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
