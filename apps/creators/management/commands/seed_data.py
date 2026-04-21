@@ -240,7 +240,7 @@ class Command(BaseCommand):
             bio="<p>Singer-songwriter from Oil City. Acoustic folk with Appalachian roots.</p>",
             location="Pittsburgh, PA",
             home_region="Oil City, PA",
-            is_published=True,
+            publish_status="published",
         )
         alice.skills.add(skill("Acoustic Guitar"), skill("Vocals"), skill("Songwriting"))
         alice.genres.add(genre("Folk"), genre("Singer-Songwriter"), genre("Americana"))
@@ -258,7 +258,7 @@ class Command(BaseCommand):
             bio="<p>Oil painter and silversmith based in Franklin. Inspired by the Allegheny landscape.</p>",
             location="Franklin, PA",
             home_region="Venango County, PA",
-            is_published=True,
+            publish_status="published",
         )
         bob.skills.add(
             skill("Oil Painting"), skill("Watercolor"),
@@ -283,7 +283,7 @@ class Command(BaseCommand):
             bio="<p>Documentary photographer. Capturing the stories of small-town Pennsylvania.</p>",
             location="Titusville, PA",
             home_region="Titusville, PA",
-            is_published=True,
+            publish_status="published",
         )
         carol.skills.add(
             skill("Documentary"), skill("Concert/Live Music"), skill("Film/Analog"),
@@ -298,7 +298,7 @@ class Command(BaseCommand):
             bio="<p>Functional pottery and raku firing. Studio in Cranberry.</p>",
             location="Cranberry, PA",
             home_region="Venango County, PA",
-            is_published=True,
+            publish_status="published",
         )
         dave.skills.add(skill("Wheel Throwing"), skill("Raku"), skill("Glazing"))
         dave.sync_disciplines_from_skills()
@@ -311,7 +311,7 @@ class Command(BaseCommand):
             bio="<p>Work in progress.</p>",
             location="Oil City, PA",
             home_region="Oil City, PA",
-            is_published=False,
+            publish_status="draft",
         )
         eve.skills.add(skill("Piano"), skill("Vocals"))
         eve.sync_disciplines_from_skills()
@@ -324,7 +324,7 @@ class Command(BaseCommand):
             bio="<p>Bass player. Plays in everything from punk to bluegrass.</p>",
             location="Oil City, PA",
             home_region="Oil City, PA",
-            is_published=True,
+            publish_status="published",
         )
         frank.skills.add(
             skill("Bass Guitar"), skill("Upright Bass"),
@@ -341,7 +341,7 @@ class Command(BaseCommand):
             bio="<p>Fiber art and mixed media. Quilts, weavings, and zines.</p>",
             location="Meadville, PA",
             home_region="Oil City, PA",
-            is_published=True,
+            publish_status="published",
         )
         grace.skills.add(
             skill("Weaving"), skill("Quilting"), skill("Zine Making"),
@@ -361,7 +361,7 @@ class Command(BaseCommand):
             bio="<p>Indie rock from Oil City. Loud guitars, louder harmonies.</p>",
             location="Oil City, PA",
             home_region="Venango County, PA",
-            is_published=True,
+            publish_status="published",
         )
         band.managers.add(users["alice"], users["frank"])
         band.skills.add(
@@ -396,7 +396,7 @@ class Command(BaseCommand):
             bio="<p>A loose collective of visual artists, makers, and musicians from the Oil Region.</p>",
             location="Oil City, PA",
             home_region="Venango County, PA",
-            is_published=True,
+            publish_status="published",
         )
         collective.managers.add(users["bob"], users["grace"])
         CreatorMembership.objects.create(group=collective, member=bob, role="Visual Art", sort_order=1)
@@ -448,7 +448,7 @@ class Command(BaseCommand):
             venue_type=VenueProfile.VenueType.BAR,
             description="<p>Dive bar with live music. The heart of Oil City's North Side music scene since the 90s.</p>",
             address=billy_addr, city="Oil City", state="PA",
-            capacity=75, is_published=True,
+            capacity=75, publish_status="published",
         )
         billy.amenities.add(amenity("PA System"), amenity("Stage"), amenity("Full Bar"), amenity("21+"))
         VenueArea.objects.create(venue=billy, name="Main Room", capacity=75, sort_order=1)
@@ -474,7 +474,7 @@ class Command(BaseCommand):
             venue_type=VenueProfile.VenueType.CAFE,
             description="<p>Coffee shop and community gathering space. Acoustic shows, open mics, and art on the walls.</p>",
             address=mosaic_addr, city="Oil City", state="PA",
-            capacity=40, is_published=True,
+            capacity=40, publish_status="published",
         )
         mosaic.amenities.add(
             amenity("PA System"), amenity("All Ages"), amenity("Wi-Fi"),
@@ -500,7 +500,7 @@ class Command(BaseCommand):
             venue_type=VenueProfile.VenueType.OUTDOOR,
             description="<p>Outdoor performance space next to the National Transit Building. Home of the summer concert series.</p>",
             address=pipeline_addr, city="Oil City", state="PA",
-            capacity=150, is_published=True,
+            capacity=150, publish_status="published",
         )
         pipeline.amenities.add(
             amenity("PA System"), amenity("Stage"), amenity("All Ages"),
@@ -760,7 +760,7 @@ class Command(BaseCommand):
 
         # Featured creators (link to seeded profiles)
         for i, creator in enumerate(CreatorProfile.objects.filter(
-            is_published=True,
+            publish_status="published",
             profile_type=CreatorProfile.ProfileType.INDIVIDUAL,
         )[:3]):
             HomePageFeaturedCreator.objects.create(

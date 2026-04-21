@@ -25,7 +25,6 @@ def venue_form_data(**overrides):
         "capacity": "",
         "description": "",
         "website": "",
-        "is_published": True,
     }
     data.update(overrides)
     return data
@@ -79,7 +78,7 @@ class VenueDirectoryViewTest(TestCase):
 
         cls.unpublished = make_venue(
             name="Hidden Venue",
-            is_published=False,
+            publish_status="draft",
         )
 
     def test_directory_loads(self):
@@ -161,7 +160,7 @@ class VenueDetailViewTest(TestCase):
         self.assertContains(response, "Double Play")
 
     def test_unpublished_venue_returns_404(self):
-        venue = make_venue(name="Hidden", is_published=False)
+        venue = make_venue(name="Hidden", publish_status="draft")
         response = self.client.get(
             reverse("venues:detail", kwargs={"slug": venue.slug})
         )

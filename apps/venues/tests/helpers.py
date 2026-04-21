@@ -30,7 +30,7 @@ def make_address(city="Oil City", state="PA", street="123 Seneca St", zip_code="
     )
 
 
-def make_venue(user=None, name="Test Venue", is_published=True, **kwargs):
+def make_venue(user=None, name="Test Venue", publish_status="published", **kwargs):
     """Create a VenueProfile with sensible defaults including an Address."""
     if user is None:
         user = make_user()
@@ -47,7 +47,7 @@ def make_venue(user=None, name="Test Venue", is_published=True, **kwargs):
     state = kwargs.get("state", kwargs["address"].state if kwargs.get("address") else "PA")
     defaults = {
         "name": name,
-        "is_published": is_published,
+        "publish_status": publish_status,
         "venue_type": VenueProfile.VenueType.BAR,
         "city": city,
         "state": state,

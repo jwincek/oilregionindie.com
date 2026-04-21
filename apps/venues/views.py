@@ -1,10 +1,13 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_GET
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.models import AvailabilityType
+from apps.core.notifications import notify_admin_profile_submitted
 
 from .forms import VenueProfileForm
 from .models import VenueProfile
@@ -13,7 +16,7 @@ from .models import VenueProfile
 @require_GET
 def directory(request):
     """Browsable venue directory."""
-    venues = VenueProfile.objects.filter(is_published=True).prefetch_related(
+    venues = VenueProfile.objects.filter(publish_status="published").prefetch_related(
         "amenities", "availabilities__availability_type"
     )
 
@@ -65,9 +68,32 @@ def detail(request, slug):
     venue = get_object_or_404(
         VenueProfile.objects.prefetch_related("events", "amenities", "social_links"),
         slug=slug,
-        is_published=True,
+        publish_status="published",
     )
     return render(request, "venues/detail.html", {"venue": venue})
+
+
+@login_required
+@require_POST
+def submit_for_review(request, slug):
+    """Submit venue profile for admin review."""
+    venue = get_object_or_404(VenueProfile, slug=slug)
+
+    if not venue.can_be_edited_by(request.user):
+        return HttpResponseForbidden()
+
+    if venue.publish_status == "published":
+        messages.info(request, "This venue is already published.")
+    elif venue.publish_status == "pending":
+        messages.info(request, "This venue is already pending review.")
+    else:
+        venue.publish_status = "pending"
+        venue.submitted_at = timezone.now()
+        venue.save(update_fields=["publish_status", "submitted_at", "updated_at"])
+        notify_admin_profile_submitted(venue)
+        messages.success(request, "Your venue has been submitted for review.")
+
+    return redirect("venues:edit", slug=venue.slug)
 
 
 @login_required

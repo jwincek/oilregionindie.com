@@ -141,7 +141,7 @@ class FullAddressTest(TestCase):
         user = make_user()
         venue = VenueProfile.objects.create(
             user=user, name="No Address Venue", city="Cranberry", state="PA",
-            venue_type=VenueProfile.VenueType.BAR, is_published=True,
+            venue_type=VenueProfile.VenueType.BAR, publish_status="published",
         )
         self.assertEqual(venue.full_address, "Cranberry, PA")
 

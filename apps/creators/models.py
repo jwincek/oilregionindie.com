@@ -149,7 +149,7 @@ class CreatorProfile(PublishableProfile, index.Indexed):
         index.SearchField("bio"),
         index.SearchField("location"),
         index.SearchField("home_region"),
-        index.FilterField("is_published"),
+        index.FilterField("publish_status"),
         index.FilterField("profile_type"),
     ]
 

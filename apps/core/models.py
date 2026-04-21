@@ -86,12 +86,26 @@ class PublishableProfile(models.Model):
     manager permissions, timestamps, and slug generation.
     """
 
+    class PublishStatus(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        PENDING = "pending", "Pending Review"
+        PUBLISHED = "published", "Published"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slug = models.SlugField(max_length=255, unique=True)
     website = models.URLField(blank=True)
     profile_image = models.ImageField(upload_to="profiles/%(class)s/", blank=True)
     header_image = models.ImageField(upload_to="headers/%(class)s/", blank=True)
-    is_published = models.BooleanField(default=False, help_text="Controls public visibility")
+    publish_status = models.CharField(
+        max_length=20,
+        choices=PublishStatus.choices,
+        default=PublishStatus.DRAFT,
+        help_text="Draft → Pending Review → Published",
+    )
+    submitted_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When the profile was submitted for review",
+    )
 
     # Stripe Connect
     stripe_account_id = models.CharField(max_length=255, blank=True)
@@ -103,6 +117,19 @@ class PublishableProfile(models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def is_published(self):
+        """Backward-compatible property for views and templates."""
+        return self.publish_status == self.PublishStatus.PUBLISHED
+
+    @property
+    def is_pending(self):
+        return self.publish_status == self.PublishStatus.PENDING
+
+    @property
+    def is_draft(self):
+        return self.publish_status == self.PublishStatus.DRAFT
 
     def generate_unique_slug(self, source_text):
         """Generate a unique slug from source text, appending numbers if needed."""

@@ -34,7 +34,6 @@ class CreatorProfileForm(forms.ModelForm):
             "website",
             "profile_image",
             "header_image",
-            "is_published",
         ]
         widgets = {
             "display_name": forms.TextInput(attrs={"class": "form-input", "placeholder": "Your name, band name, or collective name"}),

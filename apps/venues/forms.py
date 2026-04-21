@@ -40,7 +40,6 @@ class VenueProfileForm(forms.ModelForm):
             "amenities",
             "profile_image",
             "header_image",
-            "is_published",
         ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-input"}),

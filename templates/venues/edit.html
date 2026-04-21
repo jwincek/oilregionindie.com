@@ -6,8 +6,36 @@
 <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Edit Venue</h1>
     <p class="text-ink-500 mb-8">
+        {% if venue.is_published %}
         <a href="{{ venue.get_absolute_url }}" class="text-brand-600 hover:underline">View public page</a>
+        {% endif %}
     </p>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="mb-4 p-4 rounded-md text-sm {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'info' %}bg-blue-50 text-blue-800 border border-blue-200{% else %}bg-yellow-50 text-yellow-800 border border-yellow-200{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Profile status banner -->
+    {% if venue.is_draft %}
+    <div class="mb-6 p-4 rounded-md bg-amber-50 border border-amber-200">
+        <p class="text-sm font-medium text-amber-800">This venue is a draft</p>
+        <p class="text-sm text-amber-700 mt-1">Fill out the venue details and submit for review to appear in the directory.</p>
+    </div>
+    {% elif venue.is_pending %}
+    <div class="mb-6 p-4 rounded-md bg-blue-50 border border-blue-200">
+        <p class="text-sm font-medium text-blue-800">This venue is pending review</p>
+        <p class="text-sm text-blue-700 mt-1">We'll review your venue and publish it within 48 hours. You can still make edits in the meantime.</p>
+    </div>
+    {% elif venue.is_published %}
+    <div class="mb-6 p-4 rounded-md bg-green-50 border border-green-200">
+        <p class="text-sm font-medium text-green-800">This venue is published</p>
+        <p class="text-sm text-green-700 mt-1">This venue is visible in the directory. Any edits you save will appear immediately.</p>
+    </div>
+    {% endif %}
 
     <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
         {% csrf_token %}
@@ -35,5 +63,22 @@
             </button>
         </div>
     </form>
+
+    {% if venue.is_draft %}
+    <!-- Submit for Review -->
+    <form method="post" action="{% url 'venues:submit_for_review' venue.slug %}" class="mt-4">
+        {% csrf_token %}
+        <div class="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-ink-700">Ready to go live?</p>
+                <p class="text-xs text-ink-500 mt-1">Submit this venue for review to appear in the directory.</p>
+            </div>
+            <button type="submit"
+                    class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                Submit for Review
+            </button>
+        </div>
+    </form>
+    {% endif %}
 </div>
 {% endblock %}

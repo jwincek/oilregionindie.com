@@ -59,7 +59,7 @@ class DirectoryViewTest(TestCase):
         cls.both.skills.add(cls.guitar, cls.silver)
 
         cls.unpublished = make_creator(
-            display_name="Dave Hidden", is_published=False
+            display_name="Dave Hidden", publish_status="draft"
         )
 
         cls.band = make_band(display_name="The Test Band")
@@ -152,7 +152,7 @@ class DetailViewTest(TestCase):
         self.assertContains(response, "Visible Creator")
 
     def test_unpublished_creator_returns_404(self):
-        creator = make_creator(display_name="Hidden", is_published=False)
+        creator = make_creator(display_name="Hidden", publish_status="draft")
         response = self.client.get(
             reverse("creators:detail", kwargs={"slug": creator.slug})
         )
@@ -221,7 +221,6 @@ class SetupViewTest(TestCase):
             "location": "Oil City",
             "home_region": "Venango County",
             "website": "",
-            "is_published": True,
         })
         self.assertTrue(CreatorProfile.objects.filter(user=self.user).exists())
         creator = self.user.creator_profile
@@ -241,7 +240,6 @@ class SetupViewTest(TestCase):
             "location": "",
             "home_region": "",
             "website": "",
-            "is_published": True,
         })
         creator = self.user.creator_profile
         self.assertIn(musician, creator.disciplines.all())
@@ -277,7 +275,6 @@ class EditViewTest(TestCase):
             "location": "Franklin, PA",
             "home_region": "",
             "website": "",
-            "is_published": True,
         })
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.display_name, "Updated Name")

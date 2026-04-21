@@ -100,7 +100,7 @@ class VenueProfile(PublishableProfile, index.Indexed):
         index.SearchField("description"),
         index.SearchField("city"),
         index.SearchField("state"),
-        index.FilterField("is_published"),
+        index.FilterField("publish_status"),
         index.FilterField("venue_type"),
     ]
 

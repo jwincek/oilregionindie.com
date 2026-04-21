@@ -24,7 +24,6 @@ def form_data(**overrides):
         "capacity": "",
         "description": "",
         "website": "",
-        "is_published": True,
     }
     data.update(overrides)
     return data

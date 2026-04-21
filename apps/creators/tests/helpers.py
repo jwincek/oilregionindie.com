@@ -61,13 +61,13 @@ def make_skill(name="Guitar", discipline=None, **kwargs):
     return obj
 
 
-def make_creator(user=None, display_name="Test Creator", is_published=True, **kwargs):
+def make_creator(user=None, display_name="Test Creator", publish_status="published", **kwargs):
     """Create a CreatorProfile with sensible defaults."""
     if user is None:
         user = make_user()
     defaults = {
         "display_name": display_name,
-        "is_published": is_published,
+        "publish_status": publish_status,
         "profile_type": CreatorProfile.ProfileType.INDIVIDUAL,
         "location": "Oil City, PA",
         "home_region": "Venango County",

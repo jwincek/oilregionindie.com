@@ -1,10 +1,13 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.models import AvailabilityType
+from apps.core.notifications import notify_admin_profile_submitted
 
 from .forms import CreatorProfileForm, CreatorSocialLinkForm, MediaItemForm
 from .models import CreatorProfile, CreatorSocialLink, Discipline, MediaItem, Skill
@@ -13,7 +16,7 @@ from .models import CreatorProfile, CreatorSocialLink, Discipline, MediaItem, Sk
 @require_GET
 def directory(request):
     """Browsable creator directory with filtering."""
-    creators = CreatorProfile.objects.filter(is_published=True).prefetch_related(
+    creators = CreatorProfile.objects.filter(publish_status="published").prefetch_related(
         "disciplines", "genres", "skills", "availabilities__availability_type"
     )
 
@@ -95,7 +98,7 @@ def detail(request, slug):
             "memberships__group",
         ),
         slug=slug,
-        is_published=True,
+        publish_status="published",
     )
     return render(request, "creators/detail.html", {"creator": creator})
 
@@ -136,6 +139,26 @@ def edit(request):
         form = CreatorProfileForm(instance=profile)
 
     return render(request, "creators/edit.html", {"form": form, "profile": profile})
+
+
+@login_required
+@require_POST
+def submit_for_review(request):
+    """Submit creator profile for admin review."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+
+    if profile.publish_status == "published":
+        messages.info(request, "Your profile is already published.")
+    elif profile.publish_status == "pending":
+        messages.info(request, "Your profile is already pending review.")
+    else:
+        profile.publish_status = "pending"
+        profile.submitted_at = timezone.now()
+        profile.save(update_fields=["publish_status", "submitted_at", "updated_at"])
+        notify_admin_profile_submitted(profile)
+        messages.success(request, "Your profile has been submitted for review.")
+
+    return redirect("creators:edit")
 
 
 @login_required

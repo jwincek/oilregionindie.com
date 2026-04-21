@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.directory, name="directory"),
     path("setup/", views.setup, name="setup"),
     path("edit/", views.edit, name="edit"),
+    path("submit-for-review/", views.submit_for_review, name="submit_for_review"),
     # Media (HTMX)
     path("media/", views.media_items, name="media_items"),
     path("media/add/", views.add_media, name="add_media"),

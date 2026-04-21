@@ -22,7 +22,6 @@ class CreatorProfileFormTest(TestCase):
             "location": "",
             "home_region": "",
             "website": "",
-            "is_published": False,
         })
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -50,7 +49,6 @@ class CreatorProfileFormTest(TestCase):
             "location": "",
             "home_region": "",
             "website": "",
-            "is_published": True,
         })
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -62,7 +60,6 @@ class CreatorProfileFormTest(TestCase):
             "location": "",
             "home_region": "",
             "website": "",
-            "is_published": True,
         })
         self.assertTrue(form.is_valid(), form.errors)
 
@@ -80,7 +77,6 @@ class CreatorProfileFormTest(TestCase):
             "location": "",
             "home_region": "",
             "website": "",
-            "is_published": True,
         })
         self.assertTrue(form.is_valid(), form.errors)
         profile = form.save(commit=False)
@@ -101,7 +97,6 @@ class CreatorProfileFormTest(TestCase):
             "location": "",
             "home_region": "",
             "website": "not-a-url",
-            "is_published": True,
         })
         self.assertFalse(form.is_valid())
         self.assertIn("website", form.errors)

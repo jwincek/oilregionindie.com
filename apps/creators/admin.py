@@ -99,13 +99,19 @@ class CreatorAvailabilityInline(admin.TabularInline):
 
 @admin.register(CreatorProfile)
 class CreatorProfileAdmin(admin.ModelAdmin):
-    list_display = ["display_name", "profile_type", "discipline_list", "location", "is_published", "created_at"]
-    list_filter = ["is_published", "profile_type", "disciplines", "created_at"]
+    list_display = ["display_name", "profile_type", "discipline_list", "location", "publish_status", "created_at"]
+    list_filter = ["publish_status", "profile_type", "disciplines", "created_at"]
     search_fields = ["display_name", "bio", "location", "home_region"]
     prepopulated_fields = {"slug": ("display_name",)}
     filter_horizontal = ["disciplines", "genres", "skills", "managers"]
     inlines = [CreatorAvailabilityInline, SocialLinkInline, MediaItemInline, MemberInline, MembershipInline]
-    readonly_fields = ["stripe_account_id", "stripe_onboarded"]
+    readonly_fields = ["stripe_account_id", "stripe_onboarded", "submitted_at"]
+    actions = ["approve_profiles"]
+
+    @admin.action(description="Approve selected profiles (publish)")
+    def approve_profiles(self, request, queryset):
+        updated = queryset.exclude(publish_status="published").update(publish_status="published")
+        self.message_user(request, f"Approved {updated} profile(s).")
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
