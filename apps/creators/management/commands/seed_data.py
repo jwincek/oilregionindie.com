@@ -806,6 +806,58 @@ class Command(BaseCommand):
         home.add_child(instance=about)
         about.save_revision().publish()
 
+        # --- Feedback page ---
+        feedback = ContentPage(
+            title="Feedback",
+            slug="feedback",
+            subtitle="Help us improve the Oil Region Creative Hub.",
+            body=[
+                ("paragraph", (
+                    "<p>This platform is in active development. Your feedback helps us "
+                    "prioritize what to build next and catch issues we've missed. Whether you've "
+                    "found a bug, have an idea for a feature, or just want to share your "
+                    "experience — we'd love to hear from you.</p>"
+                )),
+                ("heading", "Report a Bug"),
+                ("paragraph", (
+                    "<p>Something not working right? Let us know:</p>"
+                    "<ul>"
+                    "<li><b>What happened</b> — describe what you saw</li>"
+                    "<li><b>What you expected</b> — what should have happened instead</li>"
+                    "<li><b>Steps to reproduce</b> — how can we see the same issue?</li>"
+                    "<li><b>Browser &amp; device</b> — e.g., Chrome on iPhone, Firefox on Windows</li>"
+                    "</ul>"
+                )),
+                ("heading", "Suggest a Feature"),
+                ("paragraph", (
+                    "<p>Have an idea that would make the platform more useful? Tell us:</p>"
+                    "<ul>"
+                    "<li><b>What you'd like</b> — describe the feature</li>"
+                    "<li><b>Why it matters</b> — how would it help you or the community?</li>"
+                    "</ul>"
+                )),
+                ("heading", "How to Submit"),
+                ("paragraph", (
+                    "<p>You can reach us in two ways:</p>"
+                    "<ul>"
+                    "<li><b>GitHub Issues</b> — "
+                    '<a href="https://github.com/jeromewincek/oilregionindie.com/issues">open an issue</a> '
+                    "on our repository. Best for bug reports and detailed feature requests.</li>"
+                    "<li><b>Email</b> — send feedback to "
+                    '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a></li>'
+                    "</ul>"
+                )),
+                ("paragraph", (
+                    "<p>This project is open source under the AGPL-3.0 license. "
+                    "If you're a developer, designer, or just curious, "
+                    '<a href="https://github.com/jeromewincek/oilregionindie.com">visit the repository</a> '
+                    "to see the code, open issues, or contribute.</p>"
+                )),
+            ],
+        )
+        home.add_child(instance=feedback)
+        feedback.save_revision().publish()
+
         # --- Blog index ---
         blog_index = BlogIndexPage(
             title="Blog",
@@ -850,6 +902,6 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS(
-            f"  Created {Page.objects.count() - 1} pages (home, about, blog, 1 post)"
+            f"  Created {Page.objects.count() - 1} pages (home, about, feedback, blog, 1 post)"
         ))
         self.stdout.write(self.style.SUCCESS("\nSample content seeding complete!"))
