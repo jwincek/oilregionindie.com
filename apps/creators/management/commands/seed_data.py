@@ -2,8 +2,9 @@
 Seed the database with initial data.
 
 Usage:
-    python manage.py seed_data          # Taxonomy only (safe to re-run)
-    python manage.py seed_data --full   # Taxonomy + sample content (fresh DB only)
+    python manage.py seed_data           # Taxonomy only (safe to re-run)
+    python manage.py seed_data --pages   # Taxonomy + Wagtail pages (soft launch)
+    python manage.py seed_data --full    # Taxonomy + sample content + pages (dev/demo)
 """
 
 from datetime import time, timedelta
@@ -127,6 +128,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "--pages",
+            action="store_true",
+            help="Also create Wagtail pages (home, about, blog) for soft launch",
+        )
+        parser.add_argument(
             "--full",
             action="store_true",
             help="Also create sample creators, venues, events, and Wagtail pages (fresh DB only)",
@@ -137,6 +143,8 @@ class Command(BaseCommand):
 
         if options["full"]:
             self._seed_sample_content()
+            self._seed_wagtail_pages()
+        elif options["pages"]:
             self._seed_wagtail_pages()
 
     # =====================================================================
