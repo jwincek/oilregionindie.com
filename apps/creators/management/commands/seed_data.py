@@ -847,6 +847,20 @@ class Command(BaseCommand):
                     '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a></li>'
                     "</ul>"
                 )),
+                ("heading", "Support the Project"),
+                ("paragraph", (
+                    "<p>The Oil Region Creative Hub is a volunteer-run, open-source project. "
+                    "Financial contributions help cover hosting, domain registration, and development time. "
+                    "Every contribution — no matter the size — makes a difference.</p>"
+                    "<ul>"
+                    "<li><b>Open Collective</b> — "
+                    '<a href="https://opencollective.com/oilregionindie">support us on Open Collective</a>. '
+                    "All contributions and spending are transparent.</li>"
+                    "<li><b>GitHub Sponsors</b> — "
+                    '<a href="https://github.com/sponsors/jeromewincek">sponsor on GitHub</a> '
+                    "if you prefer to support through the platform where the code lives.</li>"
+                    "</ul>"
+                )),
                 ("paragraph", (
                     "<p>This project is open source under the AGPL-3.0 license. "
                     "If you're a developer, designer, or just curious, "
