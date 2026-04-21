@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 # Set up environment
 cp .env.example .env
-# Edit .env — set DATABASE_URL=sqlite:///db.sqlite3 for local dev
+# Edit .env — SQLite is the default for local dev
 
 # Migrate, create admin, seed everything
 python manage.py migrate
@@ -32,6 +32,8 @@ python manage.py runserver
 Visit **http://localhost:8000**. Wagtail admin: **http://localhost:8000/cms/**.
 
 The `seed_data --full` command populates the database with sample creators, venues, events, availability flags, and Wagtail pages so you can see the platform working immediately. Sample accounts use password `testpass123`.
+
+For a more detailed walkthrough, see [GETTING-STARTED.md](GETTING-STARTED.md).
 
 ### Docker
 
@@ -52,7 +54,7 @@ oilregion-hub/
 ├── config/                 # Settings, URLs, WSGI/ASGI
 ├── apps/
 │   ├── core/               # Address, UserProfile, PublishableProfile (abstract),
-│   │                         AvailabilityType, ProfileAvailability, SocialPlatform
+│   │                         AvailabilityType, ProfileAvailability, notifications
 │   ├── creators/           # CreatorProfile, Discipline, Skill, Genre,
 │   │                         MediaItem, Memberships, Social Links, Embeds
 │   ├── venues/             # VenueProfile, VenueContact, VenueArea, Amenity
@@ -66,7 +68,7 @@ oilregion-hub/
 │   ├── venues/             # Directory, detail, setup, edit
 │   ├── events/             # Listing, detail, create, edit, past
 │   ├── pages/              # Wagtail page templates
-│   └── includes/           # Nav, footer
+│   └── includes/           # Nav, footer, soft-launch banner
 ├── docker-compose.yml
 ├── Dockerfile
 └── requirements.txt
@@ -82,8 +84,9 @@ oilregion-hub/
 | Database | PostgreSQL (SQLite for dev) |
 | Payments | Stripe Connect Express |
 | Embeds | Wagtail Embeds (oEmbed) + manual embed codes |
-| Cache/Queue | Redis + Django Q |
+| Cache/Queue | Redis + Django Q2 |
 | Auth | django-allauth (email-based) |
+| Bot Protection | Cloudflare Turnstile |
 | Deployment | Docker Compose |
 
 ## Key Concepts
@@ -92,9 +95,13 @@ oilregion-hub/
 
 Creators select specific skills (Guitar, Silversmithing, Wheel Throwing), and their disciplines (Musician, Jeweler, Ceramicist) are auto-populated. The directory filters by both. A creator can belong to a band or collective via memberships while maintaining their own individual profile.
 
+### Profile Approval
+
+New profiles start in **draft** status. Creators fill out their profile and submit it for review. An admin reviews and approves (publishes) the profile from the Django admin panel. Published profiles appear in the directory; drafts and pending profiles do not.
+
 ### Availability System
 
-Creators and venues set availability flags — "Available for Booking", "Accepting Commissions", "Gallery Space Available", etc. These are filterable in the directory and displayed on profile pages with optional notes like "Weekends only, July–September". The types are seeded and extensible without migrations.
+Creators and venues set availability flags — "Available for Booking", "Accepting Commissions", "Gallery Space Available", etc. These are filterable in the directory and displayed on profile pages with optional notes like "Weekends only, July-September". The types are seeded and extensible without migrations.
 
 ### Bidirectional Booking
 
@@ -108,11 +115,16 @@ Media items support three sources: direct file upload, oEmbed URL (YouTube, Soun
 
 Social links and media items on the creator edit page use HTMX for inline add/edit/delete without page reloads. Directory filters auto-submit on change.
 
+### Soft Launch Mode
+
+Set `SOFT_LAUNCH=True` in `.env` to enable a site-wide banner and "Demo" badges on seed-data profiles. This mode is designed for early deployments where sample data coexists with real user signups. Set to `False` (or remove) to disable.
+
 ## Management Commands
 
 ```bash
 python manage.py seed_data              # Taxonomy only (safe to re-run)
-python manage.py seed_data --full       # Full sample content (fresh DB)
+python manage.py seed_data --pages      # Taxonomy + Wagtail pages (for production/soft launch)
+python manage.py seed_data --full       # Full sample content (dev/demo)
 python manage.py refresh_embeds         # Backfill oEmbed HTML
 python manage.py refresh_embeds --all   # Re-fetch all embeds
 ```
@@ -122,14 +134,28 @@ python manage.py refresh_embeds --all   # Re-fetch all embeds
 348 tests across core, creators, venues, and events:
 
 ```bash
-python manage.py test apps.core apps.creators apps.venues apps.events -v 2
+python manage.py test apps.core.tests apps.creators.tests apps.venues.tests apps.events.tests -v 2
 ```
 
 ## Seed Data
 
 `seed_data` seeds 12 disciplines with 139 skills, 20 genres, 23 amenities, and 9 availability types.
 
-`seed_data --full` additionally creates: 9 creator profiles (individuals, a band with memberships, a collective), 3 venues modeled on Oil City locations with contacts and areas, 5 events with slots, a booking request, availability flags, media items, social links, and Wagtail pages (home, about, blog).
+`seed_data --pages` additionally creates Wagtail CMS pages (home, about, blog with a welcome post). Ideal for production deployments where you want the page structure without sample profiles.
+
+`seed_data --full` additionally creates: 9 creator profiles (individuals, a band with memberships, a collective), 3 venues modeled on Oil City locations with contacts and areas, 5 events with slots, a booking request, availability flags, media items, social links, and Wagtail pages.
+
+## Environment Variables
+
+See [.env.example](.env.example) for the full list. Key settings:
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `SOFT_LAUNCH` | Enable soft-launch banner and demo badges | `False` |
+| `TURNSTILE_SITE_KEY` | Cloudflare Turnstile public key | (disabled) |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | (disabled) |
+| `DJANGO_DEBUG` | Debug mode | `False` |
+| `DATABASE_URL` | PostgreSQL connection string | (required in production) |
 
 ## Stripe Connect Setup
 
@@ -139,11 +165,15 @@ python manage.py test apps.core apps.creators apps.venues apps.events -v 2
 
 ## Development Phases
 
-**Phase 1 — Core Platform** (current): Creator profiles, venues, events, bookings, contacts, availability, embeds, HTMX management, auth pages, seed data, 348 tests. Substantially complete.
+**Phase 1 — Core Platform** (current): Creator profiles, venues, events, bookings, contacts, availability, embeds, HTMX management, auth pages, profile approval workflow, Cloudflare Turnstile, soft-launch mode, seed data, 348 tests. Substantially complete.
 
 **Phase 2 — Commerce & Coordination**: Stripe Connect end-to-end, frontend event/lineup management, booking request views with notifications.
 
 **Phase 3 — Community & Growth**: Discussion posts, follow notifications, email digests, advanced search, distance-based filtering.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, coding conventions, and areas where help is needed.
 
 ## License
 
