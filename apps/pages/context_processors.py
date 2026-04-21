@@ -6,4 +6,5 @@ def site_settings(request):
     return {
         "SITE_NAME": getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub"),
         "STRIPE_PUBLIC_KEY": getattr(settings, "STRIPE_PUBLIC_KEY", ""),
+        "SOFT_LAUNCH": getattr(settings, "SOFT_LAUNCH", False),
     }

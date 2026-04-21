@@ -1,3 +1,4 @@
+{% load demo_tags %}
 {% if venues %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for venue in venues %}
@@ -17,7 +18,10 @@
         <div class="h-32 bg-gradient-to-br from-ink-600 to-ink-700"></div>
         {% endif %}
         <div class="p-4">
-            <h3 class="font-semibold text-ink-800">{{ venue.name }}</h3>
+            <h3 class="font-semibold text-ink-800">
+                {{ venue.name }}
+                {% if venue|is_demo %}{% demo_badge %}{% endif %}
+            </h3>
             <span class="text-xs text-brand-600 font-medium">{{ venue.get_venue_type_display }}</span>
             <p class="text-sm text-ink-500 mt-1">{{ venue.city }}, {{ venue.state }}</p>
             {% if venue.capacity %}

@@ -18,6 +18,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
+SOFT_LAUNCH = env.bool("SOFT_LAUNCH", default=False)
 
 # ---------------------------------------------------------------------------
 # Applications

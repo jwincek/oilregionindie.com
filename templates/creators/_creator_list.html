@@ -1,3 +1,4 @@
+{% load demo_tags %}
 {% if creators %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for creator in creators %}
@@ -16,7 +17,10 @@
             <img src="{{ creator.profile_image.url }}" alt="{{ creator.display_name }}"
                  class="w-16 h-16 rounded-full border-4 border-white object-cover shadow-sm">
             {% endif %}
-            <h3 class="font-semibold text-ink-800 mt-2">{{ creator.display_name }}</h3>
+            <h3 class="font-semibold text-ink-800 mt-2">
+                {{ creator.display_name }}
+                {% if creator|is_demo %}{% demo_badge %}{% endif %}
+            </h3>
             <div class="flex items-center gap-2 mt-0.5">
                 <p class="text-sm text-brand-600 font-medium">{{ creator.discipline_list }}</p>
                 {% if creator.is_group %}
