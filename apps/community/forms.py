@@ -1,5 +1,7 @@
 from django import forms
 
+from apps.core.models import BlockedWord
+
 from .models import CommunityPost
 
 
@@ -20,6 +22,16 @@ class CommunityPostForm(forms.ModelForm):
             "tags": forms.CheckboxSelectMultiple(),
         }
 
+    def clean_body(self):
+        body = self.cleaned_data.get("body", "")
+        blocked = BlockedWord.check_content(body)
+        if blocked:
+            raise forms.ValidationError(
+                "Your post contains content that isn't allowed. "
+                "Please review our Code of Conduct."
+            )
+        return body
+
 
 class ReplyForm(forms.ModelForm):
     class Meta:
@@ -31,3 +43,13 @@ class ReplyForm(forms.ModelForm):
                 "placeholder": "Write a reply...",
             }),
         }
+
+    def clean_body(self):
+        body = self.cleaned_data.get("body", "")
+        blocked = BlockedWord.check_content(body)
+        if blocked:
+            raise forms.ValidationError(
+                "Your reply contains content that isn't allowed. "
+                "Please review our Code of Conduct."
+            )
+        return body

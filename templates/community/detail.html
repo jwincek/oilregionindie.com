@@ -22,16 +22,18 @@
                 <span class="bg-brand-50 text-brand-700 text-xs px-1.5 py-0.5 rounded ml-1">{{ tag.name }}</span>
                 {% endfor %}
             </div>
-            {% if request.user == post.author %}
             <div class="flex gap-2 text-xs">
+                {% if request.user == post.author %}
                 <a href="{% url 'community:edit' pk=post.pk %}" class="text-ink-400 hover:text-brand-600 transition">Edit</a>
                 <form method="post" action="{% url 'community:delete' pk=post.pk %}" class="inline">
                     {% csrf_token %}
                     <button type="submit" onclick="return confirm('Delete this post?')"
                             class="text-ink-400 hover:text-red-600 transition">Delete</button>
                 </form>
+                {% elif request.user.is_authenticated %}
+                {% include "includes/_report_button.html" with report_type="post" report_id=post.pk report_url=request.get_full_path %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
 
         {% if post.title %}

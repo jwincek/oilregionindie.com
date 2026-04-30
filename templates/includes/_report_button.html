@@ -1,0 +1,38 @@
+{% comment %}
+Report button — include on any page with reportable content.
+Required context:
+  report_type    — "profile", "post", "endorsement", "user"
+  report_id      — UUID or identifier of the content
+  report_url     — URL of the page being reported (for admin reference)
+{% endcomment %}
+
+{% if request.user.is_authenticated %}
+<div x-data="{ reportOpen: false }" class="inline">
+    <button @click="reportOpen = !reportOpen"
+            class="text-xs text-ink-400 hover:text-red-500 transition">
+        Report
+    </button>
+
+    <div x-show="reportOpen" x-transition @click.away="reportOpen = false"
+         class="mt-2 bg-white border border-ink-200 rounded-lg shadow-lg p-4 max-w-sm">
+        <form method="post" action="{% url 'report_content' %}">
+            {% csrf_token %}
+            <input type="hidden" name="content_type" value="{{ report_type }}">
+            <input type="hidden" name="content_id" value="{{ report_id }}">
+            <input type="hidden" name="content_url" value="{{ report_url }}">
+            <label class="block text-xs font-medium text-ink-600 mb-1">Why are you reporting this?</label>
+            <textarea name="reason" required rows="3"
+                      class="w-full rounded-md border-ink-200 text-sm mb-2"
+                      placeholder="Describe the issue..."></textarea>
+            <div class="flex justify-end gap-2">
+                <button type="button" @click="reportOpen = false"
+                        class="text-xs text-ink-500 px-2 py-1">Cancel</button>
+                <button type="submit"
+                        class="bg-red-600 text-white text-xs px-3 py-1 rounded-md hover:bg-red-700 transition">
+                    Submit Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}

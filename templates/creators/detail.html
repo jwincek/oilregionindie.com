@@ -68,6 +68,12 @@
     </div>
 </div>
 
+{% if request.user.is_authenticated and not is_preview and request.user != creator.user %}
+<div class="flex justify-end mt-2 mb-4">
+    {% include "includes/_report_button.html" with report_type="profile" report_id=creator.pk report_url=request.get_full_path %}
+</div>
+{% endif %}
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- Main content -->
     <div class="lg:col-span-2 space-y-8">

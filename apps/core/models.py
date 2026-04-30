@@ -198,6 +198,12 @@ class UserProfile(models.Model):
         "venues.VenueProfile", blank=True, related_name="followers"
     )
 
+    # Moderation
+    is_suspended = models.BooleanField(
+        default=False,
+        help_text="Suspended users cannot log in or interact with the platform",
+    )
+
     # Preferences
     email_digest = models.BooleanField(
         default=True,
@@ -262,6 +268,81 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.notification_type}: {self.message}"
+
+
+# ---------------------------------------------------------------------------
+# Content reports
+# ---------------------------------------------------------------------------
+
+
+class Report(models.Model):
+    """User-submitted report of problematic content or behavior."""
+
+    class ContentType(models.TextChoices):
+        PROFILE = "profile", "Profile"
+        POST = "post", "Community Post"
+        ENDORSEMENT = "endorsement", "Endorsement"
+        USER = "user", "User"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending Review"
+        REVIEWED = "reviewed", "Reviewed"
+        DISMISSED = "dismissed", "Dismissed"
+        ACTION_TAKEN = "action_taken", "Action Taken"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reports_filed",
+    )
+    content_type = models.CharField(max_length=20, choices=ContentType.choices)
+    content_id = models.CharField(
+        max_length=255,
+        help_text="UUID or identifier of the reported content",
+    )
+    content_url = models.CharField(max_length=500, blank=True)
+    reason = models.TextField(help_text="Why is this being reported?")
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING,
+    )
+    admin_notes = models.TextField(blank=True, help_text="Internal notes (not shown to reporter)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Report: {self.content_type} by {self.reporter}"
+
+
+# ---------------------------------------------------------------------------
+# Word filter
+# ---------------------------------------------------------------------------
+
+
+class BlockedWord(models.Model):
+    """Words or phrases that are blocked from community posts."""
+
+    word = models.CharField(max_length=100, unique=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["word"]
+
+    def __str__(self):
+        return self.word
+
+    @classmethod
+    def check_content(cls, text):
+        """Return a list of blocked words found in the text."""
+        if not text:
+            return []
+        text_lower = text.lower()
+        blocked = cls.objects.filter(is_active=True).values_list("word", flat=True)
+        return [w for w in blocked if w.lower() in text_lower]
 
 
 # ---------------------------------------------------------------------------

@@ -872,6 +872,137 @@ class Command(BaseCommand):
         home.add_child(instance=feedback)
         feedback.save_revision().publish()
 
+        # --- Terms of Service ---
+        tos = ContentPage(
+            title="Terms of Service",
+            slug="terms",
+            subtitle="",
+            body=[
+                ("paragraph", (
+                    "<p>By creating an account on the Oil Region Creative Hub, you agree to the following terms. "
+                    "These terms are written in plain language to be understandable, not to obscure your rights.</p>"
+                )),
+                ("heading", "Your Account"),
+                ("paragraph", (
+                    "<p>You must provide a valid email address and accurate information when creating your account. "
+                    "You are responsible for maintaining the security of your account and for all activity that occurs under it. "
+                    "You must be at least 13 years old to create an account.</p>"
+                )),
+                ("heading", "Your Content"),
+                ("paragraph", (
+                    "<p>You retain ownership of any content you post — profile information, media, community posts, "
+                    "endorsements, and messages. By posting content on the platform, you grant the Oil Region Creative Hub "
+                    "a non-exclusive license to display it as part of the platform's normal operation (e.g., showing your "
+                    "profile in the directory, displaying your posts in the community feed).</p>"
+                    "<p>You may delete your content at any time. If you delete your account, we will remove your content "
+                    "within a reasonable timeframe.</p>"
+                )),
+                ("heading", "Acceptable Use"),
+                ("paragraph", (
+                    "<p>You agree not to:</p>"
+                    "<ul>"
+                    "<li>Post content that is illegal, harassing, threatening, or discriminatory</li>"
+                    "<li>Impersonate another person or misrepresent your identity</li>"
+                    "<li>Use the platform to spam, scam, or mislead other users</li>"
+                    "<li>Attempt to access other users' accounts or private data</li>"
+                    "<li>Use automated tools to scrape content or create accounts</li>"
+                    "</ul>"
+                    "<p>Violations may result in content removal or account suspension at our discretion.</p>"
+                )),
+                ("heading", "Payments"),
+                ("paragraph", (
+                    "<p>Product purchases are processed through Stripe. The platform facilitates the transaction but "
+                    "does not hold funds — payments go directly to the creator's connected Stripe account. "
+                    "Refund and dispute policies are handled between the buyer and creator, with Stripe's standard "
+                    "dispute resolution process available.</p>"
+                )),
+                ("heading", "Platform Availability"),
+                ("paragraph", (
+                    "<p>We aim to keep the platform available and reliable, but we cannot guarantee uninterrupted access. "
+                    "The platform is provided as-is, without warranties of any kind. We are not liable for any damages "
+                    "arising from your use of the platform.</p>"
+                )),
+                ("heading", "Changes to These Terms"),
+                ("paragraph", (
+                    "<p>We may update these terms as the platform evolves. Significant changes will be announced "
+                    "via the blog or email. Continued use of the platform after changes constitutes acceptance.</p>"
+                )),
+                ("heading", "Open Source"),
+                ("paragraph", (
+                    "<p>The Oil Region Creative Hub software is open source under the AGPL-3.0 license. "
+                    "These terms of service apply to this hosted instance of the platform, not to the software itself.</p>"
+                )),
+                ("paragraph", (
+                    "<p>Questions? Contact us at "
+                    '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a>.</p>'
+                )),
+            ],
+        )
+        home.add_child(instance=tos)
+        tos.save_revision().publish()
+
+        # --- Code of Conduct ---
+        coc = ContentPage(
+            title="Code of Conduct",
+            slug="code-of-conduct",
+            subtitle="How we treat each other in this community.",
+            body=[
+                ("paragraph", (
+                    "<p>The Oil Region Creative Hub exists to connect independent creators, venues, and fans. "
+                    "This code of conduct applies to all interactions on the platform — profiles, community posts, "
+                    "booking requests, endorsements, and messages.</p>"
+                )),
+                ("heading", "Be Respectful"),
+                ("paragraph", (
+                    "<p>Treat everyone with the same respect you'd show a fellow artist at a show or a neighbor "
+                    "on Seneca Street. Disagreement is fine; personal attacks, insults, and harassment are not.</p>"
+                )),
+                ("heading", "Be Honest"),
+                ("paragraph", (
+                    "<p>Represent yourself and your work accurately. Don't impersonate other creators, "
+                    "misrepresent your skills or experience, or post misleading information about venues or events.</p>"
+                )),
+                ("heading", "Be Constructive"),
+                ("paragraph", (
+                    "<p>Community posts and endorsements should contribute positively. Share opportunities, "
+                    "ask questions, offer help, celebrate each other's work. If you have a concern about "
+                    "a creator or venue, use private feedback through the booking system rather than public posts.</p>"
+                )),
+                ("heading", "No Discrimination"),
+                ("paragraph", (
+                    "<p>This platform welcomes people of all backgrounds, identities, and experience levels. "
+                    "Discrimination based on race, gender, sexuality, religion, disability, age, or any other "
+                    "characteristic will not be tolerated.</p>"
+                )),
+                ("heading", "No Spam or Self-Promotion Abuse"),
+                ("paragraph", (
+                    "<p>Your profile is the place to showcase your work. Community posts should be conversations, "
+                    "not advertisements. Occasional sharing of your own events or releases is welcome; "
+                    "flooding the feed with promotional content is not.</p>"
+                )),
+                ("heading", "Reporting and Enforcement"),
+                ("paragraph", (
+                    "<p>If you see behavior that violates this code of conduct, please report it. "
+                    "We take reports seriously and will review them promptly.</p>"
+                    "<p>Depending on the severity, responses may include:</p>"
+                    "<ul>"
+                    "<li>A private warning</li>"
+                    "<li>Removal of the offending content</li>"
+                    "<li>Temporary or permanent account suspension</li>"
+                    "</ul>"
+                    "<p>We aim to be fair and proportionate. Our goal is to maintain a community where "
+                    "everyone feels welcome to participate.</p>"
+                )),
+                ("paragraph", (
+                    "<p>This code of conduct may be updated as the community grows. "
+                    "Questions or concerns? Reach out at "
+                    '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a>.</p>'
+                )),
+            ],
+        )
+        home.add_child(instance=coc)
+        coc.save_revision().publish()
+
         # --- Blog index ---
         blog_index = BlogIndexPage(
             title="Blog",
@@ -916,6 +1047,6 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS(
-            f"  Created {Page.objects.count() - 1} pages (home, about, feedback, blog, 1 post)"
+            f"  Created {Page.objects.count() - 1} pages (home, about, feedback, terms, code of conduct, blog, 1 post)"
         ))
         self.stdout.write(self.style.SUCCESS("\nSample content seeding complete!"))

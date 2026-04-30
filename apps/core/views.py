@@ -4,7 +4,12 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Notification, UserProfile
+from .models import Notification, Report, UserProfile
+
+
+def suspended(request):
+    """Page shown to suspended users."""
+    return render(request, "core/suspended.html")
 
 
 @login_required
@@ -242,3 +247,50 @@ def search(request):
         "results": results,
         "total": total,
     })
+
+
+# ---------------------------------------------------------------------------
+# Reporting
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@require_POST
+def report_content(request):
+    """Submit a report about problematic content."""
+    from django.contrib import messages as msg
+
+    content_type = request.POST.get("content_type", "")
+    content_id = request.POST.get("content_id", "")
+    content_url = request.POST.get("content_url", "")
+    reason = request.POST.get("reason", "").strip()
+
+    if not reason or not content_type or not content_id:
+        msg.error(request, "Please provide a reason for your report.")
+        return redirect(content_url or "/")
+
+    Report.objects.create(
+        reporter=request.user,
+        content_type=content_type,
+        content_id=content_id,
+        content_url=content_url,
+        reason=reason,
+    )
+
+    # Notify admins
+    from apps.core.notifications import notify_admin_profile_submitted
+    from django.conf import settings as conf
+    from django.core.mail import send_mail
+
+    admin_emails = [email for _, email in getattr(conf, "ADMINS", [])]
+    if admin_emails:
+        send_mail(
+            subject=f"[Oil Region Hub] New {content_type} report",
+            message=f"A {content_type} has been reported.\n\nReason: {reason}\n\nURL: {content_url}",
+            from_email=None,
+            recipient_list=admin_emails,
+            fail_silently=True,
+        )
+
+    msg.success(request, "Thank you. Your report has been submitted and will be reviewed.")
+    return redirect(content_url or "/")
