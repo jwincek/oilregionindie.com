@@ -38,7 +38,8 @@
             <p class="text-sm text-ink-400 mt-1">Capacity: {{ venue.capacity }}</p>
             {% endif %}
             {% if request.user.is_authenticated and not is_preview %}
-            <div class="mt-4">
+            <div class="mt-4 flex gap-3">
+                {% include "includes/_follow_button.html" with target=venue following=is_following follow_url_name="follow_venue" %}
                 <a href="{% url 'events:booking_create' direction='to-venue' profile_slug=venue.slug %}"
                    class="text-sm text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-md transition inline-block">
                     Request to Play Here

@@ -105,9 +105,16 @@ def detail(request, slug):
         from django.http import Http404
         raise Http404
 
+    is_following = (
+        request.user.is_authenticated
+        and hasattr(request.user, "profile")
+        and request.user.profile.followed_creators.filter(pk=creator.pk).exists()
+    )
+
     return render(request, "creators/detail.html", {
         "creator": creator,
         "is_preview": not creator.is_published,
+        "is_following": is_following,
     })
 
 

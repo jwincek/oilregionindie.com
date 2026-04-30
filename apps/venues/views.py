@@ -75,9 +75,16 @@ def detail(request, slug):
         from django.http import Http404
         raise Http404
 
+    is_following = (
+        request.user.is_authenticated
+        and hasattr(request.user, "profile")
+        and request.user.profile.followed_venues.filter(pk=venue.pk).exists()
+    )
+
     return render(request, "venues/detail.html", {
         "venue": venue,
         "is_preview": not venue.is_published,
+        "is_following": is_following,
     })
 
 

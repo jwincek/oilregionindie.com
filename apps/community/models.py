@@ -48,6 +48,9 @@ class CommunityPost(models.Model):
         max_length=20, choices=PostType.choices, default=PostType.DISCUSSION
     )
     tags = models.ManyToManyField(Tag, blank=True, related_name="posts")
+    liked_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="liked_posts",
+    )
     is_pinned = models.BooleanField(default=False)
 
     # Threaded replies

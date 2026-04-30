@@ -4,6 +4,8 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.models import Notification
+
 from .forms import CommunityPostForm, ReplyForm
 from .models import CommunityPost, Tag
 
@@ -53,10 +55,15 @@ def detail(request, pk):
         parent__isnull=True,
     )
     reply_form = ReplyForm() if request.user.is_authenticated else None
+    user_liked = (
+        request.user.is_authenticated
+        and post.liked_by.filter(pk=request.user.pk).exists()
+    )
 
     return render(request, "community/detail.html", {
         "post": post,
         "reply_form": reply_form,
+        "user_liked": user_liked,
     })
 
 
@@ -129,5 +136,16 @@ def reply(request, pk):
         reply_post.parent = parent
         reply_post.post_type = parent.post_type
         reply_post.save()
+
+        # Notify the original post author
+        if parent.author != request.user:
+            display_name = request.user.profile.get_display_name()
+            Notification.objects.create(
+                recipient=parent.author,
+                actor=request.user,
+                notification_type=Notification.NotificationType.REPLY,
+                message=f"{display_name} replied to your post{': ' + parent.title if parent.title else ''}",
+                url=f"/community/{parent.pk}/",
+            )
 
     return redirect("community:detail", pk=parent.pk)

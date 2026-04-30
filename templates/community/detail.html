@@ -40,11 +40,18 @@
 
         <div class="text-sm text-ink-600 whitespace-pre-line">{{ post.body }}</div>
 
-        <div class="flex items-center gap-3 mt-4 pt-4 border-t border-ink-100 text-xs text-ink-400">
-            <span class="font-medium text-ink-600">{{ post.author.get_full_name|default:post.author.email }}</span>
-            <span>{{ post.created_at|date:"N j, Y g:i A" }}</span>
-            {% if post.updated_at != post.created_at %}
-            <span>(edited)</span>
+        <div class="flex items-center justify-between mt-4 pt-4 border-t border-ink-100">
+            <div class="flex items-center gap-3 text-xs text-ink-400">
+                <span class="font-medium text-ink-600">{{ post.author.get_full_name|default:post.author.email }}</span>
+                <span>{{ post.created_at|date:"N j, Y g:i A" }}</span>
+                {% if post.updated_at != post.created_at %}
+                <span>(edited)</span>
+                {% endif %}
+            </div>
+            {% if request.user.is_authenticated %}
+            {% include "community/_like_button.html" with post=post liked=user_liked %}
+            {% else %}
+            <span class="text-sm text-ink-400">{{ post.liked_by.count }} likes</span>
             {% endif %}
         </div>
     </div>

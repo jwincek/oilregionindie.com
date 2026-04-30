@@ -7,7 +7,10 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
-from apps.core.views import welcome
+from apps.core.views import (
+    follow_creator, follow_venue, mark_all_read,
+    notification_inbox, toggle_like, welcome,
+)
 
 urlpatterns = [
     # Django admin (keep but rarely used; Wagtail admin is primary)
@@ -19,6 +22,12 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Post-signup welcome
     path("welcome/", welcome, name="welcome"),
+    # Follow / Like / Notifications
+    path("follow/creator/<slug:slug>/", follow_creator, name="follow_creator"),
+    path("follow/venue/<slug:slug>/", follow_venue, name="follow_venue"),
+    path("like/<uuid:pk>/", toggle_like, name="toggle_like"),
+    path("notifications/", notification_inbox, name="notifications"),
+    path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),
     # Project apps
     path("creators/", include("apps.creators.urls", namespace="creators")),
     path("venues/", include("apps.venues.urls", namespace="venues")),
