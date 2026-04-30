@@ -9,9 +9,18 @@
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-lg shadow-sm p-4 mb-8">
+<div class="bg-white rounded-lg shadow-sm p-4 mb-4" x-data="{ filtersOpen: false }">
+    <!-- Mobile toggle -->
+    <button @click="filtersOpen = !filtersOpen"
+            class="md:hidden flex items-center justify-between w-full text-sm font-medium text-ink-700 mb-2">
+        <span>Filters</span>
+        <svg class="w-4 h-4 transition" :class="{ 'rotate-180': filtersOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+
     <form hx-get="{% url 'events:listing' %}" hx-target="#event-list" hx-swap="innerHTML" hx-push-url="true"
-          class="flex flex-wrap gap-4 items-end">
+          class="flex-wrap gap-4 items-end md:flex" :class="filtersOpen ? 'flex' : 'hidden md:flex'">
         <div class="flex-1 min-w-[200px]">
             <label for="q" class="block text-sm font-medium text-ink-600 mb-1">Search</label>
             <input type="text" name="q" id="q" value="{{ query }}"
@@ -66,8 +75,15 @@
     </form>
 </div>
 
-<div class="flex justify-end mb-4">
-    <a href="{% url 'events:past' %}" class="text-sm text-ink-500 hover:text-brand-600 transition">View past events &rarr;</a>
+<!-- Active filters & result count -->
+<div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-ink-500">{{ events|length }} event{{ events|length|pluralize }}</p>
+    <div class="flex gap-4">
+        {% if current_type or current_venue or current_cost or current_location or query %}
+        <a href="{% url 'events:listing' %}" class="text-sm text-ink-400 hover:text-brand-600 transition">Clear all filters</a>
+        {% endif %}
+        <a href="{% url 'events:past' %}" class="text-sm text-ink-500 hover:text-brand-600 transition">View past events &rarr;</a>
+    </div>
 </div>
 
 <div id="event-list">

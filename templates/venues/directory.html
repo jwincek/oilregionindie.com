@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load filter_tags %}
 
 {% block title %}Venues — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}Browse venues, galleries, cafes, and spaces in the Oil Region Creative Hub.{% endblock %}
@@ -10,9 +11,18 @@
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-lg shadow-sm p-4 mb-8">
+<div class="bg-white rounded-lg shadow-sm p-4 mb-4" x-data="{ filtersOpen: false }">
+    <!-- Mobile toggle -->
+    <button @click="filtersOpen = !filtersOpen"
+            class="md:hidden flex items-center justify-between w-full text-sm font-medium text-ink-700 mb-2">
+        <span>Filters</span>
+        <svg class="w-4 h-4 transition" :class="{ 'rotate-180': filtersOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+
     <form hx-get="{% url 'venues:directory' %}" hx-target="#venue-grid" hx-swap="innerHTML" hx-push-url="true"
-          class="flex flex-wrap gap-4 items-end">
+          class="flex-wrap gap-4 items-end md:flex" :class="filtersOpen ? 'flex' : 'hidden md:flex'">
         <div class="flex-1 min-w-[200px]">
             <label for="q" class="block text-sm font-medium text-ink-600 mb-1">Search</label>
             <input type="text" name="q" id="q" value="{{ query }}"
@@ -31,18 +41,12 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="min-w-[160px]">
-            <label for="amenity" class="block text-sm font-medium text-ink-600 mb-1">Amenity</label>
-            <select name="amenity" id="amenity"
-                    hx-get="{% url 'venues:directory' %}" hx-target="#venue-grid" hx-swap="innerHTML"
-                    hx-include="closest form" hx-push-url="true"
-                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
-                <option value="">Any Amenity</option>
-                {% for am in amenities %}
-                <option value="{{ am.slug }}" {% if current_amenity == am.slug %}selected{% endif %}>{{ am.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
+
+        <!-- Searchable amenity select -->
+        {% searchable_options_json amenities "slug" "name" as amenity_options %}
+        {% url 'venues:directory' as dir_url %}
+        {% include "includes/_searchable_select.html" with ss_name="amenity" ss_label="Amenity" ss_options_json=amenity_options ss_current=current_amenity ss_current_label=current_amenity_label ss_placeholder="Type to filter..." ss_hx_url=dir_url ss_hx_target="#venue-grid" %}
+
         <div class="min-w-[140px]">
             <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
             <input type="text" name="location" id="location" value="{{ current_location }}"
@@ -66,6 +70,14 @@
             Filter
         </button>
     </form>
+</div>
+
+<!-- Active filters & result count -->
+<div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-ink-500">{{ venues|length }} venue{{ venues|length|pluralize }}</p>
+    {% if current_type or current_amenity or current_availability or current_location or query %}
+    <a href="{% url 'venues:directory' %}" class="text-sm text-ink-400 hover:text-brand-600 transition">Clear all filters</a>
+    {% endif %}
 </div>
 
 <div id="venue-grid">

@@ -53,6 +53,12 @@ def directory(request):
     from apps.venues.models import Amenity
     amenities = Amenity.objects.all()
 
+    current_amenity_label = ""
+    if amenity:
+        a = Amenity.objects.filter(slug=amenity).first()
+        if a:
+            current_amenity_label = a.name
+
     template = "venues/_venue_list.html" if request.htmx else "venues/directory.html"
 
     return render(request, template, {
@@ -62,6 +68,7 @@ def directory(request):
         "amenities": amenities,
         "current_type": venue_type,
         "current_amenity": amenity,
+        "current_amenity_label": current_amenity_label,
         "current_availability": availability_slug,
         "current_location": location or "",
         "query": query or "",

@@ -77,6 +77,19 @@ def directory(request):
     else:
         available_skills = Skill.objects.select_related("discipline").all()
 
+    # Resolve labels for searchable selects
+    current_skill_label = ""
+    if skill_slug:
+        s = Skill.objects.filter(slug=skill_slug).select_related("discipline").first()
+        if s:
+            current_skill_label = f"{s.name} ({s.discipline.name})" if not discipline_slug else s.name
+
+    current_genre_label = ""
+    if genre_slug:
+        g = Genre.objects.filter(slug=genre_slug).first()
+        if g:
+            current_genre_label = g.name
+
     template = "creators/_creator_list.html" if request.htmx else "creators/directory.html"
 
     return render(request, template, {
@@ -89,7 +102,9 @@ def directory(request):
         "current_profile_type": profile_type,
         "current_discipline": discipline_slug,
         "current_skill": skill_slug,
+        "current_skill_label": current_skill_label,
         "current_genre": genre_slug,
+        "current_genre_label": current_genre_label,
         "current_availability": availability_slug,
         "current_location": location or "",
         "query": query or "",

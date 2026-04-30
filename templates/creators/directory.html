@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load filter_tags %}
 
 {% block title %}Creators — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}Browse independent musicians, visual artists, jewelers, and makers in the Oil Region Creative Hub.{% endblock %}
@@ -10,9 +11,18 @@
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-lg shadow-sm p-4 mb-8">
+<div class="bg-white rounded-lg shadow-sm p-4 mb-4" x-data="{ filtersOpen: false }">
+    <!-- Mobile toggle -->
+    <button @click="filtersOpen = !filtersOpen"
+            class="md:hidden flex items-center justify-between w-full text-sm font-medium text-ink-700 mb-2">
+        <span>Filters</span>
+        <svg class="w-4 h-4 transition" :class="{ 'rotate-180': filtersOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+
     <form hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML" hx-push-url="true"
-          class="flex flex-wrap gap-4 items-end">
+          class="flex-wrap gap-4 items-end md:flex" :class="filtersOpen ? 'flex' : 'hidden md:flex'">
         <div class="flex-1 min-w-[200px]">
             <label for="q" class="block text-sm font-medium text-ink-600 mb-1">Search</label>
             <input type="text" name="q" id="q" value="{{ query }}"
@@ -43,32 +53,16 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="min-w-[140px]">
-            <label for="skill" class="block text-sm font-medium text-ink-600 mb-1">Skill</label>
-            <select name="skill" id="skill"
-                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
-                    hx-include="closest form" hx-push-url="true"
-                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
-                <option value="">All Skills</option>
-                {% for s in available_skills %}
-                <option value="{{ s.slug }}" {% if current_skill == s.slug %}selected{% endif %}>
-                    {{ s.name }}{% if not current_discipline %} ({{ s.discipline.name }}){% endif %}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="min-w-[140px]">
-            <label for="genre" class="block text-sm font-medium text-ink-600 mb-1">Genre</label>
-            <select name="genre" id="genre"
-                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
-                    hx-include="closest form" hx-push-url="true"
-                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
-                <option value="">All Genres</option>
-                {% for g in genres %}
-                <option value="{{ g.slug }}" {% if current_genre == g.slug %}selected{% endif %}>{{ g.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
+
+        <!-- Searchable skill select -->
+        {% searchable_options_json available_skills "slug" "name" "discipline" as skill_options %}
+        {% url 'creators:directory' as dir_url %}
+        {% include "includes/_searchable_select.html" with ss_name="skill" ss_label="Skill" ss_options_json=skill_options ss_current=current_skill ss_current_label=current_skill_label ss_placeholder="Type to filter skills..." ss_hx_url=dir_url ss_hx_target="#creator-grid" %}
+
+        <!-- Searchable genre select -->
+        {% searchable_options_json genres "slug" "name" as genre_options %}
+        {% include "includes/_searchable_select.html" with ss_name="genre" ss_label="Genre" ss_options_json=genre_options ss_current=current_genre ss_current_label=current_genre_label ss_placeholder="Type to filter genres..." ss_hx_url=dir_url ss_hx_target="#creator-grid" %}
+
         <div class="min-w-[140px]">
             <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
             <input type="text" name="location" id="location" value="{{ current_location }}"
@@ -92,6 +86,14 @@
             Filter
         </button>
     </form>
+</div>
+
+<!-- Active filters & result count -->
+<div class="flex items-center justify-between mb-4">
+    <p class="text-sm text-ink-500">{{ creators|length }} creator{{ creators|length|pluralize }}</p>
+    {% if current_profile_type or current_discipline or current_skill or current_genre or current_availability or current_location or query %}
+    <a href="{% url 'creators:directory' %}" class="text-sm text-ink-400 hover:text-brand-600 transition">Clear all filters</a>
+    {% endif %}
 </div>
 
 <!-- Creator grid -->
