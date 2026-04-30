@@ -17,7 +17,7 @@ No JavaScript build tools are required. The frontend uses Tailwind CSS via CDN, 
 
 ```bash
 git clone https://github.com/jeromewincek/oilregionindie.com.git
-cd oilregion-hub
+cd oilregionindie.com
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
@@ -56,7 +56,7 @@ For development with full sample data:
 python manage.py seed_data --full
 ```
 
-This creates sample creators, venues, events, and Wagtail pages. All sample accounts use password `testpass123`.
+This creates sample creators, venues, events, and Wagtail pages (home, about, feedback, terms, code of conduct, help, blog). All sample accounts use `@oilregion-demo.example` emails with password `testpass123`.
 
 For a production-like setup (taxonomy + CMS pages, no sample profiles):
 
@@ -92,13 +92,16 @@ Visit http://localhost (nginx proxies to the app).
 
 ### Key directories
 
-- `config/` — Django settings, root URL configuration
-- `apps/core/` — Shared models (Address, UserProfile, PublishableProfile), notifications, template tags
+- `config/` — Django settings, root URL configuration, sitemaps
+- `apps/core/` — Shared models (UserProfile, PublishableProfile, Notification, Report, BlockedWord), notifications, digest, middleware, template tags
 - `apps/creators/` — Creator profiles, the directory, media/social link management
-- `apps/venues/` — Venue profiles and directory
-- `apps/events/` — Events, time slots, booking requests
+- `apps/venues/` — Venue profiles, directory, social link management
+- `apps/events/` — Events, time slots, booking requests, feedback, endorsements
+- `apps/commerce/` — Products, orders, Stripe Connect onboarding
+- `apps/community/` — Discussion posts, tags, likes
 - `apps/pages/` — Wagtail CMS page models and context processors
-- `templates/` — All HTML templates (Django template language + HTMX attributes)
+- `templates/` — All HTML templates (Django template language + HTMX + Alpine.js)
+- `static/` — JavaScript (searchable select), SVG icons, favicon
 
 ### How the profile flow works
 
@@ -112,6 +115,15 @@ Visit http://localhost (nginx proxies to the app).
 8. Profile appears in the public directory
 
 Profile owners can preview their unpublished profile at its normal URL. Other users get a 404 for unpublished profiles.
+
+### How booking requests work
+
+1. Creator visits a venue page and clicks "Request to Play Here" (or venue visits creator and clicks "Invite to Perform")
+2. Requester fills out event type, preferred dates, and a message
+3. Receiving party sees the request in their booking inbox
+4. They accept or decline with an optional response message
+5. Both parties are notified by email
+6. After acceptance, both can leave private feedback and write public endorsements
 
 ### Running tests
 
@@ -146,10 +158,6 @@ The `.env.example` file documents all available settings. Key ones for developme
 
 ## Common Tasks
 
-### Add a new discipline or skill
-
-Edit `DISCIPLINES_WITH_SKILLS` in `apps/creators/management/commands/seed_data.py`, then re-run `python manage.py seed_data` (idempotent — won't duplicate existing entries).
-
 ### Approve a pending profile
 
 1. Go to Django admin: http://localhost:8000/django-admin/
@@ -163,7 +171,23 @@ Edit `DISCIPLINES_WITH_SKILLS` in `apps/creators/management/commands/seed_data.p
 2. Register with any email
 3. Check `tmp_emails/` for the verification email (file-based backend in dev)
 4. Click the confirmation link
-5. Fill out your profile at `/creators/setup/`
+5. Choose what to do on the welcome page
+6. Fill out your profile at `/creators/setup/`
+
+### Manage moderation
+
+- **Reports**: Django admin → Reports (filter by status: Pending Review)
+- **Word filter**: Django admin → Blocked Words (add words/phrases to block from community posts)
+- **Suspend user**: Django admin → User Profiles → select user → "Suspend selected users" action
+
+### Set up email digests
+
+```bash
+python manage.py setup_schedules   # Create weekly schedule
+python manage.py qcluster          # Start the worker
+```
+
+Or run manually: `python manage.py send_digests --dry-run`
 
 ### Reset the database
 

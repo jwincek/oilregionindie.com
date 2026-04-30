@@ -180,6 +180,25 @@ def preferences(request):
     return render(request, "core/preferences.html", {"profile": profile})
 
 
+@login_required
+@require_POST
+def delete_account(request):
+    """Delete the current user's account and all associated data."""
+    from django.contrib.auth import logout as auth_logout
+    from django.contrib import messages as msg
+
+    confirmation = request.POST.get("confirm", "")
+    if confirmation != "DELETE":
+        msg.error(request, 'Please type "DELETE" to confirm account deletion.')
+        return redirect("preferences")
+
+    user = request.user
+    auth_logout(request)
+    user.delete()
+
+    return render(request, "core/account_deleted.html")
+
+
 # ---------------------------------------------------------------------------
 # Global search
 # ---------------------------------------------------------------------------

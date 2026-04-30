@@ -19,30 +19,30 @@ Follow the [Getting Started guide](GETTING-STARTED.md) to get the project runnin
 
 ## Where Help Is Needed
 
-### Phase 2 — Commerce & Coordination
+### Infrastructure & Performance
 
-These are the highest-impact areas right now:
+- **Wagtail full-text search** — the search indexes are configured but views use basic `icontains`. Switching to Wagtail's search backend would add relevance ranking and typo tolerance.
+- **Distance-based filtering** — the `Address` model has lat/lng fields ready for geocoding. Needs a geocoding integration and distance filtering in directory views.
+- **Tailwind build pipeline** — currently using the CDN; a production build with purging would reduce page weight.
 
-- **Stripe Connect integration** — wiring up Express onboarding and checkout flows in `apps/commerce/`. The models exist; the views and templates need to be built.
-- **Booking request UI** — building notification and response views for the bidirectional booking system in `apps/events/`. The `BookingRequest` model is complete; it needs frontend views where creators and venues can see, accept, and decline requests.
-- **Event management views** — creator- and venue-facing tools for managing lineups and time slots. The `EventSlot` model supports multi-stage scheduling; the frontend needs build-out.
+### Features
 
-### Phase 3 — Community & Growth
-
-- **Community posts** — `apps/community/` is a stub. Discussion posts, tags, and feeds need implementation.
-- **Distance-based search** — the `Address` model has lat/lng fields ready for geocoding. Needs a geocoding integration and distance filtering in directory views.
-- **Notification system** — email digests, follow notifications, booking status updates.
+- **Event calendar view** — a monthly grid alongside the current list view.
+- **RSS feeds** — for events and blog posts, using Django's feed framework.
+- **Search autocomplete** — typeahead suggestions for the global search.
+- **Digital product delivery** — download links for digital products after purchase.
 
 ### Design & Frontend
 
 - **Template refinement** — the Tailwind-based templates are functional but could use design polish. All templates are in `templates/`.
 - **Responsive testing** — mobile layouts, touch interactions, and accessibility improvements.
-- **Tailwind build pipeline** — currently using the CDN; a production build with purging would reduce page weight.
+- **Initials avatar centering** — the SVG initials avatars may need CSS adjustments in some browsers due to Tailwind's box-sizing reset.
 
 ### Testing
 
-- **Commerce and community apps** — these are stubs awaiting tests alongside their implementation.
-- **Integration tests** — the signup-to-published-profile flow, booking request lifecycle, and Stripe webhooks.
+- **Commerce app tests** — the Stripe Connect flow, checkout, and webhook handlers need test coverage.
+- **Community app tests** — posts, replies, likes, and moderation.
+- **Integration tests** — the signup-to-published-profile flow, booking request lifecycle, and notification delivery.
 
 ### Documentation
 
@@ -51,21 +51,23 @@ These are the highest-impact areas right now:
 
 ## Code Style
 
-- **Python** — follow the existing patterns in the codebase. Standard Django conventions: class-based or function-based views (this project uses function views), model/form/view organization per app.
-- **Templates** — Django template language with Tailwind utility classes. HTMX for dynamic interactions, Alpine.js for client-side state (dropdowns, dismissals).
+- **Python** — follow the existing patterns in the codebase. Standard Django conventions: function-based views, model/form/view organization per app.
+- **Templates** — Django template language with Tailwind utility classes. HTMX for dynamic interactions, Alpine.js for client-side state (dropdowns, searchable selects, dismissals).
 - **No JavaScript build step** — the frontend intentionally avoids a JS build pipeline. HTMX and Alpine.js are loaded via CDN.
 
 ## Project Conventions
 
 - **Apps live in `apps/`** — each Django app is a subdirectory of `apps/`.
-- **Shared models in `apps/core/`** — `PublishableProfile` is the abstract base for creator and venue profiles. New profile-like models should extend it.
+- **Shared models in `apps/core/`** — `PublishableProfile` is the abstract base for creator and venue profiles. `Notification`, `Report`, and `BlockedWord` are cross-app concerns.
 - **Seed data is idempotent** — `python manage.py seed_data` uses `get_or_create` for taxonomy. Running it multiple times is safe.
 - **Tests alongside apps** — each app has a `tests/` directory with `helpers.py` for factory functions. Use the existing `make_*` helpers rather than creating objects inline.
 - **HTMX partials** — templates prefixed with `_` (e.g., `_creator_list.html`) are HTMX partials returned for fragment swaps. Views check `request.htmx` to decide which template to render.
+- **Notifications** — use `apps.core.models.Notification` for in-app notifications and `apps.core.notifications` for email notifications.
+- **Reusable template includes** — `templates/includes/` has shared components: `_follow_button.html`, `_report_button.html`, `_searchable_select.html`.
 
 ## Reporting Issues
 
-If you find a bug or have a suggestion, [open an issue](https://github.com/jeromewincek/oilregionindie.com/issues). Include:
+If you find a bug or have a suggestion, [open an issue](https://github.com/jeromewincek/oilregionindie.com/issues) or use the [feedback form](https://oilregionindie.com/feedback/) on the live site. Include:
 
 - What you expected to happen
 - What actually happened

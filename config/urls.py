@@ -1,19 +1,29 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
+from django.http import HttpResponse
 from django.urls import include, path
 
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from apps.core.sitemaps import sitemaps
+
 from apps.core.views import (
-    follow_creator, follow_venue, mark_all_read,
+    delete_account, follow_creator, follow_venue, mark_all_read,
     notification_inbox, preferences, report_content, search,
     submit_feedback, suspended, toggle_like, welcome,
 )
 
 urlpatterns = [
+    # SEO
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
+    path("robots.txt", lambda r: HttpResponse(
+        "User-agent: *\nAllow: /\nSitemap: /sitemap.xml\n",
+        content_type="text/plain",
+    )),
     # Django admin (keep but rarely used; Wagtail admin is primary)
     path("django-admin/", admin.site.urls),
     # Wagtail admin
@@ -30,6 +40,7 @@ urlpatterns = [
     path("notifications/", notification_inbox, name="notifications"),
     path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),
     path("preferences/", preferences, name="preferences"),
+    path("delete-account/", delete_account, name="delete_account"),
     path("search/", search, name="search"),
     path("report/", report_content, name="report_content"),
     path("submit-feedback/", submit_feedback, name="submit_feedback"),

@@ -51,24 +51,30 @@ Visit **http://localhost**.
 
 ```
 oilregion-hub/
-├── config/                 # Settings, URLs, WSGI/ASGI
+├── config/                 # Settings, URLs, WSGI/ASGI, sitemaps
 ├── apps/
-│   ├── core/               # Address, UserProfile, PublishableProfile (abstract),
-│   │                         AvailabilityType, ProfileAvailability, notifications
+│   ├── core/               # UserProfile, PublishableProfile, Notification,
+│   │                         Report, BlockedWord, Address, Availability,
+│   │                         digest, middleware, sitemaps, template tags
 │   ├── creators/           # CreatorProfile, Discipline, Skill, Genre,
 │   │                         MediaItem, Memberships, Social Links, Embeds
 │   ├── venues/             # VenueProfile, VenueContact, VenueArea, Amenity
-│   ├── events/             # Event, EventSlot, BookingRequest
-│   ├── commerce/           # Product, Order, Stripe Connect (Phase 2)
-│   ├── community/          # CommunityPost, Tag (Phase 3 stub)
+│   ├── events/             # Event, EventSlot, BookingRequest,
+│   │                         BookingFeedback, Endorsement
+│   ├── commerce/           # Product, Order, Stripe Connect
+│   ├── community/          # CommunityPost, Tag, likes
 │   └── pages/              # Wagtail CMS: HomePage, ContentPage, Blog
 ├── templates/
 │   ├── account/            # Custom allauth auth pages
+│   ├── core/               # Welcome, preferences, notifications, search
 │   ├── creators/           # Directory, detail, edit, HTMX partials
 │   ├── venues/             # Directory, detail, setup, edit
-│   ├── events/             # Listing, detail, create, edit, past
+│   ├── events/             # Listing, detail, bookings, lineup, endorsements
+│   ├── commerce/           # Products, checkout, Stripe Connect
+│   ├── community/          # Posts, detail, likes
 │   ├── pages/              # Wagtail page templates
-│   └── includes/           # Nav, footer, soft-launch banner
+│   └── includes/           # Nav, footer, reusable components
+├── static/                 # CSS, JS, favicon, icons
 ├── docker-compose.yml
 ├── Dockerfile
 └── requirements.txt
@@ -97,34 +103,37 @@ Creators select specific skills (Guitar, Silversmithing, Wheel Throwing), and th
 
 ### Profile Approval
 
-New profiles start in **draft** status. Creators fill out their profile and submit it for review. An admin reviews and approves (publishes) the profile from the Django admin panel. Published profiles appear in the directory; drafts and pending profiles do not.
-
-### Availability System
-
-Creators and venues set availability flags — "Available for Booking", "Accepting Commissions", "Gallery Space Available", etc. These are filterable in the directory and displayed on profile pages with optional notes like "Weekends only, July-September". The types are seeded and extensible without migrations.
+New profiles start in **draft** status. Creators fill out their profile and submit it for review. An admin reviews and approves (publishes) the profile from the Django admin panel. Published profiles appear in the directory; drafts and pending profiles do not. Owners can preview their unpublished profile at its normal URL.
 
 ### Bidirectional Booking
 
-BookingRequests work both ways: a creator can request to play at a venue, or a venue can invite a creator. Only the receiving party can accept or decline. Managers of either profile can participate.
+BookingRequests work both ways: a creator can request to play at a venue, or a venue can invite a creator. Only the receiving party can accept or decline. After a booking is accepted, both parties can leave private feedback and write public endorsements.
 
-### Embed Pipeline
+### Commerce
 
-Media items support three sources: direct file upload, oEmbed URL (YouTube, SoundCloud, Vimeo — auto-fetched on save), or pasted embed code (Bandcamp and other providers without oEmbed). Cached HTML avoids API calls on page load.
+Creators set up Stripe Connect, add products (digital or physical), and sell directly through their profile. Payments go to the creator's connected Stripe account. The platform can collect a configurable fee.
 
-### HTMX Management
+### Community
 
-Social links and media items on the creator edit page use HTMX for inline add/edit/delete without page reloads. Directory filters auto-submit on change.
+Discussion posts with four types (discussion, announcement, opportunity, review), threaded replies, tags, and likes. Users can follow creators and venues to receive notifications and weekly email digests.
+
+### Moderation
+
+Report buttons on profiles and posts, word filter on community content, user suspension via admin. Terms of Service and Code of Conduct are seeded as CMS pages and referenced during signup.
 
 ### Soft Launch Mode
 
-Set `SOFT_LAUNCH=True` in `.env` to enable a site-wide banner and "Demo" badges on seed-data profiles. This mode is designed for early deployments where sample data coexists with real user signups. Set to `False` (or remove) to disable.
+Set `SOFT_LAUNCH=True` in `.env` to enable a site-wide banner and "Demo" badges on seed-data profiles. Designed for early deployments where sample data coexists with real user signups.
 
 ## Management Commands
 
 ```bash
 python manage.py seed_data              # Taxonomy only (safe to re-run)
-python manage.py seed_data --pages      # Taxonomy + Wagtail pages (for production/soft launch)
+python manage.py seed_data --pages      # Taxonomy + Wagtail pages (production/soft launch)
 python manage.py seed_data --full       # Full sample content (dev/demo)
+python manage.py send_digests           # Send weekly email digests
+python manage.py send_digests --dry-run # Preview without sending
+python manage.py setup_schedules        # Configure Django Q recurring tasks
 python manage.py refresh_embeds         # Backfill oEmbed HTML
 python manage.py refresh_embeds --all   # Re-fetch all embeds
 ```
@@ -141,9 +150,9 @@ python manage.py test apps.core.tests apps.creators.tests apps.venues.tests apps
 
 `seed_data` seeds 12 disciplines with 139 skills, 20 genres, 23 amenities, and 9 availability types.
 
-`seed_data --pages` additionally creates Wagtail CMS pages (home, about, blog with a welcome post). Ideal for production deployments where you want the page structure without sample profiles.
+`seed_data --pages` additionally creates 8 Wagtail CMS pages: home, about, feedback (with inline form), terms of service, code of conduct, help, blog index, and a welcome post. Ideal for production deployments.
 
-`seed_data --full` additionally creates: 9 creator profiles (individuals, a band with memberships, a collective), 3 venues inspired by Oil City locations with contacts and areas, 5 events with slots, a booking request, availability flags, media items, social links, and Wagtail pages. All sample accounts use `@oilregion-demo.example` emails with password `testpass123`.
+`seed_data --full` additionally creates: 9 creator profiles (individuals, a band with memberships, a collective), 3 venues with contacts and areas, 5 events with slots, a booking request, availability flags, media items, social links, and all Wagtail pages. All sample accounts use `@oilregion-demo.example` emails with password `testpass123`.
 
 ## Environment Variables
 
@@ -154,6 +163,8 @@ See [.env.example](.env.example) for the full list. Key settings:
 | `SOFT_LAUNCH` | Enable soft-launch banner and demo badges | `False` |
 | `TURNSTILE_SITE_KEY` | Cloudflare Turnstile public key | (disabled) |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | (disabled) |
+| `DJANGO_ADMINS` | Admin emails for notifications (format: `Name:email`) | (none) |
+| `DEFAULT_FROM_EMAIL` | Sender address for transactional emails | `noreply@oilregionindie.com` |
 | `DJANGO_DEBUG` | Debug mode | `False` |
 | `DATABASE_URL` | PostgreSQL connection string | (required in production) |
 
@@ -162,14 +173,6 @@ See [.env.example](.env.example) for the full list. Key settings:
 1. Create a [Stripe account](https://dashboard.stripe.com/) and enable [Connect](https://dashboard.stripe.com/connect/overview)
 2. Add keys to `.env`: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
 3. Set up webhook at `/shop/webhooks/stripe/` for `checkout.session.completed` and `payment_intent.payment_failed`
-
-## Development Phases
-
-**Phase 1 — Core Platform** (current): Creator profiles, venues, events, bookings, contacts, availability, embeds, HTMX management, auth pages, profile approval workflow, Cloudflare Turnstile, soft-launch mode, seed data, 348 tests. Substantially complete.
-
-**Phase 2 — Commerce & Coordination**: Stripe Connect end-to-end, frontend event/lineup management, booking request views with notifications.
-
-**Phase 3 — Community & Growth**: Discussion posts, follow notifications, email digests, advanced search, distance-based filtering.
 
 ## Contributing
 
