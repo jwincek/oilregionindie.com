@@ -1,0 +1,38 @@
+Your weekly digest from {{ site_name }}
+======================================
+
+Hi {{ user_profile.get_display_name }},
+
+Here's what's been happening with the creators and venues you follow.
+
+{% if new_events %}
+NEW EVENTS
+----------
+{% for event in new_events %}
+- {{ event.title }}{% if event.venue %} at {{ event.venue.name }}{% endif %}
+  {{ event.start_datetime|date:"l, N j" }} at {{ event.start_datetime|date:"g:i A" }}
+{% endfor %}
+{% endif %}
+{% if upcoming_events %}
+COMING UP
+---------
+{% for event in upcoming_events %}
+- {{ event.title }}{% if event.venue %} at {{ event.venue.name }}{% endif %}
+  {{ event.start_datetime|date:"l, N j" }} at {{ event.start_datetime|date:"g:i A" }}
+{% endfor %}
+{% endif %}
+{% if new_posts %}
+COMMUNITY POSTS
+---------------
+{% for post in new_posts %}
+- {% if post.title %}{{ post.title }}{% else %}Post{% endif %} by {{ post.author.get_full_name|default:post.author.email }}
+  {{ post.body|truncatewords:30 }}
+{% endfor %}
+{% endif %}
+
+---
+
+You're receiving this because you have email digests enabled.
+To unsubscribe, update your preferences in your account settings.
+
+{{ site_name }}

@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import Notification
+from .models import Notification, UserProfile
 
 
 @login_required
@@ -151,3 +151,24 @@ def mark_all_read(request):
     if request.htmx:
         return HttpResponse("")
     return redirect("notifications")
+
+
+# ---------------------------------------------------------------------------
+# Account preferences
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def preferences(request):
+    """User preferences — digest settings, etc."""
+    from django.contrib import messages
+
+    profile = request.user.profile
+
+    if request.method == "POST":
+        profile.email_digest = "email_digest" in request.POST
+        profile.save(update_fields=["email_digest", "updated_at"])
+        messages.success(request, "Preferences saved.")
+        return redirect("preferences")
+
+    return render(request, "core/preferences.html", {"profile": profile})
