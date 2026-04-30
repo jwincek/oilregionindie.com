@@ -9,8 +9,8 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.core.models import AvailabilityType
 from apps.core.notifications import notify_admin_profile_submitted
 
-from .forms import VenueProfileForm
-from .models import VenueProfile
+from .forms import VenueProfileForm, VenueSocialLinkForm
+from .models import VenueProfile, VenueSocialLink
 
 
 @require_GET
@@ -138,3 +138,95 @@ def edit(request, slug):
         form = VenueProfileForm(instance=venue)
 
     return render(request, "venues/edit.html", {"form": form, "venue": venue})
+
+
+# ---------------------------------------------------------------------------
+# Social links (HTMX-powered add/edit/delete)
+# ---------------------------------------------------------------------------
+
+
+def _get_editable_venue(request, slug):
+    """Get a venue the current user can edit, or 403."""
+    venue = get_object_or_404(VenueProfile, slug=slug)
+    if not venue.can_be_edited_by(request.user):
+        return None, HttpResponseForbidden()
+    return venue, None
+
+
+@login_required
+def social_links(request, slug):
+    """List social links for a venue (HTMX partial)."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+    return render(request, "venues/_social_links.html", {
+        "venue": venue,
+        "links": venue.social_links.all(),
+    })
+
+
+@login_required
+def add_social_link(request, slug):
+    """Add a social link to a venue via HTMX."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+
+    if request.method == "POST":
+        form = VenueSocialLinkForm(request.POST)
+        if form.is_valid():
+            link = form.save(commit=False)
+            link.venue = venue
+            link.save()
+            return render(request, "venues/_social_links.html", {
+                "venue": venue,
+                "links": venue.social_links.all(),
+            })
+    else:
+        form = VenueSocialLinkForm()
+
+    return render(request, "venues/_social_link_form.html", {
+        "form": form,
+        "venue": venue,
+    })
+
+
+@login_required
+def edit_social_link(request, slug, pk):
+    """Edit a venue social link via HTMX."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+    link = get_object_or_404(VenueSocialLink, pk=pk, venue=venue)
+
+    if request.method == "POST":
+        form = VenueSocialLinkForm(request.POST, instance=link)
+        if form.is_valid():
+            form.save()
+            return render(request, "venues/_social_links.html", {
+                "venue": venue,
+                "links": venue.social_links.all(),
+            })
+    else:
+        form = VenueSocialLinkForm(instance=link)
+
+    return render(request, "venues/_social_link_form.html", {
+        "form": form,
+        "venue": venue,
+        "link": link,
+    })
+
+
+@login_required
+@require_POST
+def delete_social_link(request, slug, pk):
+    """Delete a venue social link via HTMX."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+    link = get_object_or_404(VenueSocialLink, pk=pk, venue=venue)
+    link.delete()
+    return render(request, "venues/_social_links.html", {
+        "venue": venue,
+        "links": venue.social_links.all(),
+    })

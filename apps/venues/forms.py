@@ -2,7 +2,7 @@ from django import forms
 
 from apps.core.models import Address
 
-from .models import VenueProfile
+from .models import VenueProfile, VenueSocialLink
 
 
 class VenueProfileForm(forms.ModelForm):
@@ -94,3 +94,14 @@ class VenueProfileForm(forms.ModelForm):
             venue.save()
             self.save_m2m()
         return venue
+
+
+class VenueSocialLinkForm(forms.ModelForm):
+    class Meta:
+        model = VenueSocialLink
+        fields = ["platform", "url", "sort_order"]
+        widgets = {
+            "platform": forms.Select(attrs={"class": "form-select"}),
+            "url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
+            "sort_order": forms.NumberInput(attrs={"class": "form-input w-20"}),
+        }

@@ -10,4 +10,9 @@ urlpatterns = [
     path("<slug:slug>/", views.detail, name="detail"),
     path("<slug:slug>/edit/", views.edit, name="edit"),
     path("<slug:slug>/submit-for-review/", views.submit_for_review, name="submit_for_review"),
+    # Social links (HTMX)
+    path("<slug:slug>/social-links/", views.social_links, name="social_links"),
+    path("<slug:slug>/social-links/add/", views.add_social_link, name="add_social_link"),
+    path("<slug:slug>/social-links/<int:pk>/edit/", views.edit_social_link, name="edit_social_link"),
+    path("<slug:slug>/social-links/<int:pk>/delete/", views.delete_social_link, name="delete_social_link"),
 ]

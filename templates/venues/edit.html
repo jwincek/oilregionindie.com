@@ -64,6 +64,16 @@
         </div>
     </form>
 
+    <!-- Social links (managed via HTMX, outside the profile form) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Social Links</h2>
+        <div hx-get="{% url 'venues:social_links' venue.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading social links...</p>
+        </div>
+    </div>
+
     {% if venue.is_draft %}
     <!-- Submit for Review -->
     <form method="post" action="{% url 'venues:submit_for_review' venue.slug %}" class="mt-4">
