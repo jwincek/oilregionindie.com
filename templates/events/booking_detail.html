@@ -129,5 +129,70 @@
         </form>
     </div>
     {% endif %}
+
+    <!-- Private feedback (accepted bookings only) -->
+    {% if booking.status == 'accepted' %}
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="text-sm font-semibold text-ink-700 mb-4">Private Feedback</h2>
+
+        {% if other_feedback %}
+        <div class="bg-ink-50 rounded-md p-4 mb-4">
+            <p class="text-sm text-ink-600 whitespace-pre-line">{{ other_feedback.body }}</p>
+            <div class="flex items-center gap-3 mt-2 text-xs text-ink-400">
+                <span>{{ other_feedback.created_at|date:"N j, Y" }}</span>
+                {% if other_feedback.would_work_again %}
+                <span class="text-green-600">Would work together again</span>
+                {% else %}
+                <span class="text-ink-400">Would prefer not to work together again</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if my_feedback %}
+        <div class="bg-brand-50 rounded-md p-4">
+            <p class="text-xs text-ink-400 mb-1">Your feedback:</p>
+            <p class="text-sm text-ink-600 whitespace-pre-line">{{ my_feedback.body }}</p>
+            <div class="flex items-center gap-3 mt-2 text-xs text-ink-400">
+                <span>{{ my_feedback.created_at|date:"N j, Y" }}</span>
+                {% if my_feedback.would_work_again %}
+                <span class="text-green-600">Would work together again</span>
+                {% endif %}
+            </div>
+        </div>
+        {% elif can_leave_feedback %}
+        <form method="post" action="{% url 'events:booking_feedback' pk=booking.pk %}" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                {{ feedback_form.body }}
+                {% if feedback_form.body.errors %}<p class="text-xs text-red-600 mt-1">{{ feedback_form.body.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label class="flex items-center gap-2 text-sm text-ink-700">
+                    {{ feedback_form.would_work_again }}
+                    Would you work together again?
+                </label>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Submit Feedback
+                </button>
+            </div>
+        </form>
+        <p class="text-xs text-ink-400 mt-2">This feedback is private — only the other party can see it.</p>
+        {% elif not other_feedback %}
+        <p class="text-sm text-ink-400">No feedback yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Endorse link -->
+    <div class="mt-4 text-center">
+        <a href="{% url 'events:endorse' creator_slug=booking.creator.slug venue_slug=booking.venue.slug %}"
+           class="text-sm text-brand-600 hover:underline">
+            Write a public endorsement for this collaboration
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -8,8 +8,11 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.notifications import notify_booking_status_changed
 
-from .forms import BookingRequestForm, BookingResponseForm, EventForm, EventSlotForm
-from .models import BookingRequest, Event, EventSlot
+from .forms import (
+    BookingFeedbackForm, BookingRequestForm, BookingResponseForm,
+    EndorsementForm, EventForm, EventSlotForm,
+)
+from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
 
 
 @require_GET
@@ -277,10 +280,24 @@ def booking_detail(request, pk):
     can_respond = booking.status == "pending" and booking.can_be_responded_to_by(request.user)
     response_form = BookingResponseForm() if can_respond else None
 
+    # Feedback: only for accepted bookings, check if user already left feedback
+    my_feedback = booking.feedback.filter(author=request.user).first()
+    other_feedback = booking.feedback.exclude(author=request.user).first()
+    can_leave_feedback = (
+        booking.status == "accepted"
+        and booking.can_be_viewed_by(request.user)
+        and not my_feedback
+    )
+    feedback_form = BookingFeedbackForm() if can_leave_feedback else None
+
     return render(request, "events/booking_detail.html", {
         "booking": booking,
         "can_respond": can_respond,
         "response_form": response_form,
+        "my_feedback": my_feedback,
+        "other_feedback": other_feedback,
+        "can_leave_feedback": can_leave_feedback,
+        "feedback_form": feedback_form,
     })
 
 
@@ -383,3 +400,110 @@ def booking_create(request, direction, profile_slug):
         "creator": creator,
         "venue": venue,
     })
+
+
+# ---------------------------------------------------------------------------
+# Booking feedback (private)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@require_POST
+def booking_feedback(request, pk):
+    """Leave private feedback on an accepted booking."""
+    booking = get_object_or_404(BookingRequest, pk=pk, status="accepted")
+
+    if not booking.can_be_viewed_by(request.user):
+        return HttpResponseForbidden()
+
+    # Check user hasn't already left feedback
+    if booking.feedback.filter(author=request.user).exists():
+        messages.info(request, "You've already left feedback for this booking.")
+        return redirect("events:booking_detail", pk=booking.pk)
+
+    form = BookingFeedbackForm(request.POST)
+    if form.is_valid():
+        fb = form.save(commit=False)
+        fb.booking = booking
+        fb.author = request.user
+        fb.save()
+        messages.success(request, "Feedback saved. Only the other party can see it.")
+
+    return redirect("events:booking_detail", pk=booking.pk)
+
+
+# ---------------------------------------------------------------------------
+# Endorsements (public)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def endorse(request, creator_slug, venue_slug):
+    """Create an endorsement between a creator and venue."""
+    from apps.creators.models import CreatorProfile
+    from apps.venues.models import VenueProfile
+
+    creator = get_object_or_404(CreatorProfile, slug=creator_slug, publish_status="published")
+    venue = get_object_or_404(VenueProfile, slug=venue_slug, publish_status="published")
+
+    # User must be the creator or the venue owner/manager
+    is_creator_side = creator.can_be_edited_by(request.user)
+    is_venue_side = venue.can_be_edited_by(request.user)
+    if not is_creator_side and not is_venue_side:
+        return HttpResponseForbidden()
+
+    # Check for existing endorsement from this user
+    if Endorsement.objects.filter(creator=creator, venue=venue, author=request.user).exists():
+        messages.info(request, "You've already endorsed this relationship.")
+        return redirect(creator.get_absolute_url() if is_venue_side else venue.get_absolute_url())
+
+    if request.method == "POST":
+        form = EndorsementForm(request.POST)
+        if form.is_valid():
+            endorsement = form.save(commit=False)
+            endorsement.creator = creator
+            endorsement.venue = venue
+            endorsement.author = request.user
+            endorsement.save()
+
+            # Notify the other party
+            from apps.core.models import Notification
+            if is_creator_side:
+                Notification.objects.create(
+                    recipient=venue.user,
+                    actor=request.user,
+                    notification_type=Notification.NotificationType.FOLLOW,
+                    message=f"{creator.display_name} endorsed {venue.name}",
+                    url=f"/venues/{venue.slug}/",
+                )
+            else:
+                Notification.objects.create(
+                    recipient=creator.user,
+                    actor=request.user,
+                    notification_type=Notification.NotificationType.FOLLOW,
+                    message=f"{venue.name} endorsed {creator.display_name}",
+                    url=creator.get_absolute_url(),
+                )
+
+            messages.success(request, "Endorsement published.")
+            return redirect(creator.get_absolute_url() if is_venue_side else venue.get_absolute_url())
+    else:
+        form = EndorsementForm()
+
+    return render(request, "events/endorse.html", {
+        "form": form,
+        "creator": creator,
+        "venue": venue,
+        "is_creator_side": is_creator_side,
+    })
+
+
+@login_required
+@require_POST
+def delete_endorsement(request, pk):
+    """Delete an endorsement (author only)."""
+    endorsement = get_object_or_404(Endorsement, pk=pk, author=request.user)
+    creator_url = endorsement.creator.get_absolute_url()
+    endorsement.delete()
+    messages.info(request, "Endorsement removed.")
+    return redirect(creator_url)

@@ -272,6 +272,36 @@
             </ul>
         </div>
         {% endif %}
+
+        <!-- Endorsements -->
+        {% if creator.endorsements.exists %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 text-sm mb-3">Endorsements</h2>
+            <div class="space-y-3">
+                {% for e in creator.endorsements.all %}
+                <div class="border-l-2 border-brand-300 pl-3">
+                    <p class="text-sm text-ink-600">{{ e.body }}</p>
+                    <p class="text-xs text-ink-400 mt-1">
+                        {% if e.is_from_venue %}
+                            <a href="/venues/{{ e.venue.slug }}/" class="text-brand-600 hover:underline">{{ e.venue.name }}</a>
+                        {% else %}
+                            {{ e.creator.display_name }}
+                            about <a href="/venues/{{ e.venue.slug }}/" class="text-brand-600 hover:underline">{{ e.venue.name }}</a>
+                        {% endif %}
+                        &middot; {{ e.created_at|date:"M Y" }}
+                        {% if request.user == e.author %}
+                        <form method="post" action="{% url 'events:delete_endorsement' pk=e.pk %}" class="inline ml-2">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Remove this endorsement?')"
+                                    class="text-ink-400 hover:text-red-600">Remove</button>
+                        </form>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

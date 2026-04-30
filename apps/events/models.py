@@ -334,3 +334,75 @@ class BookingRequest(models.Model):
         if self.is_creator_initiated:
             return self.venue.can_be_edited_by(user)
         return self.creator.can_be_edited_by(user)
+
+
+class BookingFeedback(models.Model):
+    """
+    Private feedback left after a booking is completed.
+    Each party can leave one feedback per booking — visible only to the other party.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.ForeignKey(
+        BookingRequest, on_delete=models.CASCADE, related_name="feedback",
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="booking_feedback_given",
+    )
+    body = models.TextField(help_text="Private feedback visible only to the other party")
+    would_work_again = models.BooleanField(
+        default=True, help_text="Would you work with this creator/venue again?",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["booking", "author"],
+                name="one_feedback_per_party_per_booking",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Feedback on {self.booking} by {self.author}"
+
+
+class Endorsement(models.Model):
+    """
+    A public endorsement between a creator and a venue.
+    Positive-only — like a recommendation. Displayed on both profiles.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    creator = models.ForeignKey(
+        "creators.CreatorProfile", on_delete=models.CASCADE, related_name="endorsements",
+    )
+    venue = models.ForeignKey(
+        "venues.VenueProfile", on_delete=models.CASCADE, related_name="endorsements",
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="endorsements_given",
+    )
+    body = models.TextField(help_text="A short recommendation or positive experience")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["creator", "venue", "author"],
+                name="one_endorsement_per_relationship",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Endorsement: {self.creator.display_name} & {self.venue.name}"
+
+    @property
+    def is_from_creator(self):
+        return self.author == self.creator.user
+
+    @property
+    def is_from_venue(self):
+        return self.author == self.venue.user

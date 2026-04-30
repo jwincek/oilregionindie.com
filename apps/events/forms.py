@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import BookingRequest, Event, EventSlot
+from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
 
 
 class EventForm(forms.ModelForm):
@@ -119,3 +119,33 @@ class EventSlotForm(forms.ModelForm):
         self.fields["creator"].queryset = CreatorProfile.objects.filter(
             publish_status="published"
         ).order_by("display_name")
+
+
+class BookingFeedbackForm(forms.ModelForm):
+    class Meta:
+        model = BookingFeedback
+        fields = ["body", "would_work_again"]
+        widgets = {
+            "body": forms.Textarea(attrs={
+                "class": "form-textarea", "rows": 4,
+                "placeholder": "Share your experience — only the other party will see this.",
+            }),
+        }
+        labels = {
+            "would_work_again": "Would you work together again?",
+        }
+
+
+class EndorsementForm(forms.ModelForm):
+    class Meta:
+        model = Endorsement
+        fields = ["body"]
+        widgets = {
+            "body": forms.Textarea(attrs={
+                "class": "form-textarea", "rows": 3,
+                "placeholder": "A short recommendation based on your experience working together.",
+            }),
+        }
+        labels = {
+            "body": "Endorsement",
+        }

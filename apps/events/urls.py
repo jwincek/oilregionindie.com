@@ -14,6 +14,10 @@ urlpatterns = [
     path("bookings/<uuid:pk>/respond/", views.booking_respond, name="booking_respond"),
     path("bookings/<uuid:pk>/withdraw/", views.booking_withdraw, name="booking_withdraw"),
     path("bookings/new/<str:direction>/<slug:profile_slug>/", views.booking_create, name="booking_create"),
+    path("bookings/<uuid:pk>/feedback/", views.booking_feedback, name="booking_feedback"),
+    # Endorsements
+    path("endorse/<slug:creator_slug>/<slug:venue_slug>/", views.endorse, name="endorse"),
+    path("endorsement/<uuid:pk>/delete/", views.delete_endorsement, name="delete_endorsement"),
     # Events (slug-based — must be last)
     path("<slug:slug>/", views.detail, name="detail"),
     path("<slug:slug>/edit/", views.edit, name="edit"),
