@@ -3,18 +3,56 @@
 {% block title %}Community — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="text-center py-16">
-    <h1 class="text-3xl font-display font-bold text-ink-800 mb-4">Community</h1>
-    <p class="text-ink-500 max-w-lg mx-auto mb-8">
-        The community discussion board is coming soon. This is where creators, venues,
-        and fans will connect, share opportunities, and collaborate.
-    </p>
-    <div class="bg-white rounded-lg shadow-sm p-8 max-w-md mx-auto">
-        <p class="text-ink-600 text-sm">In the meantime, explore our growing community:</p>
-        <div class="flex flex-col gap-3 mt-4">
-            <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline font-medium">Browse Creators</a>
-            <a href="{% url 'events:listing' %}" class="text-brand-600 hover:underline font-medium">Upcoming Events</a>
-        </div>
+<div class="max-w-3xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Community</h1>
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'community:create' %}"
+           class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+            New Post
+        </a>
+        {% endif %}
     </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-3 items-end"
+              hx-get="{% url 'community:index' %}" hx-target="#post-list" hx-swap="outerHTML"
+              hx-trigger="change from:select, submit">
+
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-medium text-ink-600 mb-1">Search</label>
+                <input type="text" name="q" value="{{ query }}"
+                       class="form-input w-full text-sm" placeholder="Search posts...">
+            </div>
+
+            <div class="w-40">
+                <label class="block text-xs font-medium text-ink-600 mb-1">Type</label>
+                <select name="type" class="form-select w-full text-sm">
+                    <option value="">All types</option>
+                    {% for value, label in post_types %}
+                    <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="w-40">
+                <label class="block text-xs font-medium text-ink-600 mb-1">Tag</label>
+                <select name="tag" class="form-select w-full text-sm">
+                    <option value="">All tags</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.slug }}" {% if current_tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="bg-ink-100 text-ink-700 px-4 py-2 rounded-md text-sm hover:bg-ink-200 transition">
+                Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Post list -->
+    {% include "community/_post_list.html" %}
 </div>
 {% endblock %}
