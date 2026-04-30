@@ -294,3 +294,49 @@ def report_content(request):
 
     msg.success(request, "Thank you. Your report has been submitted and will be reviewed.")
     return redirect(content_url or "/")
+
+
+# ---------------------------------------------------------------------------
+# Feedback form
+# ---------------------------------------------------------------------------
+
+
+@require_POST
+def submit_feedback(request):
+    """Handle inline feedback form submission from the feedback page."""
+    from django.contrib import messages as msg
+    from django.conf import settings as conf
+    from django.core.mail import send_mail
+
+    feedback_type = request.POST.get("feedback_type", "general")
+    body = request.POST.get("body", "").strip()
+    email = request.POST.get("email", "").strip()
+
+    if not body:
+        msg.error(request, "Please describe your feedback.")
+        return redirect("/feedback/")
+
+    sender = email or (request.user.email if request.user.is_authenticated else "anonymous")
+
+    # Store as a report for the admin queue
+    Report.objects.create(
+        reporter=request.user if request.user.is_authenticated else None,
+        content_type="user",
+        content_id="feedback",
+        content_url="/feedback/",
+        reason=f"[{feedback_type.upper()}] {body}\n\nFrom: {sender}",
+    )
+
+    # Email admins
+    admin_emails = [e for _, e in getattr(conf, "ADMINS", [])]
+    if admin_emails:
+        send_mail(
+            subject=f"[Oil Region Hub] {feedback_type.title()} feedback",
+            message=f"Type: {feedback_type}\nFrom: {sender}\n\n{body}",
+            from_email=None,
+            recipient_list=admin_emails,
+            fail_silently=True,
+        )
+
+    msg.success(request, "Thank you for your feedback!")
+    return redirect("/feedback/")

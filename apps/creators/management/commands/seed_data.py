@@ -1003,6 +1003,80 @@ class Command(BaseCommand):
         home.add_child(instance=coc)
         coc.save_revision().publish()
 
+        # --- Help page ---
+        help_page = ContentPage(
+            title="Help",
+            slug="help",
+            subtitle="How to use the Oil Region Creative Hub.",
+            body=[
+                ("heading", "Getting Started"),
+                ("paragraph", (
+                    "<p><b>How do I create a creator profile?</b><br>"
+                    "Sign up for an account, then choose \"Create a creator profile\" from the welcome page. "
+                    "Fill out your display name, bio, skills, and location. Your profile starts as a draft — "
+                    "submit it for review and we'll publish it within 48 hours.</p>"
+                    "<p><b>How do I register a venue?</b><br>"
+                    "After signing up, choose \"Register a venue\" from the welcome page, or visit "
+                    "Venues &rarr; Register a Venue. Fill out your venue details and submit for review.</p>"
+                    "<p><b>Do I need a profile to browse?</b><br>"
+                    "No. The creator directory, venue directory, events, and community are all publicly visible. "
+                    "You only need an account to create a profile, post, or interact.</p>"
+                )),
+                ("heading", "Profiles"),
+                ("paragraph", (
+                    "<p><b>How does the review process work?</b><br>"
+                    "New profiles start as drafts. When you're ready, click \"Submit for Review\" on your edit page. "
+                    "We review and publish profiles within 48 hours. You can continue editing while your profile "
+                    "is pending review.</p>"
+                    "<p><b>Can I preview my profile before it's published?</b><br>"
+                    "Yes. Visit your profile URL while logged in — you'll see a preview banner at the top. "
+                    "Other users will see a 404 until your profile is published.</p>"
+                    "<p><b>How do I add media, social links, or availability?</b><br>"
+                    "Go to your profile edit page. Media, social links, and availability are managed in "
+                    "separate sections below the main form, using inline add/edit/delete controls.</p>"
+                )),
+                ("heading", "Booking Requests"),
+                ("paragraph", (
+                    "<p><b>How do booking requests work?</b><br>"
+                    "Creators can request to play at a venue (\"Request to Play Here\" on any venue page), "
+                    "and venues can invite creators (\"Invite to Perform\" on any creator page). "
+                    "The receiving party can accept or decline from their booking inbox.</p>"
+                    "<p><b>Where do I see my booking requests?</b><br>"
+                    "Click your username in the top right, then \"Booking Requests.\" You'll see requests "
+                    "that need your response, requests you've sent, and past requests.</p>"
+                )),
+                ("heading", "Community"),
+                ("paragraph", (
+                    "<p><b>What are community posts for?</b><br>"
+                    "Share announcements, opportunities, discussions, and reviews with the community. "
+                    "Not for spam or self-promotion — your profile is the place to showcase your work.</p>"
+                    "<p><b>How do I follow creators or venues?</b><br>"
+                    "Visit a creator or venue profile and click the \"Follow\" button. "
+                    "You'll receive notifications about their activity and see updates in your weekly digest.</p>"
+                )),
+                ("heading", "Selling Products"),
+                ("paragraph", (
+                    "<p><b>How do I sell through the platform?</b><br>"
+                    "Set up Stripe Connect from your profile edit page (\"Set Up Payments\"), "
+                    "then add products from \"My Products\" in the menu. Payments go directly to your "
+                    "Stripe account — the platform never holds your funds.</p>"
+                )),
+                ("heading", "Account & Privacy"),
+                ("paragraph", (
+                    "<p><b>How do I change my email or password?</b><br>"
+                    "Use the password reset link on the sign-in page, or visit /accounts/password/change/ while logged in.</p>"
+                    "<p><b>How do I report a problem?</b><br>"
+                    "Use the \"Report\" link on any profile or community post, or visit our "
+                    "<a href=\"/feedback/\">feedback page</a>.</p>"
+                    "<p><b>How do I delete my account?</b><br>"
+                    "Contact us at <a href=\"mailto:feedback@oilregionindie.com\">feedback@oilregionindie.com</a> "
+                    "and we'll remove your account and content.</p>"
+                )),
+            ],
+        )
+        home.add_child(instance=help_page)
+        help_page.save_revision().publish()
+
         # --- Blog index ---
         blog_index = BlogIndexPage(
             title="Blog",
@@ -1047,6 +1121,6 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS(
-            f"  Created {Page.objects.count() - 1} pages (home, about, feedback, terms, code of conduct, blog, 1 post)"
+            f"  Created {Page.objects.count() - 1} pages (home, about, feedback, terms, code of conduct, help, blog, 1 post)"
         ))
         self.stdout.write(self.style.SUCCESS("\nSample content seeding complete!"))

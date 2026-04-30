@@ -33,5 +33,51 @@
         {% endif %}
         {% endfor %}
     </div>
+
+    {% if page.slug == "feedback" %}
+    <!-- Inline feedback form -->
+    {% if messages %}
+    {% for message in messages %}
+    <div class="mt-6 p-4 rounded-md text-sm {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="mt-8 bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-ink-800 mb-4">Send Feedback</h2>
+        <form method="post" action="{% url 'submit_feedback' %}" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-1">Type</label>
+                <select name="feedback_type" class="form-select w-full text-sm rounded-md border-ink-200">
+                    <option value="bug">Bug Report</option>
+                    <option value="feature">Feature Request</option>
+                    <option value="general" selected>General Feedback</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-1">Your Feedback</label>
+                <textarea name="body" required rows="5"
+                          class="form-textarea w-full text-sm rounded-md border-ink-200"
+                          placeholder="Describe the bug, feature idea, or feedback..."></textarea>
+            </div>
+            {% if not request.user.is_authenticated %}
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-1">Email (optional)</label>
+                <input type="email" name="email"
+                       class="form-input w-full text-sm rounded-md border-ink-200"
+                       placeholder="So we can follow up if needed">
+            </div>
+            {% endif %}
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
