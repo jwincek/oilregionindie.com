@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Event
+from .models import BookingRequest, Event
 
 
 class EventForm(forms.ModelForm):
@@ -38,3 +38,42 @@ class EventForm(forms.ModelForm):
             "ticket_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
             "stream_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
         }
+
+
+class BookingRequestForm(forms.ModelForm):
+    """Form for creating a new booking request."""
+
+    class Meta:
+        model = BookingRequest
+        fields = [
+            "event_type",
+            "preferred_dates",
+            "message",
+        ]
+        widgets = {
+            "event_type": forms.Select(attrs={"class": "form-select"}),
+            "preferred_dates": forms.Textarea(attrs={
+                "class": "form-textarea", "rows": 3,
+                "placeholder": "e.g., Any Friday in August, or specific dates",
+            }),
+            "message": forms.Textarea(attrs={
+                "class": "form-textarea", "rows": 5,
+                "placeholder": "Introduce yourself and describe what you have in mind.",
+            }),
+        }
+
+
+class BookingResponseForm(forms.Form):
+    """Form for responding to a booking request (accept or decline)."""
+
+    action = forms.ChoiceField(
+        choices=[("accept", "Accept"), ("decline", "Decline")],
+        widget=forms.HiddenInput(),
+    )
+    response_message = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-textarea", "rows": 4,
+            "placeholder": "Optional — add a message with your response.",
+        }),
+    )

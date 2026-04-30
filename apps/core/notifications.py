@@ -39,3 +39,62 @@ def notify_admin_profile_submitted(profile):
         recipient_list=admin_emails,
         fail_silently=True,
     )
+
+
+def notify_booking_status_changed(booking):
+    """
+    Send an email notification when a booking request is created or responded to.
+    Notifies the receiving party.
+    """
+    creator_name = booking.creator.display_name
+    venue_name = booking.venue.name
+
+    if booking.status == "pending":
+        # New request — notify the recipient
+        recipient = booking.recipient_email
+        if booking.is_creator_initiated:
+            subject = f"[Oil Region Hub] Booking request from {creator_name}"
+            message = (
+                f"{creator_name} has sent a booking request to {venue_name}.\n\n"
+                f"Event type: {booking.get_event_type_display()}\n"
+                f"Preferred dates: {booking.preferred_dates}\n\n"
+                f"Message:\n{booking.message}\n\n"
+                f"View and respond to this request in your booking inbox."
+            )
+        else:
+            subject = f"[Oil Region Hub] Booking invitation from {venue_name}"
+            message = (
+                f"{venue_name} has invited {creator_name} to perform.\n\n"
+                f"Event type: {booking.get_event_type_display()}\n"
+                f"Preferred dates: {booking.preferred_dates}\n\n"
+                f"Message:\n{booking.message}\n\n"
+                f"View and respond to this invitation in your booking inbox."
+            )
+    elif booking.status in ("accepted", "declined"):
+        # Response — notify the initiator
+        recipient = booking.initiated_by.email
+        status_word = "accepted" if booking.status == "accepted" else "declined"
+        if booking.is_creator_initiated:
+            subject = f"[Oil Region Hub] {venue_name} {status_word} your booking request"
+        else:
+            subject = f"[Oil Region Hub] {creator_name} {status_word} your booking invitation"
+        message = (
+            f"Your booking request has been {status_word}.\n\n"
+            f"Creator: {creator_name}\n"
+            f"Venue: {venue_name}\n"
+        )
+        if booking.response_message:
+            message += f"\nResponse:\n{booking.response_message}\n"
+    else:
+        return  # No notification for withdrawn/expired
+
+    if not recipient:
+        return
+
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=None,
+        recipient_list=[recipient],
+        fail_silently=True,
+    )

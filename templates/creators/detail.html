@@ -57,6 +57,12 @@
                 Website
             </a>
             {% endif %}
+            {% if request.user.is_authenticated and not is_preview %}
+            <a href="{% url 'events:booking_create' direction='to-creator' profile_slug=creator.slug %}"
+               class="text-sm text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-md transition">
+                Invite to Perform
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Request — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <p class="mb-6">
+        <a href="{% url 'events:booking_inbox' %}" class="text-sm text-brand-600 hover:underline">&larr; Back to inbox</a>
+    </p>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="mb-4 p-4 rounded-md text-sm {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'info' %}bg-blue-50 text-blue-800 border border-blue-200{% else %}bg-yellow-50 text-yellow-800 border border-yellow-200{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Status badge -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-display font-bold text-ink-800">
+                {% if booking.is_creator_initiated %}
+                    {{ booking.creator.display_name }} &rarr; {{ booking.venue.name }}
+                {% else %}
+                    {{ booking.venue.name }} &rarr; {{ booking.creator.display_name }}
+                {% endif %}
+            </h1>
+            <span class="text-xs font-medium px-2.5 py-1 rounded
+                {% if booking.status == 'pending' %}bg-amber-100 text-amber-700
+                {% elif booking.status == 'accepted' %}bg-green-100 text-green-700
+                {% elif booking.status == 'declined' %}bg-red-100 text-red-700
+                {% elif booking.status == 'withdrawn' %}bg-ink-100 text-ink-500
+                {% else %}bg-ink-100 text-ink-500{% endif %}">
+                {{ booking.get_status_display }}
+            </span>
+        </div>
+
+        <dl class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <dt class="text-ink-400">Creator</dt>
+                <dd class="font-medium text-ink-800">
+                    <a href="{{ booking.creator.get_absolute_url }}" class="text-brand-600 hover:underline">{{ booking.creator.display_name }}</a>
+                </dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Venue</dt>
+                <dd class="font-medium text-ink-800">
+                    <a href="{{ booking.venue.get_absolute_url }}" class="text-brand-600 hover:underline">{{ booking.venue.name }}</a>
+                </dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Event Type</dt>
+                <dd class="font-medium text-ink-800">{{ booking.get_event_type_display }}</dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Preferred Dates</dt>
+                <dd class="font-medium text-ink-800">{{ booking.preferred_dates }}</dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Sent</dt>
+                <dd class="text-ink-600">{{ booking.created_at|date:"N j, Y g:i A" }}</dd>
+            </div>
+            {% if booking.responded_at %}
+            <div>
+                <dt class="text-ink-400">Responded</dt>
+                <dd class="text-ink-600">{{ booking.responded_at|date:"N j, Y g:i A" }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+
+    <!-- Message -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-sm font-semibold text-ink-700 mb-2">Message</h2>
+        <p class="text-sm text-ink-600 whitespace-pre-line">{{ booking.message }}</p>
+    </div>
+
+    <!-- Response message (if any) -->
+    {% if booking.response_message %}
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-sm font-semibold text-ink-700 mb-2">Response</h2>
+        <p class="text-sm text-ink-600 whitespace-pre-line">{{ booking.response_message }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Action buttons -->
+    {% if can_respond %}
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-ink-700 mb-4">Respond to this request</h2>
+
+        <form method="post" action="{% url 'events:booking_respond' pk=booking.pk %}" class="space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label for="id_response_message" class="block text-sm font-medium text-ink-700 mb-1">
+                    Message (optional)
+                </label>
+                {{ response_form.response_message }}
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit" name="action" value="accept"
+                        onclick="this.form.querySelector('[name=action]').value='accept'"
+                        class="bg-green-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition">
+                    Accept
+                </button>
+                <button type="submit" name="action" value="decline"
+                        onclick="this.form.querySelector('[name=action]').value='decline'"
+                        class="bg-ink-200 text-ink-700 px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-300 transition">
+                    Decline
+                </button>
+                {{ response_form.action }}
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Withdraw button (for initiator, while pending) -->
+    {% if booking.status == 'pending' and booking.initiated_by == request.user and not can_respond %}
+    <div class="mt-4">
+        <form method="post" action="{% url 'events:booking_withdraw' pk=booking.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    onclick="return confirm('Withdraw this booking request?')"
+                    class="text-sm text-ink-400 hover:text-red-600 transition">
+                Withdraw Request
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

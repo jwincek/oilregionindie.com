@@ -1,11 +1,15 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
-from .forms import EventForm
-from .models import Event
+from apps.core.notifications import notify_booking_status_changed
+
+from .forms import BookingRequestForm, BookingResponseForm, EventForm
+from .models import BookingRequest, Event
 
 
 @require_GET
@@ -105,3 +109,171 @@ def edit(request, slug):
         form = EventForm(instance=event)
 
     return render(request, "events/edit.html", {"form": form, "event": event})
+
+
+# ---------------------------------------------------------------------------
+# Booking requests
+# ---------------------------------------------------------------------------
+
+
+def _get_user_profiles(user):
+    """Return the user's creator profile and venue profiles (if any)."""
+    creator = getattr(user, "creator_profile", None)
+    venues = list(user.venue_profiles.all()) if hasattr(user, "venue_profiles") else []
+    # Include venues where user is a manager
+    managed_venues = list(user.managed_venue_profiles.all()) if hasattr(user, "managed_venue_profiles") else []
+    all_venues = list({v.pk: v for v in venues + managed_venues}.values())
+    return creator, all_venues
+
+
+@login_required
+def booking_inbox(request):
+    """Show all booking requests for the current user's profiles."""
+    creator, venues = _get_user_profiles(request.user)
+
+    # Build query for all requests involving the user's profiles
+    filters = Q()
+    if creator:
+        filters |= Q(creator=creator)
+    for venue in venues:
+        filters |= Q(venue=venue)
+
+    if not filters:
+        requests_list = BookingRequest.objects.none()
+    else:
+        requests_list = BookingRequest.objects.filter(filters).select_related(
+            "creator", "venue", "initiated_by"
+        ).distinct()
+
+    # Split into actionable (pending, received) and other
+    received_pending = [r for r in requests_list if r.status == "pending" and r.can_be_responded_to_by(request.user)]
+    sent_pending = [r for r in requests_list if r.status == "pending" and not r.can_be_responded_to_by(request.user)]
+    resolved = [r for r in requests_list if r.status != "pending"]
+
+    return render(request, "events/booking_inbox.html", {
+        "received_pending": received_pending,
+        "sent_pending": sent_pending,
+        "resolved": resolved,
+    })
+
+
+@login_required
+def booking_detail(request, pk):
+    """View a booking request and optionally respond."""
+    booking = get_object_or_404(
+        BookingRequest.objects.select_related("creator", "venue", "initiated_by"),
+        pk=pk,
+    )
+
+    if not booking.can_be_viewed_by(request.user):
+        raise Http404
+
+    can_respond = booking.status == "pending" and booking.can_be_responded_to_by(request.user)
+    response_form = BookingResponseForm() if can_respond else None
+
+    return render(request, "events/booking_detail.html", {
+        "booking": booking,
+        "can_respond": can_respond,
+        "response_form": response_form,
+    })
+
+
+@login_required
+@require_POST
+def booking_respond(request, pk):
+    """Accept or decline a booking request."""
+    booking = get_object_or_404(BookingRequest, pk=pk)
+
+    if booking.status != "pending" or not booking.can_be_responded_to_by(request.user):
+        return HttpResponseForbidden()
+
+    form = BookingResponseForm(request.POST)
+    if form.is_valid():
+        action = form.cleaned_data["action"]
+        booking.response_message = form.cleaned_data.get("response_message", "")
+        booking.responded_at = timezone.now()
+
+        if action == "accept":
+            booking.status = BookingRequest.Status.ACCEPTED
+            messages.success(request, "Booking request accepted.")
+        else:
+            booking.status = BookingRequest.Status.DECLINED
+            messages.info(request, "Booking request declined.")
+
+        booking.save(update_fields=["status", "response_message", "responded_at", "updated_at"])
+        notify_booking_status_changed(booking)
+
+    return redirect("events:booking_detail", pk=booking.pk)
+
+
+@login_required
+@require_POST
+def booking_withdraw(request, pk):
+    """Withdraw a pending booking request (initiator only)."""
+    booking = get_object_or_404(BookingRequest, pk=pk)
+
+    if booking.status != "pending" or booking.initiated_by != request.user:
+        return HttpResponseForbidden()
+
+    booking.status = BookingRequest.Status.WITHDRAWN
+    booking.save(update_fields=["status", "updated_at"])
+    messages.info(request, "Booking request withdrawn.")
+
+    return redirect("events:booking_inbox")
+
+
+@login_required
+def booking_create(request, direction, profile_slug):
+    """
+    Create a booking request.
+    direction: 'to-venue' (creator initiates) or 'to-creator' (venue initiates)
+    profile_slug: the target profile's slug
+    """
+    from apps.creators.models import CreatorProfile
+    from apps.venues.models import VenueProfile
+
+    if direction == "to-venue":
+        # Creator is requesting to play at a venue
+        venue = get_object_or_404(VenueProfile, slug=profile_slug, publish_status="published")
+        creator = getattr(request.user, "creator_profile", None)
+        if not creator:
+            messages.error(request, "You need a creator profile to send booking requests.")
+            return redirect("creators:setup")
+        target_name = venue.name
+        booking_direction = BookingRequest.Direction.CREATOR_TO_VENUE
+    elif direction == "to-creator":
+        # Venue is inviting a creator
+        creator = get_object_or_404(CreatorProfile, slug=profile_slug, publish_status="published")
+        # Find which venue the user manages
+        user_venues = list(request.user.venue_profiles.all()) + list(request.user.managed_venue_profiles.all())
+        if not user_venues:
+            messages.error(request, "You need a venue profile to send booking invitations.")
+            return redirect("venues:setup")
+        venue = user_venues[0]  # Default to first venue; could add selection if user has multiple
+        target_name = creator.display_name
+        booking_direction = BookingRequest.Direction.VENUE_TO_CREATOR
+    else:
+        raise Http404
+
+    if request.method == "POST":
+        form = BookingRequestForm(request.POST)
+        if form.is_valid():
+            booking = form.save(commit=False)
+            booking.creator = creator
+            booking.venue = venue
+            booking.initiated_by = request.user
+            booking.direction = booking_direction
+            booking.save()
+            notify_booking_status_changed(booking)
+            messages.success(request, f"Booking request sent to {target_name}.")
+            return redirect("events:booking_inbox")
+    else:
+        form = BookingRequestForm()
+
+    return render(request, "events/booking_create.html", {
+        "form": form,
+        "direction": direction,
+        "target_name": target_name,
+        "creator": creator,
+        "venue": venue,
+    })
