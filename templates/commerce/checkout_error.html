@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout Error — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto text-center py-12">
+    <div class="bg-red-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </div>
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Checkout Failed</h1>
+    <p class="text-ink-500 mb-6">
+        Something went wrong setting up your purchase. No payment was taken. Please try again.
+    </p>
+    {% if product %}
+    <a href="{{ product.get_absolute_url }}" class="text-brand-600 hover:underline font-medium">
+        Back to {{ product.title }}
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

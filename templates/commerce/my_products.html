@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}My Products — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-display font-bold text-ink-800">My Products</h1>
+        <div class="flex gap-3">
+            <a href="{% url 'commerce:my_sales' %}"
+               class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
+                View Sales
+            </a>
+            <a href="{% url 'commerce:create_product' %}"
+               class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                Add Product
+            </a>
+        </div>
+    </div>
+
+    {% if not profile.can_accept_payments %}
+    <div class="mb-6 p-4 rounded-md bg-amber-50 border border-amber-200">
+        <p class="text-sm text-amber-800">
+            <span class="font-medium">Payments not set up</span> —
+            <a href="{% url 'commerce:connect_onboarding' %}" class="underline">Connect with Stripe</a>
+            to start selling.
+        </p>
+    </div>
+    {% endif %}
+
+    {% if products %}
+    <div class="space-y-3">
+        {% for product in products %}
+        <div class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+            <div>
+                <h2 class="font-medium text-ink-800">{{ product.title }}</h2>
+                <div class="flex items-center gap-3 mt-1 text-sm text-ink-500">
+                    <span>{{ product.get_product_type_display }}</span>
+                    <span>{{ product.price_display }}</span>
+                    {% if product.is_digital %}
+                    <span class="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded">Digital</span>
+                    {% endif %}
+                    {% if not product.is_active %}
+                    <span class="bg-ink-100 text-ink-500 text-xs px-1.5 py-0.5 rounded">Inactive</span>
+                    {% elif not product.in_stock %}
+                    <span class="bg-red-100 text-red-600 text-xs px-1.5 py-0.5 rounded">Out of Stock</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ product.get_absolute_url }}"
+                   class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">View</a>
+                <a href="{% url 'commerce:edit_product' pk=product.pk %}"
+                   class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">Edit</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-ink-400">
+        <p class="text-lg">No products yet.</p>
+        <p class="mt-2">
+            {% if profile.can_accept_payments %}
+            <a href="{% url 'commerce:create_product' %}" class="text-brand-600 hover:underline">Add your first product</a> to start selling.
+            {% else %}
+            <a href="{% url 'commerce:connect_onboarding' %}" class="text-brand-600 hover:underline">Set up payments</a> first, then add products.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

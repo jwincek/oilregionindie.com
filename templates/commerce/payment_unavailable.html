@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Unavailable — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto text-center py-12">
+    <div class="bg-yellow-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+    </div>
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Payment Unavailable</h1>
+    <p class="text-ink-500 mb-6">
+        This creator hasn't completed their payment setup yet. Check back later or contact them directly.
+    </p>
+    <a href="{{ product.creator.get_absolute_url }}" class="text-brand-600 hover:underline font-medium">
+        View {{ product.creator.display_name }}'s profile
+    </a>
+</div>
+{% endblock %}

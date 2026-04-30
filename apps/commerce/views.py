@@ -10,9 +10,12 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from django.contrib import messages
+
 from apps.creators.models import CreatorProfile
 
 from . import stripe_service
+from .forms import ProductForm
 from .models import Order, OrderItem, Product
 
 logger = logging.getLogger(__name__)
@@ -162,6 +165,85 @@ def _handle_payment_failed(intent):
     """Mark order as failed."""
     orders = Order.objects.filter(stripe_payment_id=intent["id"])
     orders.update(status=Order.Status.FAILED)
+
+
+# ---------------------------------------------------------------------------
+# Creator product management
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def my_products(request):
+    """List the current creator's products."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+    products = profile.products.order_by("-created_at")
+    return render(request, "commerce/my_products.html", {
+        "profile": profile,
+        "products": products,
+    })
+
+
+@login_required
+def create_product(request):
+    """Create a new product."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+
+    if not profile.can_accept_payments:
+        messages.info(request, "Set up Stripe Connect before adding products.")
+        return redirect("commerce:connect_onboarding")
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.creator = profile
+            product.save()
+            messages.success(request, f'"{product.title}" created.')
+            return redirect("commerce:my_products")
+    else:
+        form = ProductForm()
+
+    return render(request, "commerce/product_form.html", {
+        "form": form,
+        "profile": profile,
+    })
+
+
+@login_required
+def edit_product(request, pk):
+    """Edit an existing product."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+    product = get_object_or_404(Product, pk=pk, creator=profile)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'"{product.title}" updated.')
+            return redirect("commerce:my_products")
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, "commerce/product_form.html", {
+        "form": form,
+        "profile": profile,
+        "product": product,
+    })
+
+
+@login_required
+def my_sales(request):
+    """Show orders containing the current creator's products."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+    items = OrderItem.objects.filter(
+        creator=profile,
+        order__status__in=[Order.Status.PAID, Order.Status.FULFILLED, Order.Status.PARTIALLY_FULFILLED],
+    ).select_related("order", "product").order_by("-order__created_at")
+
+    return render(request, "commerce/my_sales.html", {
+        "profile": profile,
+        "items": items,
+    })
 
 
 # --- Stripe Connect onboarding ---

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Out of Stock — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto text-center py-12">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Sold Out</h1>
+    <p class="text-ink-500 mb-6">
+        <strong>{{ product.title }}</strong> is currently out of stock.
+    </p>
+    <a href="{{ product.creator.get_absolute_url }}" class="text-brand-600 hover:underline font-medium">
+        View {{ product.creator.display_name }}'s other work
+    </a>
+</div>
+{% endblock %}

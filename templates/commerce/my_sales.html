@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Sales — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Sales</h1>
+        <a href="{% url 'commerce:my_products' %}"
+           class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
+            My Products
+        </a>
+    </div>
+
+    {% if items %}
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-ink-50 text-ink-600">
+                <tr>
+                    <th class="text-left px-4 py-3 font-medium">Product</th>
+                    <th class="text-left px-4 py-3 font-medium">Buyer</th>
+                    <th class="text-right px-4 py-3 font-medium">Qty</th>
+                    <th class="text-right px-4 py-3 font-medium">Amount</th>
+                    <th class="text-center px-4 py-3 font-medium">Status</th>
+                    <th class="text-left px-4 py-3 font-medium">Date</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-100">
+                {% for item in items %}
+                <tr>
+                    <td class="px-4 py-3 font-medium text-ink-800">{{ item.product.title }}</td>
+                    <td class="px-4 py-3 text-ink-500">{{ item.order.buyer_email|default:"—" }}</td>
+                    <td class="px-4 py-3 text-right text-ink-600">{{ item.quantity }}</td>
+                    <td class="px-4 py-3 text-right text-ink-800">{{ item.product.price_display }}</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if item.is_fulfilled %}
+                        <span class="bg-green-100 text-green-700 text-xs px-1.5 py-0.5 rounded">Fulfilled</span>
+                        {% else %}
+                        <span class="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-ink-400">{{ item.order.created_at|date:"M j, Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-ink-400">
+        <p class="text-lg">No sales yet.</p>
+        <p class="mt-2">When customers purchase your products, they'll appear here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
