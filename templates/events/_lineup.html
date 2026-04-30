@@ -1,0 +1,58 @@
+<div id="lineup-container">
+    {% if slots %}
+    <div class="space-y-2 mb-4">
+        {% for slot in slots %}
+        <div class="flex items-center justify-between bg-ink-50 rounded-md px-3 py-2.5 group">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="text-xs text-ink-400 font-mono w-6 text-center">{{ slot.sort_order }}</span>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-ink-800 truncate">{{ slot.creator.display_name }}</p>
+                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                        {% if slot.start_time %}
+                        <span class="text-xs text-ink-500">{{ slot.start_time|time:"g:i A" }}{% if slot.end_time %} – {{ slot.end_time|time:"g:i A" }}{% endif %}</span>
+                        {% endif %}
+                        {% if slot.venue_area %}
+                        <span class="text-xs text-ink-400">{{ slot.venue_area.name }}</span>
+                        {% endif %}
+                        {% if slot.set_description %}
+                        <span class="text-xs text-ink-400 italic">{{ slot.set_description }}</span>
+                        {% endif %}
+                        {% if slot.status == "cancelled" %}
+                        <span class="bg-red-100 text-red-600 text-xs px-1.5 py-0.5 rounded">Cancelled</span>
+                        {% elif slot.status == "pending" %}
+                        <span class="bg-amber-100 text-amber-600 text-xs px-1.5 py-0.5 rounded">TBC</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                <button hx-get="{% url 'events:edit_slot' slug=event.slug pk=slot.pk %}"
+                        hx-target="#slot-form-area"
+                        hx-swap="innerHTML"
+                        class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">
+                    Edit
+                </button>
+                <button hx-post="{% url 'events:delete_slot' slug=event.slug pk=slot.pk %}"
+                        hx-target="#lineup-container"
+                        hx-swap="outerHTML"
+                        hx-confirm="Remove this slot?"
+                        class="text-xs text-ink-400 hover:text-red-600 px-2 py-1 transition">
+                    Remove
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-ink-400 mb-4">No lineup yet. Add creators to get started.</p>
+    {% endif %}
+
+    <button hx-get="{% url 'events:add_slot' slug=event.slug %}"
+            hx-target="#slot-form-area"
+            hx-swap="innerHTML"
+            class="text-sm text-brand-600 hover:text-brand-700 font-medium transition">
+        + Add to Lineup
+    </button>
+
+    <div id="slot-form-area" class="mt-3"></div>
+</div>

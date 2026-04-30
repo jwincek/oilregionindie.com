@@ -8,8 +8,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.notifications import notify_booking_status_changed
 
-from .forms import BookingRequestForm, BookingResponseForm, EventForm
-from .models import BookingRequest, Event
+from .forms import BookingRequestForm, BookingResponseForm, EventForm, EventSlotForm
+from .models import BookingRequest, Event, EventSlot
 
 
 @require_GET
@@ -109,6 +109,95 @@ def edit(request, slug):
         form = EventForm(instance=event)
 
     return render(request, "events/edit.html", {"form": form, "event": event})
+
+
+# ---------------------------------------------------------------------------
+# Lineup management (HTMX-powered)
+# ---------------------------------------------------------------------------
+
+
+def _get_editable_event(request, slug):
+    """Get an event the current user can edit, or 403."""
+    event = get_object_or_404(Event, slug=slug)
+    if not event.can_be_edited_by(request.user):
+        return None, HttpResponseForbidden()
+    return event, None
+
+
+def _lineup_context(event):
+    return {
+        "event": event,
+        "slots": event.lineup,
+    }
+
+
+@login_required
+def lineup(request, slug):
+    """List lineup slots for an event (HTMX partial)."""
+    event, err = _get_editable_event(request, slug)
+    if err:
+        return err
+    return render(request, "events/_lineup.html", _lineup_context(event))
+
+
+@login_required
+def add_slot(request, slug):
+    """Add a slot to an event's lineup via HTMX."""
+    event, err = _get_editable_event(request, slug)
+    if err:
+        return err
+
+    if request.method == "POST":
+        form = EventSlotForm(request.POST, event=event)
+        if form.is_valid():
+            slot = form.save(commit=False)
+            slot.event = event
+            slot.save()
+            return render(request, "events/_lineup.html", _lineup_context(event))
+    else:
+        # Default sort_order to next in sequence
+        next_order = (event.slots.count()) * 1
+        form = EventSlotForm(event=event, initial={"sort_order": next_order})
+
+    return render(request, "events/_slot_form.html", {
+        "form": form,
+        "event": event,
+    })
+
+
+@login_required
+def edit_slot(request, slug, pk):
+    """Edit a lineup slot via HTMX."""
+    event, err = _get_editable_event(request, slug)
+    if err:
+        return err
+    slot = get_object_or_404(EventSlot, pk=pk, event=event)
+
+    if request.method == "POST":
+        form = EventSlotForm(request.POST, instance=slot, event=event)
+        if form.is_valid():
+            form.save()
+            return render(request, "events/_lineup.html", _lineup_context(event))
+    else:
+        form = EventSlotForm(instance=slot, event=event)
+
+    return render(request, "events/_slot_form.html", {
+        "form": form,
+        "event": event,
+        "slot": slot,
+    })
+
+
+@login_required
+@require_POST
+def delete_slot(request, slug, pk):
+    """Remove a slot from an event's lineup via HTMX."""
+    event, err = _get_editable_event(request, slug)
+    if err:
+        return err
+    slot = get_object_or_404(EventSlot, pk=pk, event=event)
+    slot.delete()
+    return render(request, "events/_lineup.html", _lineup_context(event))
 
 
 # ---------------------------------------------------------------------------

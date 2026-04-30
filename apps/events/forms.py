@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import BookingRequest, Event
+from .models import BookingRequest, Event, EventSlot
 
 
 class EventForm(forms.ModelForm):
@@ -77,3 +77,45 @@ class BookingResponseForm(forms.Form):
             "placeholder": "Optional — add a message with your response.",
         }),
     )
+
+
+class EventSlotForm(forms.ModelForm):
+    """Form for adding/editing a slot in an event lineup."""
+
+    class Meta:
+        model = EventSlot
+        fields = [
+            "creator",
+            "start_time",
+            "end_time",
+            "venue_area",
+            "set_description",
+            "sort_order",
+            "status",
+        ]
+        widgets = {
+            "creator": forms.Select(attrs={"class": "form-select"}),
+            "start_time": forms.TimeInput(attrs={"class": "form-input", "type": "time"}),
+            "end_time": forms.TimeInput(attrs={"class": "form-input", "type": "time"}),
+            "venue_area": forms.Select(attrs={"class": "form-select"}),
+            "set_description": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "e.g., Acoustic Set, Live Painting",
+            }),
+            "sort_order": forms.NumberInput(attrs={"class": "form-input w-20"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def __init__(self, *args, event=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Limit venue_area choices to the event's venue (if any)
+        if event and event.venue:
+            self.fields["venue_area"].queryset = event.venue.areas.all()
+        else:
+            self.fields["venue_area"].queryset = self.fields["venue_area"].queryset.none()
+            self.fields["venue_area"].widget = forms.HiddenInput()
+        # Only show published creators
+        from apps.creators.models import CreatorProfile
+        self.fields["creator"].queryset = CreatorProfile.objects.filter(
+            publish_status="published"
+        ).order_by("display_name")

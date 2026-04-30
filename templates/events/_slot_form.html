@@ -1,0 +1,69 @@
+<div class="bg-white border border-ink-200 rounded-lg p-4 mt-2">
+    <form {% if slot %}
+          hx-post="{% url 'events:edit_slot' slug=event.slug pk=slot.pk %}"
+          {% else %}
+          hx-post="{% url 'events:add_slot' slug=event.slug %}"
+          {% endif %}
+          hx-target="#lineup-container"
+          hx-swap="outerHTML"
+          class="space-y-3">
+        {% csrf_token %}
+
+        <!-- Creator -->
+        <div>
+            <label for="{{ form.creator.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Creator</label>
+            {{ form.creator }}
+            {% if form.creator.errors %}<p class="text-xs text-red-600 mt-0.5">{{ form.creator.errors.0 }}</p>{% endif %}
+        </div>
+
+        <!-- Times and area -->
+        <div class="flex flex-wrap gap-3">
+            <div class="w-28">
+                <label for="{{ form.start_time.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Start</label>
+                {{ form.start_time }}
+            </div>
+            <div class="w-28">
+                <label for="{{ form.end_time.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">End</label>
+                {{ form.end_time }}
+            </div>
+            {% if not form.venue_area.is_hidden %}
+            <div class="flex-1 min-w-[140px]">
+                <label for="{{ form.venue_area.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Stage/Area</label>
+                {{ form.venue_area }}
+            </div>
+            {% else %}
+            {{ form.venue_area }}
+            {% endif %}
+        </div>
+
+        <!-- Description, order, status -->
+        <div class="flex flex-wrap gap-3">
+            <div class="flex-1 min-w-[200px]">
+                <label for="{{ form.set_description.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Set Description</label>
+                {{ form.set_description }}
+            </div>
+            <div class="w-20">
+                <label for="{{ form.sort_order.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Order</label>
+                {{ form.sort_order }}
+            </div>
+            <div class="w-32">
+                <label for="{{ form.status.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Status</label>
+                {{ form.status }}
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <button type="button"
+                    hx-get="{% url 'events:lineup' slug=event.slug %}"
+                    hx-target="#lineup-container"
+                    hx-swap="outerHTML"
+                    class="text-xs text-ink-500 hover:text-ink-700 px-3 py-1.5 transition">
+                Cancel
+            </button>
+            <button type="submit"
+                    class="bg-ink-800 text-white text-xs px-4 py-1.5 rounded-md font-medium hover:bg-ink-700 transition">
+                {% if slot %}Save{% else %}Add{% endif %}
+            </button>
+        </div>
+    </form>
+</div>

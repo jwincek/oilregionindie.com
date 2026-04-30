@@ -35,5 +35,15 @@
             </button>
         </div>
     </form>
+
+    <!-- Lineup management (HTMX-powered, outside the event form) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Lineup</h2>
+        <div hx-get="{% url 'events:lineup' slug=event.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading lineup...</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
