@@ -9,7 +9,7 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 from apps.core.views import (
     follow_creator, follow_venue, mark_all_read,
-    notification_inbox, preferences, toggle_like, welcome,
+    notification_inbox, preferences, search, toggle_like, welcome,
 )
 
 urlpatterns = [
@@ -29,6 +29,7 @@ urlpatterns = [
     path("notifications/", notification_inbox, name="notifications"),
     path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),
     path("preferences/", preferences, name="preferences"),
+    path("search/", search, name="search"),
     # Project apps
     path("creators/", include("apps.creators.urls", namespace="creators")),
     path("venues/", include("apps.venues.urls", namespace="venues")),

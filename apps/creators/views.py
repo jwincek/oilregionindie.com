@@ -35,6 +35,11 @@ def directory(request):
     if skill_slug:
         creators = creators.filter(skills__slug=skill_slug)
 
+    # Filter by genre
+    genre_slug = request.GET.get("genre")
+    if genre_slug:
+        creators = creators.filter(genres__slug=genre_slug)
+
     # Filter by availability
     availability_slug = request.GET.get("availability")
     if availability_slug:
@@ -62,6 +67,8 @@ def directory(request):
 
     creators = creators.distinct()
     disciplines = Discipline.objects.prefetch_related("skills").all()
+    from apps.creators.models import Genre
+    genres = Genre.objects.all()
     availability_types = AvailabilityType.for_creators()
 
     # Build skills list — if a discipline is selected, show only its skills
@@ -76,11 +83,13 @@ def directory(request):
         "creators": creators,
         "disciplines": disciplines,
         "available_skills": available_skills,
+        "genres": genres,
         "availability_types": availability_types,
         "profile_types": CreatorProfile.ProfileType.choices,
         "current_profile_type": profile_type,
         "current_discipline": discipline_slug,
         "current_skill": skill_slug,
+        "current_genre": genre_slug,
         "current_availability": availability_slug,
         "current_location": location or "",
         "query": query or "",

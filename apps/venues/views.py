@@ -50,14 +50,20 @@ def directory(request):
     venues = venues.distinct()
     availability_types = AvailabilityType.for_venues()
 
+    from apps.venues.models import Amenity
+    amenities = Amenity.objects.all()
+
     template = "venues/_venue_list.html" if request.htmx else "venues/directory.html"
 
     return render(request, template, {
         "venues": venues,
         "venue_types": VenueProfile.VenueType.choices,
         "availability_types": availability_types,
+        "amenities": amenities,
         "current_type": venue_type,
+        "current_amenity": amenity,
         "current_availability": availability_slug,
+        "current_location": location or "",
         "query": query or "",
     })
 

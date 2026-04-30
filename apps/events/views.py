@@ -30,18 +30,35 @@ def listing(request):
             Q(venue__city__icontains=location) | Q(venue__state__icontains=location)
         )
 
+    venue_slug = request.GET.get("venue")
+    if venue_slug:
+        events = events.filter(venue__slug=venue_slug)
+
+    cost = request.GET.get("cost")
+    if cost == "free":
+        events = events.filter(is_free=True)
+    elif cost == "paid":
+        events = events.filter(is_free=False)
+
     query = request.GET.get("q")
     if query:
         events = events.filter(
             Q(title__icontains=query) | Q(description__icontains=query)
         )
 
+    from apps.venues.models import VenueProfile
+    venues = VenueProfile.objects.filter(publish_status="published").order_by("name")
+
     template = "events/_event_list.html" if request.htmx else "events/listing.html"
 
     return render(request, template, {
         "events": events,
         "event_types": Event.EventType.choices,
+        "venues": venues,
         "current_type": event_type,
+        "current_location": location or "",
+        "current_venue": venue_slug or "",
+        "current_cost": cost or "",
         "query": query or "",
     })
 

@@ -58,6 +58,18 @@
             </select>
         </div>
         <div class="min-w-[140px]">
+            <label for="genre" class="block text-sm font-medium text-ink-600 mb-1">Genre</label>
+            <select name="genre" id="genre"
+                    hx-get="{% url 'creators:directory' %}" hx-target="#creator-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">All Genres</option>
+                {% for g in genres %}
+                <option value="{{ g.slug }}" {% if current_genre == g.slug %}selected{% endif %}>{{ g.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[140px]">
             <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
             <input type="text" name="location" id="location" value="{{ current_location }}"
                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"

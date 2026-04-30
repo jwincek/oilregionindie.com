@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from .models import Notification, UserProfile
 
@@ -172,3 +173,72 @@ def preferences(request):
         return redirect("preferences")
 
     return render(request, "core/preferences.html", {"profile": profile})
+
+
+# ---------------------------------------------------------------------------
+# Global search
+# ---------------------------------------------------------------------------
+
+
+@require_GET
+def search(request):
+    """Search across creators, venues, events, and community posts."""
+    query = request.GET.get("q", "").strip()
+
+    results = {
+        "creators": [],
+        "venues": [],
+        "events": [],
+        "posts": [],
+    }
+
+    if query:
+        from apps.creators.models import CreatorProfile
+        from apps.venues.models import VenueProfile
+        from apps.events.models import Event
+        from apps.community.models import CommunityPost
+        from django.utils import timezone
+
+        results["creators"] = CreatorProfile.objects.filter(
+            publish_status="published",
+        ).filter(
+            Q(display_name__icontains=query)
+            | Q(bio__icontains=query)
+            | Q(location__icontains=query)
+            | Q(disciplines__name__icontains=query)
+            | Q(skills__name__icontains=query)
+            | Q(genres__name__icontains=query)
+        ).distinct()[:8]
+
+        results["venues"] = VenueProfile.objects.filter(
+            publish_status="published",
+        ).filter(
+            Q(name__icontains=query)
+            | Q(description__icontains=query)
+            | Q(city__icontains=query)
+            | Q(amenities__name__icontains=query)
+        ).distinct()[:8]
+
+        results["events"] = Event.objects.filter(
+            is_published=True,
+            start_datetime__gte=timezone.now(),
+        ).filter(
+            Q(title__icontains=query)
+            | Q(description__icontains=query)
+            | Q(venue__name__icontains=query)
+        ).select_related("venue").distinct()[:8]
+
+        results["posts"] = CommunityPost.objects.filter(
+            parent__isnull=True,
+        ).filter(
+            Q(title__icontains=query)
+            | Q(body__icontains=query)
+        ).select_related("author")[:8]
+
+    total = sum(len(r) for r in results.values())
+
+    return render(request, "core/search.html", {
+        "query": query,
+        "results": results,
+        "total": total,
+    })

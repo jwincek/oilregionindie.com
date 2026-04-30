@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{% if query %}Search: {{ query }}{% else %}Search{% endif %} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-6">Search</h1>
+
+    <form method="get" class="mb-8">
+        <div class="flex gap-3">
+            <input type="text" name="q" value="{{ query }}" autofocus
+                   class="flex-1 rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm px-4 py-2.5"
+                   placeholder="Search creators, venues, events, and community...">
+            <button type="submit"
+                    class="bg-ink-800 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                Search
+            </button>
+        </div>
+    </form>
+
+    {% if query %}
+    <p class="text-sm text-ink-500 mb-6">{{ total }} result{{ total|pluralize }} for "{{ query }}"</p>
+
+    <!-- Creators -->
+    {% if results.creators %}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-ink-700 mb-3">Creators</h2>
+        <div class="space-y-2">
+            {% for creator in results.creators %}
+            <a href="{{ creator.get_absolute_url }}"
+               class="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition">
+                <p class="font-medium text-ink-800">{{ creator.display_name }}</p>
+                <p class="text-sm text-brand-600">{{ creator.discipline_list }}</p>
+                {% if creator.location %}
+                <p class="text-sm text-ink-400 mt-0.5">{{ creator.location }}</p>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% if results.creators|length >= 8 %}
+        <p class="mt-2 text-sm"><a href="{% url 'creators:directory' %}?q={{ query }}" class="text-brand-600 hover:underline">See all matching creators</a></p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Venues -->
+    {% if results.venues %}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-ink-700 mb-3">Venues</h2>
+        <div class="space-y-2">
+            {% for venue in results.venues %}
+            <a href="{{ venue.get_absolute_url }}"
+               class="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition">
+                <p class="font-medium text-ink-800">{{ venue.name }}</p>
+                <p class="text-sm text-ink-500">{{ venue.get_venue_type_display }} &middot; {{ venue.city }}, {{ venue.state }}</p>
+            </a>
+            {% endfor %}
+        </div>
+        {% if results.venues|length >= 8 %}
+        <p class="mt-2 text-sm"><a href="{% url 'venues:directory' %}?q={{ query }}" class="text-brand-600 hover:underline">See all matching venues</a></p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Events -->
+    {% if results.events %}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-ink-700 mb-3">Events</h2>
+        <div class="space-y-2">
+            {% for event in results.events %}
+            <a href="{{ event.get_absolute_url }}"
+               class="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition">
+                <p class="font-medium text-ink-800">{{ event.title }}</p>
+                <p class="text-sm text-ink-500">
+                    {{ event.start_datetime|date:"N j, Y" }}{% if event.venue %} &middot; {{ event.venue.name }}{% endif %}
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+        {% if results.events|length >= 8 %}
+        <p class="mt-2 text-sm"><a href="{% url 'events:listing' %}?q={{ query }}" class="text-brand-600 hover:underline">See all matching events</a></p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Community Posts -->
+    {% if results.posts %}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-ink-700 mb-3">Community</h2>
+        <div class="space-y-2">
+            {% for post in results.posts %}
+            <a href="{% url 'community:detail' pk=post.pk %}"
+               class="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition">
+                <p class="font-medium text-ink-800">{% if post.title %}{{ post.title }}{% else %}{{ post.body|truncatewords:12 }}{% endif %}</p>
+                <p class="text-sm text-ink-400">{{ post.get_post_type_display }} &middot; {{ post.created_at|timesince }} ago</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not total %}
+    <div class="text-center py-12 text-ink-400">
+        <p class="text-lg">No results found for "{{ query }}"</p>
+        <p class="mt-2">Try a different search term or browse the directories.</p>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}

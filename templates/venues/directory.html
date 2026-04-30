@@ -31,6 +31,24 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="min-w-[160px]">
+            <label for="amenity" class="block text-sm font-medium text-ink-600 mb-1">Amenity</label>
+            <select name="amenity" id="amenity"
+                    hx-get="{% url 'venues:directory' %}" hx-target="#venue-grid" hx-swap="innerHTML"
+                    hx-include="closest form" hx-push-url="true"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                <option value="">Any Amenity</option>
+                {% for am in amenities %}
+                <option value="{{ am.slug }}" {% if current_amenity == am.slug %}selected{% endif %}>{{ am.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-[140px]">
+            <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
+            <input type="text" name="location" id="location" value="{{ current_location }}"
+                   class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                   placeholder="City or state...">
+        </div>
         <div class="min-w-[180px]">
             <label for="availability" class="block text-sm font-medium text-ink-600 mb-1">Availability</label>
             <select name="availability" id="availability"
