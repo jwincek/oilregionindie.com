@@ -63,9 +63,9 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <!-- Alpine.js (searchable-select must load before Alpine) -->
     <script src="/static/js/searchable-select.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
 
     {% block extra_head %}{% endblock %}
 

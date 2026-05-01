@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load embed_tags demo_tags initials %}
+{% load embed_tags demo_tags initials banner %}
 
 {% block title %}{{ creator.display_name }} — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{{ creator.display_name }} — {{ creator.discipline_list }}. {{ creator.location }}{% endblock %}
@@ -21,7 +21,7 @@
         <img src="{{ creator.header_image.url }}" alt="" class="w-full h-full object-cover">
     </div>
     {% else %}
-    <div class="h-48 md:h-64 bg-gradient-to-br from-ink-700 to-ink-800"></div>
+    <div class="h-48 md:h-64 overflow-hidden">{% banner_pattern creator.display_name %}</div>
     {% endif %}
 
     <div class="px-6 py-6 md:flex md:items-end md:relative">

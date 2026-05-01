@@ -1,4 +1,49 @@
-{% load demo_tags %}
+{% load demo_tags banner filter_tags %}
+
+<!-- Active filters & result count -->
+<div class="flex flex-wrap items-center gap-2 mb-4">
+    <p class="text-sm text-ink-500 mr-2">{{ venues|length }} venue{{ venues|length|pluralize }}</p>
+
+    {% if query %}
+    {% url_without_param "/venues/" "q" as clear_q %}
+    <a href="{{ clear_q }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        "{{ query }}" <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_type %}
+    {% url_without_param "/venues/" "type" as clear_type %}
+    <a href="{{ clear_type }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_type|title }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_amenity_label %}
+    {% url_without_param "/venues/" "amenity" as clear_amenity %}
+    <a href="{{ clear_amenity }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_amenity_label }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_location %}
+    {% url_without_param "/venues/" "location" as clear_loc %}
+    <a href="{{ clear_loc }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_location }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_availability %}
+    {% url_without_param "/venues/" "availability" as clear_avail %}
+    <a href="{{ clear_avail }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_availability }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_type or current_amenity or current_availability or current_location or query %}
+    <a href="{% url 'venues:directory' %}" class="text-xs text-ink-400 hover:text-brand-600 transition ml-1">Clear all</a>
+    {% endif %}
+</div>
+
 {% if venues %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for venue in venues %}
@@ -15,7 +60,7 @@
                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
         </div>
         {% else %}
-        <div class="h-32 bg-gradient-to-br from-ink-600 to-ink-700"></div>
+        <div class="h-32 overflow-hidden">{% banner_pattern venue.name %}</div>
         {% endif %}
         <div class="p-4">
             <h3 class="font-semibold text-ink-800">

@@ -88,15 +88,7 @@
     </form>
 </div>
 
-<!-- Active filters & result count -->
-<div class="flex items-center justify-between mb-4">
-    <p class="text-sm text-ink-500">{{ creators|length }} creator{{ creators|length|pluralize }}</p>
-    {% if current_profile_type or current_discipline or current_skill or current_genre or current_availability or current_location or query %}
-    <a href="{% url 'creators:directory' %}" class="text-sm text-ink-400 hover:text-brand-600 transition">Clear all filters</a>
-    {% endif %}
-</div>
-
-<!-- Creator grid -->
+<!-- Results (includes filter pills — swapped by HTMX) -->
 <div id="creator-grid">
     {% include "creators/_creator_list.html" %}
 </div>

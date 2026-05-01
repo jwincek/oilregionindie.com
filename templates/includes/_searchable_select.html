@@ -1,34 +1,12 @@
-{% comment %}
-Searchable select dropdown using Alpine.js.
-
-Required context:
-  ss_name        — form field name (e.g., "skill")
-  ss_label       — display label (e.g., "Skill")
-  ss_options_json — JSON array from {% searchable_options_json %} tag
-  ss_current     — currently selected value (or "")
-  ss_current_label — currently selected display label (or "")
-  ss_placeholder — placeholder text (optional)
-  ss_hx_url      — HTMX target URL for auto-submit on change
-  ss_hx_target   — HTMX target element ID
-{% endcomment %}
-
-<div class="min-w-[160px] relative"
-     x-data="searchableSelect({
-         options: {{ ss_options_json }},
-         selectedValue: '{{ ss_current|default:"" }}',
-         selectedLabel: '{{ ss_current_label|default:"" }}',
-     })"
-     @click.away="open = false">
+{% load filter_tags %}{% searchable_select_data ss_options_json ss_current ss_current_label as ss_xdata %}<div class="min-w-[160px] relative" x-data="{{ ss_xdata }}" @click.away="open = false">
 
     <label class="block text-sm font-medium text-ink-600 mb-1">{{ ss_label }}</label>
 
-    <!-- Hidden input for form submission / HTMX -->
     <input type="hidden" name="{{ ss_name }}" x-ref="hiddenInput"
            :value="selectedValue"
            hx-get="{{ ss_hx_url }}" hx-target="{{ ss_hx_target }}" hx-swap="innerHTML"
            hx-include="closest form" hx-push-url="true" hx-trigger="change">
 
-    <!-- Visible input -->
     <div class="relative">
         <input type="text"
                x-show="open || !selectedLabel"
@@ -39,42 +17,33 @@ Required context:
                class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm pr-8"
                placeholder="{{ ss_placeholder|default:'Type to filter...' }}">
 
-        <!-- Selected value display -->
         <button type="button"
                 x-show="selectedLabel && !open"
-                @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                @click="open = true; $nextTick(function() { $refs.searchInput.focus() })"
                 class="w-full text-left rounded-md border border-ink-200 shadow-sm bg-white px-3 py-2 text-sm text-ink-800 pr-8">
             <span x-text="selectedLabel" class="truncate block"></span>
         </button>
 
-        <!-- Clear button -->
         <button type="button"
                 x-show="selectedValue"
                 @click.stop="clear()"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600 text-sm">
-            &times;
-        </button>
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600 text-sm">&times;</button>
     </div>
 
-    <!-- Dropdown -->
     <div x-show="open && filtered.length > 0" x-transition
          class="absolute z-50 mt-1 w-full bg-white border border-ink-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
         <button type="button"
                 @click="select('', '')"
-                class="w-full text-left px-3 py-1.5 text-sm text-ink-400 hover:bg-brand-50 transition">
-            All
-        </button>
-        <template x-for="opt in filtered" :key="opt.value">
+                class="w-full text-left px-3 py-1.5 text-sm text-ink-400 hover:bg-brand-50 transition">All</button>
+        <template x-for="(opt, idx) in filtered" :key="opt.value + '-' + idx">
             <button type="button"
                     @click="select(opt.value, opt.label)"
                     class="w-full text-left px-3 py-1.5 text-sm text-ink-700 hover:bg-brand-50 transition truncate"
-                    :class="{ 'bg-brand-50 font-medium': opt.value === selectedValue }"
-                    x-text="opt.label">
-            </button>
+                    :class="opt.value === selectedValue ? 'bg-brand-50 font-medium' : ''"
+                    x-text="opt.label"></button>
         </template>
     </div>
 
-    <!-- No results -->
     <div x-show="open && search && filtered.length === 0"
          class="absolute z-50 mt-1 w-full bg-white border border-ink-200 rounded-md shadow-lg p-3 text-sm text-ink-400">
         No matches

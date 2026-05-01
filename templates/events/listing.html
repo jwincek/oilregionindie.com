@@ -75,17 +75,6 @@
     </form>
 </div>
 
-<!-- Active filters & result count -->
-<div class="flex items-center justify-between mb-4">
-    <p class="text-sm text-ink-500">{{ events|length }} event{{ events|length|pluralize }}</p>
-    <div class="flex gap-4">
-        {% if current_type or current_venue or current_cost or current_location or query %}
-        <a href="{% url 'events:listing' %}" class="text-sm text-ink-400 hover:text-brand-600 transition">Clear all filters</a>
-        {% endif %}
-        <a href="{% url 'events:past' %}" class="text-sm text-ink-500 hover:text-brand-600 transition">View past events &rarr;</a>
-    </div>
-</div>
-
 <div id="event-list">
     {% include "events/_event_list.html" %}
 </div>

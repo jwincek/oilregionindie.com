@@ -72,14 +72,6 @@
     </form>
 </div>
 
-<!-- Active filters & result count -->
-<div class="flex items-center justify-between mb-4">
-    <p class="text-sm text-ink-500">{{ venues|length }} venue{{ venues|length|pluralize }}</p>
-    {% if current_type or current_amenity or current_availability or current_location or query %}
-    <a href="{% url 'venues:directory' %}" class="text-sm text-ink-400 hover:text-brand-600 transition">Clear all filters</a>
-    {% endif %}
-</div>
-
 <div id="venue-grid">
     {% include "venues/_venue_list.html" %}
 </div>

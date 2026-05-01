@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load demo_tags initials %}
+{% load demo_tags initials banner %}
 
 {% block title %}{{ venue.name }} — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{{ venue.name }} — {{ venue.get_venue_type_display }} in {{ venue.city }}, {{ venue.state }}{% endblock %}
@@ -22,7 +22,7 @@
             <img src="{{ venue.header_image.url }}" alt="" class="w-full h-full object-cover">
         </div>
         {% else %}
-        <div class="h-48 md:h-64 bg-gradient-to-br from-ink-600 to-ink-700"></div>
+        <div class="h-48 md:h-64 overflow-hidden">{% banner_pattern venue.name %}</div>
         {% endif %}
 
         <div class="px-6 py-6">

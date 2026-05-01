@@ -1,4 +1,51 @@
-{% load demo_tags %}
+{% load demo_tags filter_tags %}
+
+<!-- Active filters & result count -->
+<div class="flex flex-wrap items-center gap-2 mb-4">
+    <p class="text-sm text-ink-500 mr-2">{{ events|length }} event{{ events|length|pluralize }}</p>
+
+    {% if query %}
+    {% url_without_param "/events/" "q" as clear_q %}
+    <a href="{{ clear_q }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        "{{ query }}" <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_type %}
+    {% url_without_param "/events/" "type" as clear_type %}
+    <a href="{{ clear_type }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_type|title }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_venue %}
+    {% url_without_param "/events/" "venue" as clear_venue %}
+    <a href="{{ clear_venue }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_venue }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_cost %}
+    {% url_without_param "/events/" "cost" as clear_cost %}
+    <a href="{{ clear_cost }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_cost|title }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_location %}
+    {% url_without_param "/events/" "location" as clear_loc %}
+    <a href="{{ clear_loc }}" class="inline-flex items-center gap-1 bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded hover:bg-ink-200 transition">
+        {{ current_location }} <span class="text-ink-400">&times;</span>
+    </a>
+    {% endif %}
+
+    {% if current_type or current_venue or current_cost or current_location or query %}
+    <a href="{% url 'events:listing' %}" class="text-xs text-ink-400 hover:text-brand-600 transition ml-1">Clear all</a>
+    {% endif %}
+
+    <a href="{% url 'events:past' %}" class="text-xs text-ink-500 hover:text-brand-600 transition ml-auto">Past events &rarr;</a>
+</div>
+
 {% if events %}
 <div class="space-y-4">
     {% for event in events %}
