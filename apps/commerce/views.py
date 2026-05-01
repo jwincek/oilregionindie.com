@@ -175,7 +175,10 @@ def _handle_payment_failed(intent):
 @login_required
 def my_products(request):
     """List the current creator's products."""
-    profile = get_object_or_404(CreatorProfile, user=request.user)
+    if not hasattr(request.user, "creator_profile"):
+        messages.info(request, "Create a creator profile first to manage products.")
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
     products = profile.products.order_by("-created_at")
     return render(request, "commerce/my_products.html", {
         "profile": profile,
@@ -186,7 +189,9 @@ def my_products(request):
 @login_required
 def create_product(request):
     """Create a new product."""
-    profile = get_object_or_404(CreatorProfile, user=request.user)
+    if not hasattr(request.user, "creator_profile"):
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
 
     if not profile.can_accept_payments:
         messages.info(request, "Set up Stripe Connect before adding products.")
@@ -212,7 +217,9 @@ def create_product(request):
 @login_required
 def edit_product(request, pk):
     """Edit an existing product."""
-    profile = get_object_or_404(CreatorProfile, user=request.user)
+    if not hasattr(request.user, "creator_profile"):
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
     product = get_object_or_404(Product, pk=pk, creator=profile)
 
     if request.method == "POST":
@@ -234,7 +241,9 @@ def edit_product(request, pk):
 @login_required
 def my_sales(request):
     """Show orders containing the current creator's products."""
-    profile = get_object_or_404(CreatorProfile, user=request.user)
+    if not hasattr(request.user, "creator_profile"):
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
     items = OrderItem.objects.filter(
         creator=profile,
         order__status__in=[Order.Status.PAID, Order.Status.FULFILLED, Order.Status.PARTIALLY_FULFILLED],
