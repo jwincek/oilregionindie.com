@@ -731,7 +731,8 @@ class Command(BaseCommand):
     def _seed_wagtail_pages(self):
         from wagtail.models import Page, Site
         from apps.pages.models import (
-            BlogIndexPage, BlogPost, ContentPage, HomePage, HomePageFeaturedCreator,
+            BlogIndexPage, BlogPost, ContentPage, HomePage,
+            HomePageFeaturedCreator, HomePageFeaturedVenue,
         )
 
         self.stdout.write(self.style.MIGRATE_HEADING("\nSeeding Wagtail pages..."))
@@ -774,6 +775,16 @@ class Command(BaseCommand):
             HomePageFeaturedCreator.objects.create(
                 page=home, creator=creator,
                 blurb=f"{creator.discipline_list} — {creator.location}",
+                sort_order=i,
+            )
+
+        # Featured venues
+        for i, venue in enumerate(VenueProfile.objects.filter(
+            publish_status="published",
+        )[:3]):
+            HomePageFeaturedVenue.objects.create(
+                page=home, venue=venue,
+                blurb=f"{venue.get_venue_type_display()} — {venue.city}, {venue.state}",
                 sort_order=i,
             )
 

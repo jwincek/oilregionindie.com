@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags demo_tags initials %}
+{% load wagtailcore_tags wagtailimages_tags demo_tags initials banner %}
 
 {% block title %}{{ SITE_NAME }}{% endblock %}
 
@@ -36,25 +36,182 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for feature in page.featured_creators.all %}
         <a href="{{ feature.creator.get_absolute_url }}"
-           class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition text-center">
-            {% if feature.creator.profile_image %}
-            <img src="{{ feature.creator.profile_image.url }}" alt="{{ feature.creator.display_name }}"
-                 class="w-20 h-20 rounded-full object-cover mx-auto mb-3">
-            {% else %}
-            <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3">
-                {% initials_avatar feature.creator.display_name 80 %}
+           class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition">
+            {% if feature.creator.header_image %}
+            <div class="h-24 overflow-hidden">
+                <img src="{{ feature.creator.header_image.url }}" alt="" class="w-full h-full object-cover">
             </div>
+            {% else %}
+            <div class="h-24 overflow-hidden">{% banner_pattern feature.creator.display_name %}</div>
             {% endif %}
-            <h3 class="font-semibold text-ink-800 text-lg">
-                {{ feature.creator.display_name }}
-                {% if feature.creator|is_demo %}{% demo_badge %}{% endif %}
-            </h3>
-            <p class="text-sm text-brand-600 mt-1">{{ feature.creator.discipline_list }}</p>
-            {% if feature.blurb %}
-            <p class="text-ink-500 text-sm mt-2">{{ feature.blurb }}</p>
-            {% endif %}
+            <div class="p-5 -mt-8 relative">
+                {% if feature.creator.profile_image %}
+                <img src="{{ feature.creator.profile_image.url }}" alt="{{ feature.creator.display_name }}"
+                     class="w-16 h-16 rounded-full object-cover border-4 border-white shadow-sm mb-2">
+                {% else %}
+                <div class="w-16 h-16 rounded-full border-4 border-white shadow-sm overflow-hidden mb-2">
+                    {% initials_avatar feature.creator.display_name 64 %}
+                </div>
+                {% endif %}
+                <h3 class="font-semibold text-ink-800 text-lg">
+                    {{ feature.creator.display_name }}
+                    {% if feature.creator|is_demo %}{% demo_badge %}{% endif %}
+                </h3>
+                <p class="text-sm text-brand-600 mt-0.5">{{ feature.creator.discipline_list }}</p>
+                {% if feature.creator.location %}
+                <p class="text-xs text-ink-400 mt-1">{{ feature.creator.location }}</p>
+                {% endif %}
+                {% for avail in feature.creator.active_availabilities %}
+                {% if forloop.first %}<div class="flex flex-wrap gap-1 mt-2">{% endif %}
+                <span class="bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">{{ avail.availability_type.name }}</span>
+                {% if forloop.last %}</div>{% endif %}
+                {% endfor %}
+                {% if feature.blurb %}
+                <p class="text-ink-500 text-sm mt-2">{{ feature.blurb }}</p>
+                {% endif %}
+            </div>
         </a>
         {% endfor %}
+    </div>
+    <p class="text-center mt-6">
+        <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline font-medium text-sm">View all creators &rarr;</a>
+    </p>
+</section>
+{% endif %}
+
+<!-- Featured Venues -->
+{% if page.featured_venues.exists %}
+<section class="bg-ink-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-display font-bold text-ink-800 mb-8 text-center">Featured Venues</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for feature in page.featured_venues.all %}
+            <a href="{{ feature.venue.get_absolute_url }}"
+               class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition">
+                {% if feature.venue.header_image %}
+                <div class="h-24 overflow-hidden">
+                    <img src="{{ feature.venue.header_image.url }}" alt="" class="w-full h-full object-cover">
+                </div>
+                {% elif feature.venue.profile_image %}
+                <div class="h-24 overflow-hidden">
+                    <img src="{{ feature.venue.profile_image.url }}" alt="" class="w-full h-full object-cover">
+                </div>
+                {% else %}
+                <div class="h-24 overflow-hidden">{% banner_pattern feature.venue.name %}</div>
+                {% endif %}
+                <div class="p-5">
+                    <h3 class="font-semibold text-ink-800 text-lg">
+                        {{ feature.venue.name }}
+                        {% if feature.venue|is_demo %}{% demo_badge %}{% endif %}
+                    </h3>
+                    <p class="text-sm text-brand-600 mt-0.5">{{ feature.venue.get_venue_type_display }}</p>
+                    <p class="text-xs text-ink-400 mt-1">{{ feature.venue.city }}, {{ feature.venue.state }}</p>
+                    {% for avail in feature.venue.active_availabilities %}
+                    {% if forloop.first %}<div class="flex flex-wrap gap-1 mt-2">{% endif %}
+                    <span class="bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">{{ avail.availability_type.name }}</span>
+                    {% if forloop.last %}</div>{% endif %}
+                    {% endfor %}
+                    {% if feature.blurb %}
+                    <p class="text-ink-500 text-sm mt-2">{{ feature.blurb }}</p>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        <p class="text-center mt-6">
+            <a href="{% url 'venues:directory' %}" class="text-brand-600 hover:underline font-medium text-sm">View all venues &rarr;</a>
+        </p>
+    </div>
+</section>
+{% endif %}
+
+<!-- Coming Up -->
+{% if upcoming_events %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <h2 class="text-2xl font-display font-bold text-ink-800 mb-8 text-center">Coming Up</h2>
+    <div class="max-w-3xl mx-auto space-y-3">
+        {% for event in upcoming_events %}
+        <a href="{{ event.get_absolute_url }}"
+           class="block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-medium text-ink-800">
+                        {{ event.title }}
+                        {% if event|is_demo %}{% demo_badge %}{% endif %}
+                    </h3>
+                    <div class="flex flex-wrap gap-3 mt-1 text-sm text-ink-500">
+                        <span>{{ event.start_datetime|date:"l, M d" }}</span>
+                        <span>{{ event.start_datetime|date:"g:i A" }}</span>
+                        {% if event.venue %}
+                        <span>{{ event.venue.name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right shrink-0 ml-4">
+                    {% if event.is_free %}
+                    <span class="text-green-600 text-sm font-medium">Free</span>
+                    {% else %}
+                    <span class="text-brand-600 text-sm font-medium">{{ event.ticket_price_display }}</span>
+                    {% endif %}
+                    <span class="block text-xs text-ink-400 mt-0.5">{{ event.get_event_type_display }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    <p class="text-center mt-6">
+        <a href="{% url 'events:listing' %}" class="text-brand-600 hover:underline font-medium text-sm">View all events &rarr;</a>
+    </p>
+</section>
+{% endif %}
+
+<!-- Recently Joined -->
+{% if recent_creators or recent_venues %}
+<section class="bg-ink-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-display font-bold text-ink-800 mb-8 text-center">Recently Joined</h2>
+
+        {% if recent_creators %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {% for creator in recent_creators %}
+            <a href="{{ creator.get_absolute_url }}"
+               class="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition text-center">
+                {% if creator.profile_image %}
+                <img src="{{ creator.profile_image.url }}" alt="{{ creator.display_name }}"
+                     class="w-14 h-14 rounded-full object-cover mx-auto mb-2">
+                {% else %}
+                <div class="w-14 h-14 rounded-full overflow-hidden mx-auto mb-2">
+                    {% initials_avatar creator.display_name 56 %}
+                </div>
+                {% endif %}
+                <h3 class="font-medium text-ink-800 text-sm">
+                    {{ creator.display_name }}
+                    {% if creator|is_demo %}{% demo_badge %}{% endif %}
+                </h3>
+                <p class="text-xs text-brand-600 mt-0.5">{{ creator.discipline_list|truncatewords:4 }}</p>
+                {% if creator.location %}
+                <p class="text-xs text-ink-400 mt-0.5">{{ creator.location }}</p>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if recent_venues %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for venue in recent_venues %}
+            <a href="{{ venue.get_absolute_url }}"
+               class="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition text-center">
+                <p class="text-xs text-ink-400 mb-1">{{ venue.get_venue_type_display }}</p>
+                <h3 class="font-medium text-ink-800 text-sm">
+                    {{ venue.name }}
+                    {% if venue|is_demo %}{% demo_badge %}{% endif %}
+                </h3>
+                <p class="text-xs text-ink-400 mt-0.5">{{ venue.city }}, {{ venue.state }}</p>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 </section>
 {% endif %}
