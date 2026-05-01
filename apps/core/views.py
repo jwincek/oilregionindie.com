@@ -4,7 +4,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Notification, Report, UserProfile
+from .forms import ProfileAvailabilityForm
+from .models import Notification, ProfileAvailability, Report, UserProfile
 
 
 def suspended(request):
@@ -88,6 +89,113 @@ def follow_venue(request, slug):
             "follow_url_name": "follow_venue",
         })
     return redirect(venue.get_absolute_url())
+
+
+# ---------------------------------------------------------------------------
+# Availability management (HTMX)
+# ---------------------------------------------------------------------------
+
+
+def _get_availability_context(profile, profile_type):
+    """Build context for availability HTMX partials."""
+    return {
+        "profile": profile,
+        "availabilities": profile.availabilities.select_related("availability_type").all(),
+        "profile_type": profile_type,
+    }
+
+
+@login_required
+def availability_list(request, profile_type, slug):
+    """List availability flags for a profile (HTMX partial)."""
+    profile = _get_editable_profile(request, profile_type, slug)
+    if profile is None:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    return render(request, "includes/_availability_list.html",
+                  _get_availability_context(profile, profile_type))
+
+
+@login_required
+def add_availability(request, profile_type, slug):
+    """Add an availability flag via HTMX."""
+    profile = _get_editable_profile(request, profile_type, slug)
+    if profile is None:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    if request.method == "POST":
+        form = ProfileAvailabilityForm(request.POST, profile_type=profile_type)
+        if form.is_valid():
+            avail = form.save(commit=False)
+            if profile_type == "creator":
+                avail.creator = profile
+            else:
+                avail.venue = profile
+            avail.save()
+            return render(request, "includes/_availability_list.html",
+                          _get_availability_context(profile, profile_type))
+    else:
+        form = ProfileAvailabilityForm(profile_type=profile_type)
+
+    return render(request, "includes/_availability_form.html", {
+        "form": form,
+        "profile": profile,
+        "profile_type": profile_type,
+    })
+
+
+@login_required
+def edit_availability(request, profile_type, slug, pk):
+    """Edit an availability flag via HTMX."""
+    profile = _get_editable_profile(request, profile_type, slug)
+    if profile is None:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    avail = get_object_or_404(ProfileAvailability, pk=pk)
+
+    if request.method == "POST":
+        form = ProfileAvailabilityForm(request.POST, instance=avail, profile_type=profile_type)
+        if form.is_valid():
+            form.save()
+            return render(request, "includes/_availability_list.html",
+                          _get_availability_context(profile, profile_type))
+    else:
+        form = ProfileAvailabilityForm(instance=avail, profile_type=profile_type)
+
+    return render(request, "includes/_availability_form.html", {
+        "form": form,
+        "profile": profile,
+        "profile_type": profile_type,
+        "avail": avail,
+    })
+
+
+@login_required
+@require_POST
+def delete_availability(request, profile_type, slug, pk):
+    """Remove an availability flag via HTMX."""
+    profile = _get_editable_profile(request, profile_type, slug)
+    if profile is None:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    avail = get_object_or_404(ProfileAvailability, pk=pk)
+    avail.delete()
+    return render(request, "includes/_availability_list.html",
+                  _get_availability_context(profile, profile_type))
+
+
+def _get_editable_profile(request, profile_type, slug):
+    """Get a creator or venue profile the user can edit."""
+    if profile_type == "creator":
+        from apps.creators.models import CreatorProfile
+        profile = get_object_or_404(CreatorProfile, slug=slug)
+    else:
+        from apps.venues.models import VenueProfile
+        profile = get_object_or_404(VenueProfile, slug=slug)
+    if not profile.can_be_edited_by(request.user):
+        return None
+    return profile
 
 
 # ---------------------------------------------------------------------------

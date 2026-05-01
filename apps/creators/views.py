@@ -143,11 +143,17 @@ def detail(request, slug):
         creators=creator,
     ).select_related("venue").order_by("start_datetime")[:5]
 
+    is_accepting_bookings = creator.availabilities.filter(
+        availability_type__slug="available-for-booking",
+        is_active=True,
+    ).exists()
+
     return render(request, "creators/detail.html", {
         "creator": creator,
         "is_preview": not creator.is_published,
         "is_following": is_following,
         "upcoming_events": upcoming_events,
+        "is_accepting_bookings": is_accepting_bookings,
     })
 
 

@@ -3,6 +3,8 @@ from allauth.account.forms import SignupForm
 from django import forms
 from django.conf import settings
 
+from .models import ProfileAvailability
+
 
 class TurnstileSignupForm(SignupForm):
     """
@@ -43,3 +45,24 @@ class TurnstileSignupForm(SignupForm):
             )
 
         return token
+
+
+class ProfileAvailabilityForm(forms.ModelForm):
+    class Meta:
+        model = ProfileAvailability
+        fields = ["availability_type", "is_active", "note"]
+        widgets = {
+            "availability_type": forms.Select(attrs={"class": "form-select"}),
+            "note": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": 'e.g., "Weekends only", "Open July onward"',
+            }),
+        }
+
+    def __init__(self, *args, profile_type="creator", **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import AvailabilityType
+        if profile_type == "venue":
+            self.fields["availability_type"].queryset = AvailabilityType.for_venues()
+        else:
+            self.fields["availability_type"].queryset = AvailabilityType.for_creators()

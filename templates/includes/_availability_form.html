@@ -1,0 +1,45 @@
+<div class="bg-white border border-ink-200 rounded-lg p-4 mt-2">
+    <form {% if avail %}
+          hx-post="{% url 'edit_availability' profile_type=profile_type slug=profile.slug pk=avail.pk %}"
+          {% else %}
+          hx-post="{% url 'add_availability' profile_type=profile_type slug=profile.slug %}"
+          {% endif %}
+          hx-target="#availability-container"
+          hx-swap="outerHTML"
+          class="space-y-3">
+        {% csrf_token %}
+
+        <div class="flex flex-wrap gap-3">
+            <div class="flex-1 min-w-[180px]">
+                <label for="{{ form.availability_type.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Type</label>
+                {{ form.availability_type }}
+                {% if form.availability_type.errors %}<p class="text-xs text-red-600 mt-0.5">{{ form.availability_type.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label for="{{ form.note.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Note (optional)</label>
+                {{ form.note }}
+            </div>
+        </div>
+
+        <div>
+            <label class="flex items-center gap-2 text-sm text-ink-700">
+                {{ form.is_active }}
+                Active
+            </label>
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <button type="button"
+                    hx-get="{% url 'availability_list' profile_type=profile_type slug=profile.slug %}"
+                    hx-target="#availability-container"
+                    hx-swap="outerHTML"
+                    class="text-xs text-ink-500 hover:text-ink-700 px-3 py-1.5 transition">
+                Cancel
+            </button>
+            <button type="submit"
+                    class="bg-ink-800 text-white text-xs px-4 py-1.5 rounded-md font-medium hover:bg-ink-700 transition">
+                {% if avail %}Save{% else %}Add{% endif %}
+            </button>
+        </div>
+    </form>
+</div>

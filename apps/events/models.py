@@ -313,11 +313,11 @@ class BookingRequest(models.Model):
         """
         Return the email address of the party who should be notified.
         Creator-initiated → venue's booking email.
-        Venue-initiated → creator's user email.
+        Venue-initiated → creator's booking email (falls back to account email).
         """
         if self.is_creator_initiated:
             return self.venue.booking_email
-        return self.creator.user.email
+        return self.creator.booking_email or self.creator.user.email
 
     def can_be_viewed_by(self, user):
         """Both parties and their managers can view the request."""

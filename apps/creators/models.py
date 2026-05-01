@@ -134,6 +134,12 @@ class CreatorProfile(PublishableProfile, index.Indexed):
     location = models.CharField(max_length=255, blank=True, help_text="Current city/region")
     home_region = models.CharField(max_length=255, blank=True, help_text="Origin/roots")
 
+    # Contact
+    booking_email = models.EmailField(
+        blank=True,
+        help_text="Booking contact email (shown to venues on accepted bookings). Falls back to account email if blank.",
+    )
+
     # Structured address for geocoding and distance queries (optional)
     address = models.ForeignKey(
         Address,

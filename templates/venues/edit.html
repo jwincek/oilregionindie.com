@@ -64,6 +64,26 @@
         </div>
     </form>
 
+    <!-- Availability (managed via HTMX) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Availability</h2>
+        <div hx-get="{% url 'availability_list' profile_type='venue' slug=venue.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading availability...</p>
+        </div>
+    </div>
+
+    <!-- Contacts (managed via HTMX) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Contacts</h2>
+        <div hx-get="{% url 'venues:contacts' venue.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading contacts...</p>
+        </div>
+    </div>
+
     <!-- Social links (managed via HTMX, outside the profile form) -->
     <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
         <h2 class="font-semibold text-ink-800 mb-4">Social Links</h2>

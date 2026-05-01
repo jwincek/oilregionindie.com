@@ -16,4 +16,9 @@ urlpatterns = [
     path("<slug:slug>/social-links/add/", views.add_social_link, name="add_social_link"),
     path("<slug:slug>/social-links/<int:pk>/edit/", views.edit_social_link, name="edit_social_link"),
     path("<slug:slug>/social-links/<int:pk>/delete/", views.delete_social_link, name="delete_social_link"),
+    # Contacts (HTMX)
+    path("<slug:slug>/contacts/", views.contacts, name="contacts"),
+    path("<slug:slug>/contacts/add/", views.add_contact, name="add_contact"),
+    path("<slug:slug>/contacts/<int:pk>/edit/", views.edit_contact, name="edit_contact"),
+    path("<slug:slug>/contacts/<int:pk>/delete/", views.delete_contact, name="delete_contact"),
 ]

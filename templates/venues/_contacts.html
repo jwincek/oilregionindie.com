@@ -1,0 +1,49 @@
+<div id="contacts-container">
+    {% if contacts %}
+    <div class="space-y-2 mb-4">
+        {% for contact in contacts %}
+        <div class="flex items-center justify-between bg-ink-50 rounded-md px-3 py-2 group">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-ink-700">{{ contact.get_contact_type_display }}</span>
+                    <span class="text-xs text-ink-400">({{ contact.get_method_display }})</span>
+                    {% if not contact.is_public %}
+                    <span class="text-xs text-amber-600">Private</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-ink-600 truncate">{{ contact.value }}{% if contact.name %} — {{ contact.name }}{% endif %}</p>
+                {% if contact.notes %}
+                <p class="text-xs text-ink-400 italic">{{ contact.notes }}</p>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                <button hx-get="{% url 'venues:edit_contact' slug=venue.slug pk=contact.pk %}"
+                        hx-target="#contact-form-area"
+                        hx-swap="innerHTML"
+                        class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">
+                    Edit
+                </button>
+                <button hx-post="{% url 'venues:delete_contact' slug=venue.slug pk=contact.pk %}"
+                        hx-target="#contacts-container"
+                        hx-swap="outerHTML"
+                        hx-confirm="Remove this contact?"
+                        class="text-xs text-ink-400 hover:text-red-600 px-2 py-1 transition">
+                    Remove
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-ink-400 mb-4">No contacts added yet.</p>
+    {% endif %}
+
+    <button hx-get="{% url 'venues:add_contact' slug=venue.slug %}"
+            hx-target="#contact-form-area"
+            hx-swap="innerHTML"
+            class="text-sm text-brand-600 hover:text-brand-700 font-medium transition">
+        + Add Contact
+    </button>
+
+    <div id="contact-form-area" class="mt-3"></div>
+</div>

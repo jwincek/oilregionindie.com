@@ -12,7 +12,8 @@ from wagtail.documents import urls as wagtaildocs_urls
 from apps.core.sitemaps import sitemaps
 
 from apps.core.views import (
-    delete_account, follow_creator, follow_venue, mark_all_read,
+    add_availability, availability_list, delete_account, delete_availability,
+    edit_availability, follow_creator, follow_venue, mark_all_read,
     notification_inbox, preferences, report_content, search,
     submit_feedback, suspended, toggle_like, welcome,
 )
@@ -33,6 +34,11 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Post-signup welcome
     path("welcome/", welcome, name="welcome"),
+    # Availability management (HTMX)
+    path("availability/<str:profile_type>/<slug:slug>/", availability_list, name="availability_list"),
+    path("availability/<str:profile_type>/<slug:slug>/add/", add_availability, name="add_availability"),
+    path("availability/<str:profile_type>/<slug:slug>/<uuid:pk>/edit/", edit_availability, name="edit_availability"),
+    path("availability/<str:profile_type>/<slug:slug>/<uuid:pk>/delete/", delete_availability, name="delete_availability"),
     # Follow / Like / Notifications
     path("follow/creator/<slug:slug>/", follow_creator, name="follow_creator"),
     path("follow/venue/<slug:slug>/", follow_venue, name="follow_venue"),

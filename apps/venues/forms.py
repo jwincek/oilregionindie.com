@@ -2,7 +2,7 @@ from django import forms
 
 from apps.core.models import Address
 
-from .models import VenueProfile, VenueSocialLink
+from .models import VenueContact, VenueProfile, VenueSocialLink
 
 
 class VenueProfileForm(forms.ModelForm):
@@ -103,5 +103,19 @@ class VenueSocialLinkForm(forms.ModelForm):
         widgets = {
             "platform": forms.Select(attrs={"class": "form-select"}),
             "url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
+            "sort_order": forms.NumberInput(attrs={"class": "form-input w-20"}),
+        }
+
+
+class VenueContactForm(forms.ModelForm):
+    class Meta:
+        model = VenueContact
+        fields = ["contact_type", "method", "value", "name", "is_public", "notes", "sort_order"]
+        widgets = {
+            "contact_type": forms.Select(attrs={"class": "form-select"}),
+            "method": forms.Select(attrs={"class": "form-select"}),
+            "value": forms.TextInput(attrs={"class": "form-input", "placeholder": "Email, phone, or URL"}),
+            "name": forms.TextInput(attrs={"class": "form-input", "placeholder": "Contact person (optional)"}),
+            "notes": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g., 'Call after 2pm'"}),
             "sort_order": forms.NumberInput(attrs={"class": "form-input w-20"}),
         }

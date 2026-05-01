@@ -10,8 +10,8 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.core.models import AvailabilityType
 from apps.core.notifications import notify_admin_profile_submitted
 
-from .forms import VenueProfileForm, VenueSocialLinkForm
-from .models import VenueProfile, VenueSocialLink
+from .forms import VenueContactForm, VenueProfileForm, VenueSocialLinkForm
+from .models import VenueContact, VenueProfile, VenueSocialLink
 
 
 @require_GET
@@ -104,11 +104,17 @@ def detail(request, slug):
         "slots__creator"
     ).order_by("start_datetime")[:10]
 
+    is_accepting_bookings = venue.availabilities.filter(
+        availability_type__slug="accepting-booking-requests",
+        is_active=True,
+    ).exists()
+
     return render(request, "venues/detail.html", {
         "venue": venue,
         "is_preview": not venue.is_published,
         "is_following": is_following,
         "upcoming_events": upcoming_events,
+        "is_accepting_bookings": is_accepting_bookings,
     })
 
 
@@ -293,3 +299,72 @@ def delete_social_link(request, slug, pk):
         "venue": venue,
         "links": venue.social_links.all(),
     })
+
+
+# ---------------------------------------------------------------------------
+# Contacts (HTMX-powered add/edit/delete)
+# ---------------------------------------------------------------------------
+
+
+def _contact_context(venue):
+    return {"venue": venue, "contacts": venue.contacts.all()}
+
+
+@login_required
+def contacts(request, slug):
+    """List contacts for a venue (HTMX partial)."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+    return render(request, "venues/_contacts.html", _contact_context(venue))
+
+
+@login_required
+def add_contact(request, slug):
+    """Add a contact to a venue via HTMX."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+
+    if request.method == "POST":
+        form = VenueContactForm(request.POST)
+        if form.is_valid():
+            contact = form.save(commit=False)
+            contact.venue = venue
+            contact.save()
+            return render(request, "venues/_contacts.html", _contact_context(venue))
+    else:
+        form = VenueContactForm()
+
+    return render(request, "venues/_contact_form.html", {"form": form, "venue": venue})
+
+
+@login_required
+def edit_contact(request, slug, pk):
+    """Edit a venue contact via HTMX."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+    contact = get_object_or_404(VenueContact, pk=pk, venue=venue)
+
+    if request.method == "POST":
+        form = VenueContactForm(request.POST, instance=contact)
+        if form.is_valid():
+            form.save()
+            return render(request, "venues/_contacts.html", _contact_context(venue))
+    else:
+        form = VenueContactForm(instance=contact)
+
+    return render(request, "venues/_contact_form.html", {"form": form, "venue": venue, "contact": contact})
+
+
+@login_required
+@require_POST
+def delete_contact(request, slug, pk):
+    """Delete a venue contact via HTMX."""
+    venue, err = _get_editable_venue(request, slug)
+    if err:
+        return err
+    contact = get_object_or_404(VenueContact, pk=pk, venue=venue)
+    contact.delete()
+    return render(request, "venues/_contacts.html", _contact_context(venue))

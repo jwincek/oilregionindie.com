@@ -31,6 +31,7 @@ class CreatorProfileForm(forms.ModelForm):
             "genres",
             "location",
             "home_region",
+            "booking_email",
             "website",
             "profile_image",
             "header_image",
@@ -43,6 +44,7 @@ class CreatorProfileForm(forms.ModelForm):
             "genres": forms.CheckboxSelectMultiple(),
             "location": forms.TextInput(attrs={"class": "form-input", "placeholder": "Where you are now"}),
             "home_region": forms.TextInput(attrs={"class": "form-input", "placeholder": "Where you're from"}),
+            "booking_email": forms.EmailInput(attrs={"class": "form-input", "placeholder": "Booking contact email (optional)"}),
             "website": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
         }
         help_texts = {
