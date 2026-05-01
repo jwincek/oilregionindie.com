@@ -841,7 +841,7 @@ class Command(BaseCommand):
                     "<p>You can reach us in two ways:</p>"
                     "<ul>"
                     "<li><b>GitHub Issues</b> — "
-                    '<a href="https://github.com/jeromewincek/oilregionindie.com/issues">open an issue</a> '
+                    '<a href="https://github.com/jwincek/oilregionindie.com/issues">open an issue</a> '
                     "on our repository. Best for bug reports and detailed feature requests.</li>"
                     "<li><b>Email</b> — send feedback to "
                     '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a></li>'
@@ -857,14 +857,14 @@ class Command(BaseCommand):
                     '<a href="https://opencollective.com/oilregionindie">support us on Open Collective</a>. '
                     "All contributions and spending are transparent.</li>"
                     "<li><b>GitHub Sponsors</b> — "
-                    '<a href="https://github.com/sponsors/jeromewincek">sponsor on GitHub</a> '
+                    '<a href="https://github.com/sponsors/jwincek">sponsor on GitHub</a> '
                     "if you prefer to support through the platform where the code lives.</li>"
                     "</ul>"
                 )),
                 ("paragraph", (
                     "<p>This project is open source under the AGPL-3.0 license. "
                     "If you're a developer, designer, or just curious, "
-                    '<a href="https://github.com/jeromewincek/oilregionindie.com">visit the repository</a> '
+                    '<a href="https://github.com/jwincek/oilregionindie.com">visit the repository</a> '
                     "to see the code, open issues, or contribute.</p>"
                 )),
             ],

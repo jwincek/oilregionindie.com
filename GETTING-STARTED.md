@@ -16,7 +16,7 @@ No JavaScript build tools are required. The frontend uses Tailwind CSS via CDN, 
 ### 1. Clone and create a virtual environment
 
 ```bash
-git clone https://github.com/jeromewincek/oilregionindie.com.git
+git clone https://github.com/jwincek/oilregionindie.com.git
 cd oilregionindie.com
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate

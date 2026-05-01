@@ -8,7 +8,7 @@ Follow the [Getting Started guide](GETTING-STARTED.md) to get the project runnin
 
 ## How to Contribute
 
-1. **Find something to work on** — check the [Issues](https://github.com/jeromewincek/oilregionindie.com/issues) page. Issues labeled `good first issue` are scoped for newcomers. If you want to work on something not listed, open an issue first to discuss.
+1. **Find something to work on** — check the [Issues](https://github.com/jwincek/oilregionindie.com/issues) page. Issues labeled `good first issue` are scoped for newcomers. If you want to work on something not listed, open an issue first to discuss.
 2. **Fork the repo** and create a branch from `main`.
 3. **Make your changes** — keep commits focused and write descriptive messages.
 4. **Run the tests** before submitting:
@@ -67,7 +67,7 @@ Follow the [Getting Started guide](GETTING-STARTED.md) to get the project runnin
 
 ## Reporting Issues
 
-If you find a bug or have a suggestion, [open an issue](https://github.com/jeromewincek/oilregionindie.com/issues) or use the [feedback form](https://oilregionindie.com/feedback/) on the live site. Include:
+If you find a bug or have a suggestion, [open an issue](https://github.com/jwincek/oilregionindie.com/issues) or use the [feedback form](https://oilregionindie.com/feedback/) on the live site. Include:
 
 - What you expected to happen
 - What actually happened
