@@ -1,0 +1,45 @@
+{% load demo_tags %}
+<div id="profile-events">
+    {% if events %}
+    <ul class="space-y-3">
+        {% for event in events %}
+        <li>
+            <a href="{{ event.get_absolute_url }}" class="block p-2 -mx-2 rounded-md hover:bg-brand-50 transition">
+                <span class="text-sm font-medium text-ink-700">
+                    {{ event.title }} {% if event|is_demo %}{% demo_badge %}{% endif %}
+                </span>
+                <div class="flex flex-wrap gap-2 mt-0.5 text-xs text-ink-400">
+                    <span>{{ event.start_datetime|date:"l, M d" }}</span>
+                    <span>{{ event.start_datetime|date:"g:i A" }}</span>
+                    {% if event.venue %}
+                    <span>{{ event.venue.name }}</span>
+                    {% endif %}
+                    {% if event.is_free %}
+                    <span class="text-green-600">Free</span>
+                    {% else %}
+                    <span class="text-brand-600">{{ event.ticket_price_display }}</span>
+                    {% endif %}
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-ink-400">
+        {% if show == "past" %}No past events.{% else %}No upcoming events.{% endif %}
+    </p>
+    {% endif %}
+
+    <!-- Toggle link -->
+    <div class="mt-3 flex gap-3 text-xs">
+        {% if show == "past" %}
+        <button hx-get="{% url 'creators:profile_events' slug=creator.slug %}?show=upcoming"
+                hx-target="#profile-events" hx-swap="outerHTML"
+                class="text-brand-600 hover:underline">Show upcoming</button>
+        {% else %}
+        <button hx-get="{% url 'creators:profile_events' slug=creator.slug %}?show=past"
+                hx-target="#profile-events" hx-swap="outerHTML"
+                class="text-ink-400 hover:text-brand-600">Show past events</button>
+        {% endif %}
+    </div>
+</div>

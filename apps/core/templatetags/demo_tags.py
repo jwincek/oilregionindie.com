@@ -6,12 +6,17 @@ register = template.Library()
 
 
 @register.filter
-def is_demo(profile):
-    """Check if a profile belongs to a demo/seed account (@example.com email).
+def is_demo(obj):
+    """Check if an object belongs to a demo/seed account (.example email).
+    Works with profiles (have .user) and events (have .created_by).
     Only returns True when SOFT_LAUNCH mode is active."""
     if not getattr(settings, "SOFT_LAUNCH", False):
         return False
-    return hasattr(profile, "user") and profile.user.email.endswith(".example")
+    if hasattr(obj, "user") and obj.user:
+        return obj.user.email.endswith(".example")
+    if hasattr(obj, "created_by") and obj.created_by:
+        return obj.created_by.email.endswith(".example")
+    return False
 
 
 @register.simple_tag

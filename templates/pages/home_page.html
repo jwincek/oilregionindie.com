@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load wagtailcore_tags wagtailimages_tags demo_tags initials %}
 
 {% block title %}{{ SITE_NAME }}{% endblock %}
 
@@ -40,8 +40,15 @@
             {% if feature.creator.profile_image %}
             <img src="{{ feature.creator.profile_image.url }}" alt="{{ feature.creator.display_name }}"
                  class="w-20 h-20 rounded-full object-cover mx-auto mb-3">
+            {% else %}
+            <div class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3">
+                {% initials_avatar feature.creator.display_name 80 %}
+            </div>
             {% endif %}
-            <h3 class="font-semibold text-ink-800 text-lg">{{ feature.creator.display_name }}</h3>
+            <h3 class="font-semibold text-ink-800 text-lg">
+                {{ feature.creator.display_name }}
+                {% if feature.creator|is_demo %}{% demo_badge %}{% endif %}
+            </h3>
             <p class="text-sm text-brand-600 mt-1">{{ feature.creator.discipline_list }}</p>
             {% if feature.blurb %}
             <p class="text-ink-500 text-sm mt-2">{{ feature.blurb }}</p>

@@ -1,3 +1,4 @@
+{% load demo_tags %}
 {% if events %}
 <div class="space-y-4">
     {% for event in events %}
@@ -12,7 +13,10 @@
             <div class="p-4 flex-1">
                 <div class="flex items-start justify-between">
                     <div>
-                        <h3 class="font-semibold text-ink-800 text-lg">{{ event.title }}</h3>
+                        <h3 class="font-semibold text-ink-800 text-lg">
+                            {{ event.title }}
+                            {% if event|is_demo %}{% demo_badge %}{% endif %}
+                        </h3>
                         <span class="inline-block bg-ink-100 text-ink-600 text-xs font-medium px-2 py-0.5 rounded mt-1">
                             {{ event.get_event_type_display }}
                         </span>

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.utils import timezone
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -135,10 +136,46 @@ def detail(request, slug):
         and request.user.profile.followed_creators.filter(pk=creator.pk).exists()
     )
 
+    from apps.events.models import Event
+    upcoming_events = Event.objects.filter(
+        is_published=True,
+        start_datetime__gte=timezone.now(),
+        creators=creator,
+    ).select_related("venue").order_by("start_datetime")[:5]
+
     return render(request, "creators/detail.html", {
         "creator": creator,
         "is_preview": not creator.is_published,
         "is_following": is_following,
+        "upcoming_events": upcoming_events,
+    })
+
+
+@require_GET
+def profile_events(request, slug):
+    """HTMX partial — upcoming or past events for a creator profile."""
+    from apps.events.models import Event
+
+    creator = get_object_or_404(CreatorProfile, slug=slug, publish_status="published")
+    show = request.GET.get("show", "upcoming")
+
+    if show == "past":
+        events = Event.objects.filter(
+            is_published=True,
+            start_datetime__lt=timezone.now(),
+            creators=creator,
+        ).select_related("venue").order_by("-start_datetime")[:10]
+    else:
+        events = Event.objects.filter(
+            is_published=True,
+            start_datetime__gte=timezone.now(),
+            creators=creator,
+        ).select_related("venue").order_by("start_datetime")[:5]
+
+    return render(request, "creators/_profile_events.html", {
+        "events": events,
+        "creator": creator,
+        "show": show,
     })
 
 

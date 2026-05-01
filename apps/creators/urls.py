@@ -19,6 +19,8 @@ urlpatterns = [
     path("social-links/add/", views.add_social_link, name="add_social_link"),
     path("social-links/<int:pk>/edit/", views.edit_social_link, name="edit_social_link"),
     path("social-links/<int:pk>/delete/", views.delete_social_link, name="delete_social_link"),
+    # Profile events (HTMX)
+    path("<slug:slug>/events/", views.profile_events, name="profile_events"),
     # Detail (must be last — catches slugs)
     path("<slug:slug>/", views.detail, name="detail"),
 ]

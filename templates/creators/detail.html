@@ -171,12 +171,15 @@
                     <img src="{{ membership.member.profile_image.url }}" alt=""
                          class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                     {% else %}
-                    <div class="w-8 h-8 rounded-full bg-ink-200 flex-shrink-0"></div>
+                    <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                        {% initials_avatar membership.member.display_name 32 %}
+                    </div>
                     {% endif %}
                     <div>
                         <a href="{{ membership.member.get_absolute_url }}"
                            class="text-sm font-medium text-ink-700 hover:text-brand-600 transition">
                             {{ membership.member.display_name }}
+                            {% if membership.member|is_demo %}{% demo_badge %}{% endif %}
                         </a>
                         {% if membership.role %}
                         <p class="text-xs text-ink-400">{{ membership.role }}</p>
@@ -199,12 +202,15 @@
                     <img src="{{ membership.group.profile_image.url }}" alt=""
                          class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                     {% else %}
-                    <div class="w-8 h-8 rounded-full bg-ink-200 flex-shrink-0"></div>
+                    <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                        {% initials_avatar membership.group.display_name 32 %}
+                    </div>
                     {% endif %}
                     <div>
                         <a href="{{ membership.group.get_absolute_url }}"
                            class="text-sm font-medium text-ink-700 hover:text-brand-600 transition">
                             {{ membership.group.display_name }}
+                            {% if membership.group|is_demo %}{% demo_badge %}{% endif %}
                         </a>
                         {% if membership.role %}
                         <p class="text-xs text-ink-400">{{ membership.role }}</p>
@@ -262,22 +268,11 @@
         </div>
         {% endif %}
 
-        <!-- Upcoming events -->
-        {% if creator.events.exists %}
+        <!-- Events -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="font-semibold text-ink-800 text-sm mb-3">Upcoming Events</h3>
-            <ul class="space-y-3">
-                {% for event in creator.events.all|slice:":5" %}
-                <li>
-                    <a href="{{ event.get_absolute_url }}" class="text-sm text-ink-600 hover:text-brand-600 transition">
-                        <span class="font-medium">{{ event.title }}</span>
-                        <span class="block text-ink-400 text-xs">{{ event.start_datetime|date:"M d, Y" }}</span>
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
+            <h3 class="font-semibold text-ink-800 text-sm mb-3">Events</h3>
+            {% include "creators/_profile_events.html" with events=upcoming_events show="upcoming" %}
         </div>
-        {% endif %}
 
         <!-- Endorsements -->
         {% if creator.endorsements.exists %}
