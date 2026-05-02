@@ -3,7 +3,7 @@
 {% block title %}Create Your Profile — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl mx-auto" x-data="{ step: 1, totalSteps: 5 }">
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Create Your Profile</h1>
     <p class="text-ink-500 mb-4">Tell us about yourself and your creative work.</p>
 
@@ -15,30 +15,198 @@
         </p>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+    <!-- Progress bar -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between text-xs text-ink-400 mb-2">
+            <span x-text="'Step ' + step + ' of ' + totalSteps"></span>
+            <span x-show="step === 1">Basics</span>
+            <span x-show="step === 2">Skills & Genres</span>
+            <span x-show="step === 3">About</span>
+            <span x-show="step === 4">Images</span>
+            <span x-show="step === 5">Review</span>
+        </div>
+        <div class="w-full bg-ink-100 rounded-full h-1.5">
+            <div class="bg-brand-500 h-1.5 rounded-full transition-all duration-300"
+                 :style="'width: ' + (step / totalSteps * 100) + '%'"></div>
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-700">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6">
         {% csrf_token %}
 
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
+        <!-- Step 1: Basics -->
+        <div x-show="step === 1" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">The Basics</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.display_name.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.display_name.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.display_name }}
+                    {% if form.display_name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.display_name.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-ink-700 mb-2">{{ form.profile_type.label }}</label>
+                    <div class="flex flex-wrap gap-4">
+                        {{ form.profile_type }}
+                    </div>
+                </div>
+                <div>
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.location.label }}
+                    </label>
+                    {{ form.location }}
+                    {% if form.location.help_text %}<p class="mt-1 text-xs text-ink-400">{{ form.location.help_text }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.home_region.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.home_region.label }}
+                    </label>
+                    {{ form.home_region }}
+                    {% if form.home_region.help_text %}<p class="mt-1 text-xs text-ink-400">{{ form.home_region.help_text }}</p>{% endif %}
+                </div>
+            </div>
         </div>
-        {% endfor %}
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
-            <a href="/" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
-            <button type="submit"
-                    class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
-                Create Profile
-            </button>
+        <!-- Step 2: Skills & Genres -->
+        <div x-show="step === 2" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Skills & Genres</h2>
+            <div class="space-y-5">
+                <!-- Searchable multi-select for skills -->
+                {% include "includes/_multi_select.html" with ms_options_json=skill_options_json ms_selected_json="[]" ms_label="Skills" ms_help="Select your specific skills. Disciplines will be set automatically." ms_placeholder="Type to search skills..." ms_field=form.skills %}
+
+                {% if form.skills.errors %}<p class="mt-1 text-xs text-red-600">{{ form.skills.errors.0 }}</p>{% endif %}
+
+                <div>
+                    <label for="{{ form.other_skills.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Other Skills
+                    </label>
+                    {{ form.other_skills }}
+                    <p class="mt-1 text-xs text-ink-400">{{ form.other_skills.help_text }}</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-ink-700 mb-2">{{ form.disciplines.label }}</label>
+                    {% if form.disciplines.help_text %}<p class="mb-2 text-xs text-ink-400">{{ form.disciplines.help_text }}</p>{% endif %}
+                    <div class="flex flex-wrap gap-2">
+                        {{ form.disciplines }}
+                    </div>
+                </div>
+
+                <!-- Searchable multi-select for genres -->
+                {% include "includes/_multi_select.html" with ms_options_json=genre_options_json ms_selected_json="[]" ms_label="Genres" ms_help="Optional — most relevant for musicians." ms_placeholder="Type to search genres..." ms_field=form.genres %}
+
+                <div>
+                    <label for="{{ form.other_genres.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Other Genres
+                    </label>
+                    {{ form.other_genres }}
+                    <p class="mt-1 text-xs text-ink-400">{{ form.other_genres.help_text }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: About -->
+        <div x-show="step === 3" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">About You</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.bio.label }}
+                    </label>
+                    {{ form.bio }}
+                    <p class="mt-1 text-xs text-ink-400">Tell people about your creative work, background, and what inspires you.</p>
+                </div>
+                <div>
+                    <label for="{{ form.booking_email.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.booking_email.label }}
+                    </label>
+                    {{ form.booking_email }}
+                    {% if form.booking_email.help_text %}<p class="mt-1 text-xs text-ink-400">{{ form.booking_email.help_text }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.website.label }}
+                    </label>
+                    {{ form.website }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Images -->
+        <div x-show="step === 4" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Images</h2>
+            <p class="text-sm text-ink-500 mb-5">These are optional — you can add them later from your edit page. A default avatar and banner will be generated from your name.</p>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.profile_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Profile Image
+                    </label>
+                    {{ form.profile_image }}
+                    <p class="mt-1 text-xs text-ink-400">Square photo works best. Displayed as a circle.</p>
+                </div>
+                <div>
+                    <label for="{{ form.header_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Header Image
+                    </label>
+                    {{ form.header_image }}
+                    <p class="mt-1 text-xs text-ink-400">Wide banner image for the top of your profile page.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Review -->
+        <div x-show="step === 5" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Review & Create</h2>
+            <p class="text-sm text-ink-500 mb-5">
+                Your profile will start as a draft. After creating it, you can submit it for review to appear in the directory.
+                You can also add social links, media, and availability from your edit page.
+            </p>
+            <div class="bg-ink-50 rounded-md p-4 text-sm text-ink-600 space-y-2">
+                <p>Click <strong>Create Profile</strong> to save your profile. You'll be able to:</p>
+                <ul class="list-disc list-inside space-y-1 text-ink-500">
+                    <li>Preview how your profile looks</li>
+                    <li>Add social links and media embeds</li>
+                    <li>Set your availability flags</li>
+                    <li>Submit for review when you're ready</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="flex justify-between items-center pt-6 mt-6 border-t border-ink-100">
+            <div>
+                <button type="button"
+                        x-show="step > 1"
+                        @click="step--; window.scrollTo(0, 0)"
+                        class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    &larr; Back
+                </button>
+                <a href="/" x-show="step === 1" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    Cancel
+                </a>
+            </div>
+            <div>
+                <button type="button"
+                        x-show="step < totalSteps"
+                        @click="step++; window.scrollTo(0, 0)"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Next &rarr;
+                </button>
+                <button type="submit"
+                        x-show="step === totalSteps"
+                        class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                    Create Profile
+                </button>
+            </div>
         </div>
     </form>
 </div>

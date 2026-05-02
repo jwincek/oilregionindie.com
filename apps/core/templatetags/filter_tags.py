@@ -39,6 +39,16 @@ def searchable_select_data(options_json, current_value="", current_label=""):
     )
 
 
+@register.simple_tag
+def multi_select_data(options_json, selected_values_json="[]"):
+    """Render the x-data attribute value for a multi-select searchable input."""
+    options_str = str(options_json).replace('"', "'")
+    selected_str = str(selected_values_json).replace('"', "'")
+    return mark_safe(
+        f"multiSelect({{allOptions: {options_str}, selectedValues: {selected_str}}})"
+    )
+
+
 @register.simple_tag(takes_context=True)
 def url_without_param(context, base_url, exclude_param):
     """Build a URL with all current GET params except the excluded one."""

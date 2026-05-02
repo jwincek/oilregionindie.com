@@ -1,6 +1,10 @@
+import bleach
 from django import forms
 
-from apps.core.models import Address
+from apps.core.models import Address, BlockedWord
+
+ALLOWED_BIO_TAGS = ["p", "br", "strong", "em", "a", "ul", "ol", "li", "h2", "h3", "h4"]
+ALLOWED_BIO_ATTRS = {"a": ["href", "title", "target", "rel"]}
 
 from .models import VenueContact, VenueProfile, VenueSocialLink
 
@@ -94,6 +98,17 @@ class VenueProfileForm(forms.ModelForm):
             venue.save()
             self.save_m2m()
         return venue
+
+    def clean_description(self):
+        value = self.cleaned_data.get("description", "")
+        if value:
+            if BlockedWord.check_content(value):
+                raise forms.ValidationError(
+                    "This field contains content that isn't allowed. "
+                    "Please review our Code of Conduct."
+                )
+            value = bleach.clean(value, tags=ALLOWED_BIO_TAGS, attributes=ALLOWED_BIO_ATTRS, strip=True)
+        return value
 
 
 class VenueSocialLinkForm(forms.ModelForm):

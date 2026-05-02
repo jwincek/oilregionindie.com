@@ -130,6 +130,16 @@ class CreatorProfile(PublishableProfile, index.Indexed):
         help_text="Specific skills across any discipline",
     )
 
+    # Free-text for unlisted skills/genres
+    other_skills = models.CharField(
+        max_length=500, blank=True,
+        help_text="Skills not in the list above (comma-separated)",
+    )
+    other_genres = models.CharField(
+        max_length=500, blank=True,
+        help_text="Genres not in the list above (comma-separated)",
+    )
+
     # Location — freeform fields for identity/homecoming context
     location = models.CharField(max_length=255, blank=True, help_text="Current city/region")
     home_region = models.CharField(max_length=255, blank=True, help_text="Origin/roots")

@@ -11,7 +11,7 @@ from apps.core.models import AvailabilityType
 from apps.core.notifications import notify_admin_profile_submitted
 
 from .forms import CreatorProfileForm, CreatorSocialLinkForm, MediaItemForm
-from .models import CreatorProfile, CreatorSocialLink, Discipline, MediaItem, Skill
+from .models import CreatorProfile, CreatorSocialLink, Discipline, Genre, MediaItem, Skill
 
 
 @require_GET
@@ -204,7 +204,23 @@ def setup(request):
     else:
         form = CreatorProfileForm()
 
-    return render(request, "creators/setup.html", {"form": form})
+    import json
+    from django.utils.safestring import mark_safe
+
+    skill_options = json.dumps([
+        {"value": str(s.pk), "label": f"{s.name} ({s.discipline.name})"}
+        for s in Skill.objects.select_related("discipline").order_by("discipline__name", "name")
+    ])
+    genre_options = json.dumps([
+        {"value": str(g.pk), "label": g.name}
+        for g in Genre.objects.order_by("name")
+    ])
+
+    return render(request, "creators/setup.html", {
+        "form": form,
+        "skill_options_json": mark_safe(skill_options.replace('"', "'")),
+        "genre_options_json": mark_safe(genre_options.replace('"', "'")),
+    })
 
 
 @login_required

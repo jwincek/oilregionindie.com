@@ -1,4 +1,10 @@
+import bleach
 from django import forms
+
+from apps.core.models import BlockedWord
+
+ALLOWED_BIO_TAGS = ["p", "br", "strong", "em", "a", "ul", "ol", "li", "h2", "h3", "h4"]
+ALLOWED_BIO_ATTRS = {"a": ["href", "title", "target", "rel"]}
 
 from .models import CreatorMembership, CreatorProfile, CreatorSocialLink, MediaItem, Skill
 
@@ -29,6 +35,8 @@ class CreatorProfileForm(forms.ModelForm):
             "skills",
             "disciplines",
             "genres",
+            "other_skills",
+            "other_genres",
             "location",
             "home_region",
             "booking_email",
@@ -42,6 +50,8 @@ class CreatorProfileForm(forms.ModelForm):
             "bio": forms.Textarea(attrs={"class": "form-textarea", "rows": 6}),
             "disciplines": forms.CheckboxSelectMultiple(),
             "genres": forms.CheckboxSelectMultiple(),
+            "other_skills": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g., Glassblowing, Circuit Bending"}),
+            "other_genres": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g., Shoegaze, Noise"}),
             "location": forms.TextInput(attrs={"class": "form-input", "placeholder": "Where you are now"}),
             "home_region": forms.TextInput(attrs={"class": "form-input", "placeholder": "Where you're from"}),
             "booking_email": forms.EmailInput(attrs={"class": "form-input", "placeholder": "Booking contact email (optional)"}),
@@ -50,6 +60,27 @@ class CreatorProfileForm(forms.ModelForm):
         help_texts = {
             "disciplines": "Auto-filled from skills, but you can add more if needed.",
         }
+
+    def _check_blocked_words(self, field_name):
+        value = self.cleaned_data.get(field_name, "")
+        if value and BlockedWord.check_content(value):
+            raise forms.ValidationError(
+                "This field contains content that isn't allowed. "
+                "Please review our Code of Conduct."
+            )
+        return value
+
+    def clean_other_skills(self):
+        return self._check_blocked_words("other_skills")
+
+    def clean_other_genres(self):
+        return self._check_blocked_words("other_genres")
+
+    def clean_bio(self):
+        value = self._check_blocked_words("bio")
+        if value:
+            value = bleach.clean(value, tags=ALLOWED_BIO_TAGS, attributes=ALLOWED_BIO_ATTRS, strip=True)
+        return value
 
     def save(self, commit=True):
         profile = super().save(commit=commit)

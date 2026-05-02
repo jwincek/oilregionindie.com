@@ -1,6 +1,12 @@
+import bleach
 from django import forms
 
+from apps.core.models import BlockedWord
+
 from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
+
+ALLOWED_TAGS = ["p", "br", "strong", "em", "a", "ul", "ol", "li", "h2", "h3", "h4"]
+ALLOWED_ATTRS = {"a": ["href", "title", "target", "rel"]}
 
 
 class EventForm(forms.ModelForm):
@@ -38,6 +44,16 @@ class EventForm(forms.ModelForm):
             "ticket_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
             "stream_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
         }
+
+    def clean_description(self):
+        value = self.cleaned_data.get("description", "")
+        if value:
+            if BlockedWord.check_content(value):
+                raise forms.ValidationError(
+                    "This field contains content that isn't allowed."
+                )
+            value = bleach.clean(value, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+        return value
 
 
 class BookingRequestForm(forms.ModelForm):

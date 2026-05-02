@@ -1,0 +1,45 @@
+{% load filter_tags %}{% multi_select_data ms_options_json ms_selected_json as ms_xdata %}<div x-data="{{ ms_xdata }}" @click.away="open = false" class="relative">
+
+    <label class="block text-sm font-medium text-ink-700 mb-1">{{ ms_label }}</label>
+    {% if ms_help %}<p class="mb-2 text-xs text-ink-400">{{ ms_help }}</p>{% endif %}
+
+    <!-- Selected pills -->
+    <div class="flex flex-wrap gap-1.5 mb-2" x-show="selectedItems.length > 0">
+        <template x-for="item in selectedItems" :key="item.value">
+            <span class="inline-flex items-center gap-1 bg-brand-100 text-brand-700 text-xs font-medium px-2 py-1 rounded">
+                <span x-text="item.label"></span>
+                <button type="button" @click="remove(item.value)" class="text-brand-500 hover:text-brand-800">&times;</button>
+            </span>
+        </template>
+    </div>
+
+    <!-- Search input -->
+    <input type="text"
+           x-model="search"
+           @focus="open = true"
+           @keydown.escape="open = false"
+           class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+           placeholder="{{ ms_placeholder|default:'Type to search and add...' }}">
+
+    <!-- Dropdown -->
+    <div x-show="open && filtered.length > 0" x-transition
+         class="absolute z-50 mt-1 w-full bg-white border border-ink-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <template x-for="(opt, idx) in filtered" :key="opt.value + '-' + idx">
+            <button type="button"
+                    @click="add(opt.value)"
+                    class="w-full text-left px-3 py-1.5 text-sm text-ink-700 hover:bg-brand-50 transition truncate"
+                    x-text="opt.label"></button>
+        </template>
+    </div>
+
+    <!-- No match message -->
+    <div x-show="open && hasNoMatch"
+         class="absolute z-50 mt-1 w-full bg-white border border-ink-200 rounded-md shadow-lg p-3 text-sm text-ink-400">
+        No matches found. Use the text field below to describe unlisted items.
+    </div>
+
+    <!-- Hidden checkboxes (synced by Alpine) -->
+    <div x-ref="hiddenFields" class="hidden">
+        {{ ms_field }}
+    </div>
+</div>
