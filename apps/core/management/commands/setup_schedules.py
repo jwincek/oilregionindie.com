@@ -19,12 +19,26 @@ class Command(BaseCommand):
             defaults={
                 "func": "apps.core.tasks.send_weekly_digests",
                 "schedule_type": Schedule.WEEKLY,
-                "repeats": -1,  # Run indefinitely
+                "repeats": -1,
             },
         )
         status = "Created" if created else "Updated"
         self.stdout.write(self.style.SUCCESS(
             f"  [{status}] Weekly email digest schedule"
+        ))
+
+        # Daily booking expiration — expire pending bookings older than 30 days
+        schedule, created = Schedule.objects.update_or_create(
+            name="daily-booking-expiration",
+            defaults={
+                "func": "apps.events.tasks.expire_old_bookings",
+                "schedule_type": Schedule.DAILY,
+                "repeats": -1,
+            },
+        )
+        status = "Created" if created else "Updated"
+        self.stdout.write(self.style.SUCCESS(
+            f"  [{status}] Daily booking expiration schedule"
         ))
 
         self.stdout.write(self.style.SUCCESS("\nSchedules configured."))

@@ -213,8 +213,8 @@ class EventSlot(models.Model):
 class BookingRequest(models.Model):
     """
     A booking inquiry between a creator and a venue. Bidirectional:
-    a creator can request to play at a venue, or a venue can invite
-    a creator to perform. The initiator is tracked to determine direction.
+    a creator can request to book at a venue, or a venue can invite
+    a creator. The initiator is tracked to determine direction.
     """
 
     class Status(models.TextChoices):

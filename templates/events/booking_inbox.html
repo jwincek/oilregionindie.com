@@ -16,10 +16,45 @@
     {% endfor %}
     {% endif %}
 
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-3 items-end">
+            <div class="flex-1 min-w-[180px]">
+                <label for="q" class="block text-xs font-medium text-ink-600 mb-1">Search</label>
+                <input type="text" name="q" id="q" value="{{ query }}"
+                       class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                       placeholder="Creator, venue, or message...">
+            </div>
+            <div class="w-40">
+                <label for="status" class="block text-xs font-medium text-ink-600 mb-1">Status</label>
+                <select name="status" id="status"
+                        class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                    <option value="">All</option>
+                    <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="accepted" {% if status_filter == "accepted" %}selected{% endif %}>Accepted</option>
+                    <option value="declined" {% if status_filter == "declined" %}selected{% endif %}>Declined</option>
+                    <option value="withdrawn" {% if status_filter == "withdrawn" %}selected{% endif %}>Withdrawn</option>
+                </select>
+            </div>
+            <button type="submit"
+                    class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                Filter
+            </button>
+            {% if query or status_filter %}
+            <a href="{% url 'events:booking_inbox' %}" class="text-xs text-ink-400 hover:text-brand-600 transition">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <p class="text-sm text-ink-500 mb-4">{{ total_count }} request{{ total_count|pluralize }}</p>
+
     <!-- Received & pending — needs action -->
     {% if received_pending %}
     <div class="mb-8">
-        <h2 class="text-lg font-semibold text-ink-700 mb-4">Needs Your Response</h2>
+        <h2 class="text-lg font-semibold text-ink-700 mb-4">
+            Needs Your Response
+            <span class="bg-amber-100 text-amber-700 text-xs font-medium px-1.5 py-0.5 rounded ml-2">{{ received_pending|length }}</span>
+        </h2>
         <div class="space-y-3">
             {% for booking in received_pending %}
             <a href="{% url 'events:booking_detail' pk=booking.pk %}"
@@ -28,7 +63,7 @@
                     <div>
                         <p class="font-medium text-ink-800">
                             {% if booking.is_creator_initiated %}
-                                {{ booking.creator.display_name }} wants to play at {{ booking.venue.name }}
+                                {{ booking.creator.display_name }} requested to book at {{ booking.venue.name }}
                             {% else %}
                                 {{ booking.venue.name }} invited {{ booking.creator.display_name }}
                             {% endif %}
@@ -114,8 +149,19 @@
 
     {% if not received_pending and not sent_pending and not resolved %}
     <div class="text-center py-12 text-ink-400">
+        {% if query or status_filter %}
+        <p class="text-lg">No booking requests match your filters.</p>
+        <p class="mt-2"><a href="{% url 'events:booking_inbox' %}" class="text-brand-600 hover:underline">Clear filters</a></p>
+        {% else %}
         <p class="text-lg">No booking requests yet.</p>
-        <p class="mt-2">Browse the <a href="{% url 'venues:directory' %}" class="text-brand-600 hover:underline">venue directory</a> to find a place to play, or the <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline">creator directory</a> to invite someone.</p>
+        <p class="text-ink-500 mt-3 max-w-md mx-auto text-sm">
+            Booking requests let you coordinate shows and events. Here's how to get started:
+        </p>
+        <div class="flex flex-col gap-2 mt-4">
+            <a href="{% url 'venues:directory' %}" class="text-brand-600 hover:underline text-sm">Browse venues and request to play</a>
+            <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline text-sm">Browse creators and send a booking invitation</a>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 </div>

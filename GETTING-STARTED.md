@@ -118,7 +118,7 @@ Profile owners can preview their unpublished profile at its normal URL. Other us
 
 ### How booking requests work
 
-1. Creator visits a venue page and clicks "Request to Play Here" (or venue visits creator and clicks "Invite to Perform")
+1. Creator visits a venue page and clicks "Request to Book" (or venue visits creator and clicks "Invite to Book")
 2. Requester fills out event type, preferred dates, and a message
 3. Receiving party sees the request in their booking inbox
 4. They accept or decline with an optional response message

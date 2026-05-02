@@ -103,6 +103,22 @@
                 </dd>
             </div>
         </dl>
+
+        {% if not booking.resulting_event %}
+        <div class="mt-4 pt-3 border-t border-green-200">
+            <a href="{% url 'events:create_from_booking' pk=booking.pk %}"
+               class="inline-block bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition">
+                Create Event from This Booking
+            </a>
+        </div>
+        {% else %}
+        <div class="mt-4 pt-3 border-t border-green-200">
+            <p class="text-sm text-green-700">
+                Event created:
+                <a href="{{ booking.resulting_event.get_absolute_url }}" class="underline font-medium">{{ booking.resulting_event.title }}</a>
+            </p>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 

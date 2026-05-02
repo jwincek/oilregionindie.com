@@ -107,7 +107,7 @@ New profiles start in **draft** status. Creators fill out their profile and subm
 
 ### Bidirectional Booking
 
-BookingRequests work both ways: a creator can request to play at a venue, or a venue can invite a creator. Only the receiving party can accept or decline. After a booking is accepted, both parties can leave private feedback and write public endorsements.
+BookingRequests work both ways: a creator can request to book at a venue, or a venue can invite a creator. Only the receiving party can accept or decline. After a booking is accepted, both parties can leave private feedback and write public endorsements.
 
 ### Commerce
 

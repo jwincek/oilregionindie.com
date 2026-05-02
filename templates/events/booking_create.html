@@ -1,25 +1,57 @@
 {% extends "base.html" %}
+{% load initials %}
 
 {% block title %}Send Booking Request — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-4">
         {% if direction == "to-venue" %}
-            Request to play at {{ target_name }}
+            Request to book at {{ target_name }}
         {% else %}
-            Invite {{ target_name }} to perform
+            Invite {{ target_name }} to book
         {% endif %}
     </h1>
-    <p class="text-ink-500 mb-8">
-        {% if direction == "to-venue" %}
-            Sending as <strong>{{ creator.display_name }}</strong> to <strong>{{ venue.name }}</strong>.
-        {% else %}
-            Sending from <strong>{{ venue.name }}</strong> to <strong>{{ creator.display_name }}</strong>.
-        {% endif %}
-    </p>
 
     {% include "includes/_unpublished_reminder.html" %}
+
+    <!-- Target profile card -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center gap-4">
+        {% if direction == "to-venue" %}
+        {% if venue.profile_image %}
+        <img src="{{ venue.profile_image.url }}" alt="" class="w-14 h-14 rounded-lg object-cover flex-shrink-0">
+        {% else %}
+        <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">{% initials_avatar venue.name 56 %}</div>
+        {% endif %}
+        <div>
+            <a href="{{ venue.get_absolute_url }}" class="font-semibold text-ink-800 hover:text-brand-600 transition">{{ venue.name }}</a>
+            <p class="text-sm text-ink-500">{{ venue.get_venue_type_display }} &middot; {{ venue.city }}, {{ venue.state }}</p>
+            {% for avail in venue.active_availabilities %}
+            {% if forloop.first %}<div class="flex flex-wrap gap-1 mt-1">{% endif %}
+            <span class="bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">{{ avail.availability_type.name }}</span>
+            {% if forloop.last %}</div>{% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        {% if creator.profile_image %}
+        <img src="{{ creator.profile_image.url }}" alt="" class="w-14 h-14 rounded-full object-cover flex-shrink-0">
+        {% else %}
+        <div class="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">{% initials_avatar creator.display_name 56 %}</div>
+        {% endif %}
+        <div>
+            <a href="{{ creator.get_absolute_url }}" class="font-semibold text-ink-800 hover:text-brand-600 transition">{{ creator.display_name }}</a>
+            <p class="text-sm text-brand-600">{{ creator.discipline_list }}</p>
+            {% if creator.location %}
+            <p class="text-sm text-ink-400">{{ creator.location }}</p>
+            {% endif %}
+            {% for avail in creator.active_availabilities %}
+            {% if forloop.first %}<div class="flex flex-wrap gap-1 mt-1">{% endif %}
+            <span class="bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">{{ avail.availability_type.name }}</span>
+            {% if forloop.last %}</div>{% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
 
     <form method="post" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
         {% csrf_token %}
@@ -32,26 +64,83 @@
         </div>
         {% endif %}
 
-        {% for field in form %}
+        {% if user_venues|length > 1 %}
         <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
+            <label for="from_venue" class="block text-sm font-medium text-ink-700 mb-1">Sending from</label>
+            <select name="from_venue" id="from_venue"
+                    class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
+                {% for v in user_venues %}
+                <option value="{{ v.slug }}" {% if v.slug == venue.slug %}selected{% endif %}>{{ v.name }}</option>
+                {% endfor %}
+            </select>
         </div>
-        {% endfor %}
+        {% endif %}
+
+        <!-- Event type as cards -->
+        <div>
+            <label class="block text-sm font-medium text-ink-700 mb-2">What kind of event?</label>
+            {% if form.event_type.errors %}<p class="mb-2 text-xs text-red-600">{{ form.event_type.errors.0 }}</p>{% endif %}
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" x-data="{ selected: '{{ form.event_type.value|default:"concert" }}' }">
+                {% for choice in form.event_type %}
+                <label class="cursor-pointer">
+                    <input type="radio" name="event_type" value="{{ choice.data.value }}"
+                           class="sr-only" x-model="selected"
+                           {% if choice.data.value == form.event_type.value %}checked{% endif %}>
+                    <div class="border rounded-lg p-3 text-center text-sm transition"
+                         :class="selected === '{{ choice.data.value }}' ? 'border-brand-500 bg-brand-50 text-brand-700 font-medium' : 'border-ink-200 text-ink-600 hover:border-ink-300'">
+                        {{ choice.choice_label }}
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Preferred dates -->
+        <div>
+            <label for="{{ form.preferred_dates.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                Preferred dates
+            </label>
+            {% if direction == "to-venue" %}
+            {% for avail in venue.active_availabilities %}
+            {% if avail.note %}
+            <p class="mb-2 text-xs text-green-700 bg-green-50 rounded px-2 py-1 inline-block">
+                {{ avail.availability_type.name }}: {{ avail.note }}
+            </p>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {{ form.preferred_dates }}
+            {% if form.preferred_dates.errors %}<p class="mt-1 text-xs text-red-600">{{ form.preferred_dates.errors.0 }}</p>{% endif %}
+        </div>
+
+        <!-- Message with guided prompts -->
+        <div x-data="{ charCount: 0 }">
+            <label for="{{ form.message.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                Your message
+            </label>
+            <p class="mb-2 text-xs text-ink-400">
+                {% if direction == "to-venue" %}
+                Introduce yourself, describe what you'd like to do (perform, exhibit, demonstrate, sell), how long, and any technical or space needs.
+                {% else %}
+                Describe the opportunity — what kind of event, expected audience, compensation (if any), and what you're looking for in a creator.
+                {% endif %}
+            </p>
+            <textarea name="message" id="{{ form.message.id_for_label }}" rows="5" required
+                      x-on:input="charCount = $el.value.length"
+                      class="form-textarea w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm"
+                      placeholder="{% if direction == 'to-venue' %}Hi! I'd love to be part of an event at your venue. I'm a... and I'd like to...{% else %}We're looking for a creator for our upcoming event. The event is...{% endif %}">{{ form.message.value|default:"" }}</textarea>
+            <div class="flex justify-between mt-1">
+                {% if form.message.errors %}<p class="text-xs text-red-600">{{ form.message.errors.0 }}</p>{% endif %}
+                <span class="text-xs text-ink-400 ml-auto" :class="charCount > 0 && charCount < 50 ? 'text-amber-500' : ''"
+                      x-text="charCount + ' characters'"></span>
+            </div>
+        </div>
 
         <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
             <a href="{% if direction == 'to-venue' %}{{ venue.get_absolute_url }}{% else %}{{ creator.get_absolute_url }}{% endif %}"
                class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
             <button type="submit"
-                    class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
                 Send Request
             </button>
         </div>

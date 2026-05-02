@@ -64,7 +64,7 @@ def notify_booking_status_changed(booking):
         else:
             subject = f"[Oil Region Hub] Booking invitation from {venue_name}"
             message = (
-                f"{venue_name} has invited {creator_name} to perform.\n\n"
+                f"{venue_name} has sent a booking invitation to {creator_name}.\n\n"
                 f"Event type: {booking.get_event_type_display()}\n"
                 f"Preferred dates: {booking.preferred_dates}\n\n"
                 f"Message:\n{booking.message}\n\n"
@@ -97,4 +97,30 @@ def notify_booking_status_changed(booking):
         from_email=None,
         recipient_list=[recipient],
         fail_silently=True,
+    )
+
+    # Also create an in-app notification
+    from .models import Notification
+
+    if booking.status == "pending":
+        # Notify the recipient
+        if booking.is_creator_initiated:
+            notif_recipient = booking.venue.user
+            notif_message = f"{creator_name} sent a booking request to {venue_name}"
+        else:
+            notif_recipient = booking.creator.user
+            notif_message = f"{venue_name} sent a booking invitation to {creator_name}"
+    elif booking.status in ("accepted", "declined"):
+        notif_recipient = booking.initiated_by
+        status_word = "accepted" if booking.status == "accepted" else "declined"
+        notif_message = f"Your booking with {creator_name} & {venue_name} was {status_word}"
+    else:
+        return
+
+    Notification.objects.create(
+        recipient=notif_recipient,
+        actor=booking.initiated_by if booking.status == "pending" else None,
+        notification_type=Notification.NotificationType.BOOKING,
+        message=notif_message,
+        url=f"/events/bookings/{booking.pk}/",
     )

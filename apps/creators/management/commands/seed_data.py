@@ -1049,8 +1049,8 @@ class Command(BaseCommand):
                 ("heading", "Booking Requests"),
                 ("paragraph", (
                     "<p><b>How do booking requests work?</b><br>"
-                    "Creators can request to play at a venue (\"Request to Play Here\" on any venue page), "
-                    "and venues can invite creators (\"Invite to Perform\" on any creator page). "
+                    "Creators can request to book at a venue (\"Request to Book\" on any venue page), "
+                    "and venues can invite creators (\"Invite to Book\" on any creator page). "
                     "The receiving party can accept or decline from their booking inbox.</p>"
                     "<p><b>Where do I see my booking requests?</b><br>"
                     "Click your username in the top right, then \"Booking Requests.\" You'll see requests "

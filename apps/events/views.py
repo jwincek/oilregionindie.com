@@ -254,6 +254,20 @@ def booking_inbox(request):
             "creator", "venue", "initiated_by"
         ).distinct()
 
+    # Apply search filter
+    query = request.GET.get("q", "").strip()
+    if query:
+        requests_list = requests_list.filter(
+            Q(creator__display_name__icontains=query) |
+            Q(venue__name__icontains=query) |
+            Q(message__icontains=query)
+        )
+
+    # Apply status filter
+    status_filter = request.GET.get("status", "")
+    if status_filter:
+        requests_list = requests_list.filter(status=status_filter)
+
     # Split into actionable (pending, received) and other
     received_pending = [r for r in requests_list if r.status == "pending" and r.can_be_responded_to_by(request.user)]
     sent_pending = [r for r in requests_list if r.status == "pending" and not r.can_be_responded_to_by(request.user)]
@@ -263,6 +277,9 @@ def booking_inbox(request):
         "received_pending": received_pending,
         "sent_pending": sent_pending,
         "resolved": resolved,
+        "query": query,
+        "status_filter": status_filter,
+        "total_count": len(received_pending) + len(sent_pending) + len(resolved),
     })
 
 
@@ -356,7 +373,7 @@ def booking_create(request, direction, profile_slug):
     from apps.venues.models import VenueProfile
 
     if direction == "to-venue":
-        # Creator is requesting to play at a venue
+        # Creator is requesting to book at a venue
         venue = get_object_or_404(VenueProfile, slug=profile_slug, publish_status="published")
         creator = getattr(request.user, "creator_profile", None)
         if not creator:
@@ -367,12 +384,20 @@ def booking_create(request, direction, profile_slug):
     elif direction == "to-creator":
         # Venue is inviting a creator
         creator = get_object_or_404(CreatorProfile, slug=profile_slug, publish_status="published")
-        # Find which venue the user manages
-        user_venues = list(request.user.venue_profiles.all()) + list(request.user.managed_venue_profiles.all())
+        # Find which venues the user manages
+        user_venues = list({v.pk: v for v in (
+            list(request.user.venue_profiles.all()) +
+            list(request.user.managed_venue_profiles.all())
+        )}.values())
         if not user_venues:
             messages.error(request, "You need a venue profile to send booking invitations.")
             return redirect("venues:setup")
-        venue = user_venues[0]  # Default to first venue; could add selection if user has multiple
+        # If user selected a venue via GET param, use that
+        venue_slug = request.GET.get("from_venue") or request.POST.get("from_venue")
+        if venue_slug:
+            venue = next((v for v in user_venues if v.slug == venue_slug), user_venues[0])
+        else:
+            venue = user_venues[0]
         target_name = creator.display_name
         booking_direction = BookingRequest.Direction.VENUE_TO_CREATOR
     else:
@@ -399,6 +424,63 @@ def booking_create(request, direction, profile_slug):
         "target_name": target_name,
         "creator": creator,
         "venue": venue,
+        "user_venues": user_venues if direction == "to-creator" else [],
+    })
+
+
+# ---------------------------------------------------------------------------
+# Create event from accepted booking
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def create_from_booking(request, pk):
+    """Pre-fill an event form from an accepted booking request."""
+    booking = get_object_or_404(BookingRequest, pk=pk, status="accepted")
+
+    if not booking.can_be_viewed_by(request.user):
+        return HttpResponseForbidden()
+
+    if booking.resulting_event:
+        messages.info(request, "An event has already been created from this booking.")
+        return redirect("events:booking_detail", pk=booking.pk)
+
+    if request.method == "POST":
+        form = EventForm(request.POST, request.FILES)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.created_by = request.user
+            if hasattr(request.user, "creator_profile"):
+                event.organizing_creator = request.user.creator_profile
+            event.save()
+            form.save_m2m()
+
+            # Create a slot for the creator
+            EventSlot.objects.create(
+                event=event,
+                creator=booking.creator,
+                status=EventSlot.Status.CONFIRMED,
+            )
+
+            # Link the booking to the event
+            booking.resulting_event = event
+            booking.save(update_fields=["resulting_event", "updated_at"])
+
+            messages.success(request, f'Event "{event.title}" created from booking.')
+            return redirect("events:detail", slug=event.slug)
+    else:
+        # Pre-fill the form from booking details
+        form = EventForm(initial={
+            "event_type": booking.event_type,
+            "venue": booking.venue,
+            "organizing_venue": booking.venue,
+            "organizing_creator": booking.creator if booking.is_venue_initiated else None,
+            "is_published": False,
+        })
+
+    return render(request, "events/create.html", {
+        "form": form,
+        "booking": booking,
     })
 
 

@@ -12,4 +12,22 @@ def site_settings(request):
         ctx["unread_notification_count"] = request.user.notifications.filter(
             is_read=False
         ).count()
+
+        # Count pending booking requests needing response
+        from django.db.models import Q
+        from apps.events.models import BookingRequest
+        booking_filters = Q()
+        if hasattr(request.user, "creator_profile"):
+            booking_filters |= Q(creator=request.user.creator_profile)
+        venue_ids = list(request.user.venue_profiles.values_list("pk", flat=True))
+        managed_ids = list(request.user.managed_venue_profiles.values_list("pk", flat=True))
+        for vid in set(venue_ids + managed_ids):
+            booking_filters |= Q(venue_id=vid)
+        if booking_filters:
+            ctx["pending_booking_count"] = BookingRequest.objects.filter(
+                booking_filters, status="pending"
+            ).exclude(initiated_by=request.user).distinct().count()
+        else:
+            ctx["pending_booking_count"] = 0
+
     return ctx
