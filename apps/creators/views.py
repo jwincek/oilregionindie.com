@@ -236,7 +236,28 @@ def edit(request):
     else:
         form = CreatorProfileForm(instance=profile)
 
-    return render(request, "creators/edit.html", {"form": form, "profile": profile})
+    import json as _json
+    from django.utils.safestring import mark_safe as _mark_safe
+
+    skill_options = _json.dumps([
+        {"value": str(s.pk), "label": f"{s.name} ({s.discipline.name})"}
+        for s in Skill.objects.select_related("discipline").order_by("discipline__name", "name")
+    ])
+    genre_options = _json.dumps([
+        {"value": str(g.pk), "label": g.name}
+        for g in Genre.objects.order_by("name")
+    ])
+    selected_skills = _json.dumps([str(pk) for pk in profile.skills.values_list("pk", flat=True)])
+    selected_genres = _json.dumps([str(pk) for pk in profile.genres.values_list("pk", flat=True)])
+
+    return render(request, "creators/edit.html", {
+        "form": form,
+        "profile": profile,
+        "skill_options_json": _mark_safe(skill_options.replace('"', "'")),
+        "genre_options_json": _mark_safe(genre_options.replace('"', "'")),
+        "selected_skills_json": _mark_safe(selected_skills.replace('"', "'")),
+        "selected_genres_json": _mark_safe(selected_genres.replace('"', "'")),
+    })
 
 
 @login_required

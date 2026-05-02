@@ -3,13 +3,13 @@
 {% block title %}Edit Profile — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Edit Your Profile</h1>
-    <p class="text-ink-500 mb-8">
+<div class="max-w-2xl mx-auto" x-data="{ tab: 'basics' }">
+    <div class="flex items-center justify-between mb-2">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Edit Your Profile</h1>
         {% if profile.is_published %}
-        <a href="{{ profile.get_absolute_url }}" class="text-brand-600 hover:underline">View your public profile</a>
+        <a href="{{ profile.get_absolute_url }}" class="text-sm text-brand-600 hover:underline">View profile</a>
         {% endif %}
-    </p>
+    </div>
 
     {% if messages %}
     {% for message in messages %}
@@ -37,35 +37,123 @@
     </div>
     {% endif %}
 
-    <!-- Profile form -->
-    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+    <!-- Tab navigation -->
+    <div class="flex border-b border-ink-200 mb-6 overflow-x-auto">
+        <button @click="tab = 'basics'" :class="tab === 'basics' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Basics</button>
+        <button @click="tab = 'skills'" :class="tab === 'skills' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Skills & Genres</button>
+        <button @click="tab = 'about'" :class="tab === 'about' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">About</button>
+        <button @click="tab = 'images'" :class="tab === 'images' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Images</button>
+        <button @click="tab = 'availability'" :class="tab === 'availability' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Availability</button>
+        <button @click="tab = 'social'" :class="tab === 'social' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Social Links</button>
+        <button @click="tab = 'media'" :class="tab === 'media' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Media</button>
+    </div>
+
+    <!-- Profile form (tabs: basics, skills, about, images) -->
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6" x-show="tab === 'basics' || tab === 'skills' || tab === 'about' || tab === 'images'">
         {% csrf_token %}
 
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
+        <!-- Basics tab -->
+        <div x-show="tab === 'basics'" class="space-y-5">
+            <div>
+                <label for="{{ form.display_name.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.display_name.label }}</label>
+                {{ form.display_name }}
+                {% if form.display_name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.display_name.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-2">{{ form.profile_type.label }}</label>
+                <div class="flex flex-wrap gap-4">{{ form.profile_type }}</div>
+            </div>
+            <div>
+                <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.location.label }}</label>
+                {{ form.location }}
+            </div>
+            <div>
+                <label for="{{ form.home_region.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.home_region.label }}</label>
+                {{ form.home_region }}
+            </div>
         </div>
-        {% endfor %}
 
-        <div class="flex justify-between items-center pt-4 border-t border-ink-100">
+        <!-- Skills & Genres tab -->
+        <div x-show="tab === 'skills'" class="space-y-5">
+            {% include "includes/_multi_select.html" with ms_options_json=skill_options_json ms_selected_json=selected_skills_json ms_label="Skills" ms_help="Select your specific skills. Disciplines will be set automatically." ms_placeholder="Type to search skills..." ms_field=form.skills %}
+            {% if form.skills.errors %}<p class="mt-1 text-xs text-red-600">{{ form.skills.errors.0 }}</p>{% endif %}
+
+            <div>
+                <label for="{{ form.other_skills.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Other Skills</label>
+                {{ form.other_skills }}
+                <p class="mt-1 text-xs text-ink-400">{{ form.other_skills.help_text }}</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-2">{{ form.disciplines.label }}</label>
+                {% if form.disciplines.help_text %}<p class="mb-2 text-xs text-ink-400">{{ form.disciplines.help_text }}</p>{% endif %}
+                <div class="flex flex-wrap gap-2">{{ form.disciplines }}</div>
+            </div>
+
+            {% include "includes/_multi_select.html" with ms_options_json=genre_options_json ms_selected_json=selected_genres_json ms_label="Genres" ms_help="Optional — most relevant for musicians." ms_placeholder="Type to search genres..." ms_field=form.genres %}
+
+            <div>
+                <label for="{{ form.other_genres.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Other Genres</label>
+                {{ form.other_genres }}
+                <p class="mt-1 text-xs text-ink-400">{{ form.other_genres.help_text }}</p>
+            </div>
+        </div>
+
+        <!-- About tab -->
+        <div x-show="tab === 'about'" class="space-y-5">
+            <div>
+                <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.bio.label }}</label>
+                {{ form.bio }}
+            </div>
+            <div>
+                <label for="{{ form.booking_email.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.booking_email.label }}</label>
+                {{ form.booking_email }}
+                {% if form.booking_email.help_text %}<p class="mt-1 text-xs text-ink-400">{{ form.booking_email.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.website.label }}</label>
+                {{ form.website }}
+            </div>
+        </div>
+
+        <!-- Images tab -->
+        <div x-show="tab === 'images'" class="space-y-5">
+            <div>
+                <label for="{{ form.profile_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Profile Image</label>
+                {% if profile.profile_image %}
+                <div class="mb-2">
+                    <img src="{{ profile.profile_image.url }}" alt="" class="w-16 h-16 rounded-full object-cover">
+                </div>
+                {% endif %}
+                {{ form.profile_image }}
+                <p class="mt-1 text-xs text-ink-400">Square photo works best. Displayed as a circle.</p>
+            </div>
+            <div>
+                <label for="{{ form.header_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Header Image</label>
+                {% if profile.header_image %}
+                <div class="mb-2">
+                    <img src="{{ profile.header_image.url }}" alt="" class="w-full h-20 object-cover rounded">
+                </div>
+                {% endif %}
+                {{ form.header_image }}
+                <p class="mt-1 text-xs text-ink-400">Wide banner image for the top of your profile page.</p>
+            </div>
+        </div>
+
+        <!-- Save button (visible on all form tabs) -->
+        <div class="flex justify-between items-center pt-4 mt-6 border-t border-ink-100">
             <div>
                 {% if profile.can_accept_payments %}
-                <a href="{% url 'commerce:stripe_dashboard' %}" class="text-sm text-brand-600 hover:underline">
-                    Stripe Dashboard
-                </a>
+                <a href="{% url 'commerce:stripe_dashboard' %}" class="text-sm text-brand-600 hover:underline">Stripe Dashboard</a>
                 {% else %}
-                <a href="{% url 'commerce:connect_onboarding' %}" class="text-sm text-brand-600 hover:underline">
-                    Set Up Payments
-                </a>
+                <a href="{% url 'commerce:connect_onboarding' %}" class="text-sm text-brand-600 hover:underline">Set Up Payments</a>
                 {% endif %}
             </div>
             <div class="flex gap-3">
@@ -80,7 +168,7 @@
 
     {% if profile.is_draft %}
     <!-- Submit for Review -->
-    <form method="post" action="{% url 'creators:submit_for_review' %}" class="mt-4">
+    <form method="post" action="{% url 'creators:submit_for_review' %}" class="mt-4" x-show="tab === 'basics'">
         {% csrf_token %}
         <div class="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
             <div>
@@ -95,8 +183,8 @@
     </form>
     {% endif %}
 
-    <!-- Availability (managed via HTMX) -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+    <!-- Availability tab (HTMX) -->
+    <div x-show="tab === 'availability'" class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="font-semibold text-ink-800 mb-4">Availability</h2>
         <div hx-get="{% url 'availability_list' profile_type='creator' slug=profile.slug %}"
              hx-trigger="load"
@@ -105,8 +193,8 @@
         </div>
     </div>
 
-    <!-- Social links (managed via HTMX, outside the profile form) -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+    <!-- Social Links tab (HTMX) -->
+    <div x-show="tab === 'social'" class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="font-semibold text-ink-800 mb-4">Social Links</h2>
         <div hx-get="{% url 'creators:social_links' %}"
              hx-trigger="load"
@@ -115,8 +203,8 @@
         </div>
     </div>
 
-    <!-- Media management (HTMX-powered, outside the profile form) -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+    <!-- Media tab (HTMX) -->
+    <div x-show="tab === 'media'" class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="font-semibold text-ink-800 mb-4">Media</h2>
         <div hx-get="{% url 'creators:media_items' %}"
              hx-trigger="load"
