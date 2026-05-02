@@ -3,36 +3,188 @@
 {% block title %}Create Event — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Create an Event</h1>
-    <p class="text-ink-500 mb-4">Post a concert, art show, maker market, or other gathering.</p>
+<div class="max-w-2xl mx-auto" x-data="{ step: 1, totalSteps: 3, isFree: {{ form.is_free.value|yesno:'true,false,true' }}, isVirtual: {{ form.is_virtual.value|yesno:'true,false,false' }} }">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-4">Create an Event</h1>
 
     {% include "includes/_unpublished_reminder.html" %}
 
-    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+    <!-- Progress bar -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between text-xs text-ink-400 mb-2">
+            <span x-text="'Step ' + step + ' of ' + totalSteps"></span>
+            <span x-show="step === 1">Basics</span>
+            <span x-show="step === 2">Date & Time</span>
+            <span x-show="step === 3">Details</span>
+        </div>
+        <div class="w-full bg-ink-100 rounded-full h-1.5">
+            <div class="bg-brand-500 h-1.5 rounded-full transition-all duration-300"
+                 :style="'width: ' + (step / totalSteps * 100) + '%'"></div>
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-700">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6">
         {% csrf_token %}
 
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
-        </div>
-        {% endfor %}
+        <!-- Step 1: Basics -->
+        <div x-show="step === 1" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Event Basics</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Event Title <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>{% endif %}
+                </div>
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
-            <a href="{% url 'events:listing' %}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
-            <button type="submit"
-                    class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
-                Create Event
-            </button>
+                <div>
+                    <label for="{{ form.event_type.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Event Type</label>
+                    {{ form.event_type }}
+                </div>
+
+                <div>
+                    <label for="{{ form.venue.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Venue</label>
+                    {{ form.venue }}
+                    <p class="mt-1 text-xs text-ink-400">Leave blank for virtual or multi-venue events.</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}<p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Date & Time -->
+        <div x-show="step === 2" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Date & Time</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.start_datetime.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Start Date & Time <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.start_datetime }}
+                    {% if form.start_datetime.errors %}<p class="mt-1 text-xs text-red-600">{{ form.start_datetime.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.end_datetime.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">End Date & Time</label>
+                    {{ form.end_datetime }}
+                    <p class="mt-1 text-xs text-ink-400">Optional — leave blank for open-ended events.</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.doors_time.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Doors Open</label>
+                    {{ form.doors_time }}
+                    <p class="mt-1 text-xs text-ink-400">Optional — when attendees can start arriving.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Details -->
+        <div x-show="step === 3" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Details</h2>
+            <div class="space-y-5">
+                <!-- Free/Paid toggle -->
+                <div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-ink-700 cursor-pointer">
+                        <input type="checkbox" name="is_free" x-model="isFree"
+                               class="rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+                               {% if form.is_free.value %}checked{% endif %}>
+                        Free Event
+                    </label>
+                </div>
+
+                <!-- Ticket fields (shown only when not free) -->
+                <div x-show="!isFree" x-transition class="space-y-4 pl-4 border-l-2 border-ink-100">
+                    <div>
+                        <label for="id_price_dollars" class="block text-sm font-medium text-ink-700 mb-1">
+                            Ticket Price ($)
+                        </label>
+                        {{ form.price_dollars }}
+                    </div>
+                    <div>
+                        <label for="{{ form.ticket_url.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                            Ticket Link
+                        </label>
+                        {{ form.ticket_url }}
+                        <p class="mt-1 text-xs text-ink-400">Where attendees can buy tickets.</p>
+                    </div>
+                </div>
+
+                <!-- Virtual toggle -->
+                <div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-ink-700 cursor-pointer">
+                        <input type="checkbox" name="is_virtual" x-model="isVirtual"
+                               class="rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+                               {% if form.is_virtual.value %}checked{% endif %}>
+                        Virtual / Livestream
+                    </label>
+                </div>
+
+                <!-- Stream URL (shown only when virtual) -->
+                <div x-show="isVirtual" x-transition class="pl-4 border-l-2 border-ink-100">
+                    <label for="{{ form.stream_url.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Stream URL
+                    </label>
+                    {{ form.stream_url }}
+                </div>
+
+                <!-- Poster image -->
+                <div>
+                    <label for="{{ form.poster_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Poster Image
+                    </label>
+                    {{ form.poster_image }}
+                    <p class="mt-1 text-xs text-ink-400">Optional — displayed on the event listing and detail page.</p>
+                </div>
+
+                <!-- Publish -->
+                <div class="bg-ink-50 rounded-md p-4">
+                    <label class="flex items-center gap-2 text-sm font-medium text-ink-700">
+                        {{ form.is_published }}
+                        Publish immediately
+                    </label>
+                    <p class="mt-1 text-xs text-ink-400">Published events appear in the public listing. Uncheck to save as a draft.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="flex justify-between items-center pt-6 mt-6 border-t border-ink-100">
+            <div>
+                <button type="button"
+                        x-show="step > 1"
+                        @click="step--; window.scrollTo(0, 0)"
+                        class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    &larr; Back
+                </button>
+                <a href="{% url 'events:listing' %}" x-show="step === 1" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    Cancel
+                </a>
+            </div>
+            <div>
+                <button type="button"
+                        x-show="step < totalSteps"
+                        @click="step++; window.scrollTo(0, 0)"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Next &rarr;
+                </button>
+                <button type="submit"
+                        x-show="step === totalSteps"
+                        class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                    Create Event
+                </button>
+            </div>
         </div>
     </form>
 </div>

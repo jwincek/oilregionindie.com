@@ -100,14 +100,21 @@ def create(request):
         if form.is_valid():
             event = form.save(commit=False)
             event.created_by = request.user
-            # Auto-set organizing_creator if user has a creator profile
             if hasattr(request.user, "creator_profile"):
                 event.organizing_creator = request.user.creator_profile
+            # Auto-set organizing_venue if event has a venue the user manages
+            if event.venue and event.venue.can_be_edited_by(request.user):
+                event.organizing_venue = event.venue
             event.save()
             form.save_m2m()
             return redirect("events:detail", slug=event.slug)
     else:
-        form = EventForm()
+        # Smart defaults
+        initial = {}
+        user_venues = list(request.user.venue_profiles.all())
+        if user_venues:
+            initial["venue"] = user_venues[0]
+        form = EventForm(initial=initial)
 
     return render(request, "events/create.html", {"form": form})
 

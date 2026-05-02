@@ -10,20 +10,31 @@ ALLOWED_ATTRS = {"a": ["href", "title", "target", "rel"]}
 
 
 class EventForm(forms.ModelForm):
+    price_dollars = forms.DecimalField(
+        required=False,
+        max_digits=7,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            "class": "form-input",
+            "placeholder": "0.00",
+            "step": "0.01",
+            "min": "0",
+        }),
+        label="Ticket Price ($)",
+        help_text="Leave blank for free events.",
+    )
+
     class Meta:
         model = Event
         fields = [
             "title",
-            "description",
             "event_type",
             "venue",
-            "organizing_creator",
-            "organizing_venue",
+            "description",
             "start_datetime",
             "end_datetime",
             "doors_time",
             "is_free",
-            "ticket_price_cents",
             "ticket_url",
             "poster_image",
             "is_virtual",
@@ -31,19 +42,47 @@ class EventForm(forms.ModelForm):
             "is_published",
         ]
         widgets = {
-            "title": forms.TextInput(attrs={"class": "form-input"}),
-            "description": forms.Textarea(attrs={"class": "form-textarea", "rows": 6}),
+            "title": forms.TextInput(attrs={"class": "form-input", "placeholder": "Event name"}),
+            "description": forms.Textarea(attrs={"class": "form-textarea", "rows": 4, "placeholder": "Describe the event..."}),
             "event_type": forms.Select(attrs={"class": "form-select"}),
             "venue": forms.Select(attrs={"class": "form-select"}),
-            "organizing_creator": forms.Select(attrs={"class": "form-select"}),
-            "organizing_venue": forms.Select(attrs={"class": "form-select"}),
             "start_datetime": forms.DateTimeInput(attrs={"class": "form-input", "type": "datetime-local"}),
             "end_datetime": forms.DateTimeInput(attrs={"class": "form-input", "type": "datetime-local"}),
             "doors_time": forms.TimeInput(attrs={"class": "form-input", "type": "time"}),
-            "ticket_price_cents": forms.NumberInput(attrs={"class": "form-input", "placeholder": "e.g., 1500 for $15.00"}),
-            "ticket_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
+            "ticket_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://tickets.example.com"}),
             "stream_url": forms.URLInput(attrs={"class": "form-input", "placeholder": "https://"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pre-populate price_dollars from existing cents value
+        if self.instance and self.instance.pk and self.instance.ticket_price_cents:
+            self.fields["price_dollars"].initial = self.instance.ticket_price_cents / 100
+        # Only show published venues
+        from apps.venues.models import VenueProfile
+        self.fields["venue"].queryset = VenueProfile.objects.filter(
+            publish_status="published"
+        ).order_by("name")
+        self.fields["venue"].required = False
+        self.fields["is_published"].initial = True
+
+    def clean(self):
+        cleaned = super().clean()
+        is_free = cleaned.get("is_free", True)
+        price = cleaned.get("price_dollars")
+        if not is_free and price:
+            cleaned["ticket_price_cents"] = int(price * 100)
+        else:
+            cleaned["ticket_price_cents"] = 0
+        return cleaned
+
+    def save(self, commit=True):
+        event = super().save(commit=False)
+        event.ticket_price_cents = self.cleaned_data.get("ticket_price_cents", 0)
+        if commit:
+            event.save()
+            self.save_m2m()
+        return event
 
     def clean_description(self):
         value = self.cleaned_data.get("description", "")
