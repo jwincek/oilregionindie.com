@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}{% if group %}Edit {{ group.title }}{% else %}Create Product Group{% endif %} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">
+        {% if group %}Edit Group{% else %}Create Product Group{% endif %}
+    </h1>
+    <p class="text-ink-500 mb-6">
+        <a href="{% url 'commerce:my_products' %}" class="text-brand-600 hover:underline">&larr; Back to products</a>
+    </p>
+
+    {% if form.non_field_errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-700">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-5">
+        {% csrf_token %}
+
+        <div>
+            <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                Title <span class="text-red-500">*</span>
+            </label>
+            {{ form.title }}
+            {% if form.title.errors %}<p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-ink-700 mb-2">Group Type</label>
+            <div class="grid grid-cols-2 gap-3">
+                {% for radio in form.group_type %}
+                <label class="cursor-pointer border rounded-lg p-4 transition
+                       {% if radio.data.selected %}border-brand-500 bg-brand-50{% else %}border-ink-200 hover:border-ink-300{% endif %}">
+                    {{ radio.tag }}
+                    <span class="block font-medium text-ink-700 mt-1">{{ radio.choice_label }}</span>
+                    <span class="block text-xs text-ink-400 mt-0.5">
+                        {% if radio.data.value == "collection" %}
+                        Items can be purchased individually or as a bundle
+                        {% else %}
+                        Items are only available as a complete set
+                        {% endif %}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <label for="id_bundle_price_dollars" class="block text-sm font-medium text-ink-700 mb-1">
+                Bundle Price ($) <span class="text-red-500">*</span>
+            </label>
+            {{ form.bundle_price_dollars }}
+            {% if form.bundle_price_dollars.errors %}<p class="mt-1 text-xs text-red-600">{{ form.bundle_price_dollars.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}<p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Cover Image</label>
+            {% if group and group.image %}
+            <div class="mb-2">
+                <img src="{{ group.image.url }}" alt="" class="w-32 h-32 object-cover rounded">
+            </div>
+            {% endif %}
+            {{ form.image }}
+        </div>
+
+        {% if group %}
+        <div class="bg-ink-50 rounded-md p-4">
+            <label class="flex items-center gap-2 text-sm font-medium text-ink-700">
+                {{ form.is_active }}
+                Active (visible to buyers)
+            </label>
+        </div>
+        {% endif %}
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
+            <a href="{% url 'commerce:my_products' %}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
+            <button type="submit"
+                    class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                {% if group %}Save Changes{% else %}Create Group{% endif %}
+            </button>
+        </div>
+    </form>
+
+    {% if group %}
+    <!-- Group items (HTMX) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Products in This Group</h2>
+        <div hx-get="{% url 'commerce:group_items' pk=group.pk %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading items...</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

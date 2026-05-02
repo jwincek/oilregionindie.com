@@ -15,8 +15,8 @@ from django.contrib import messages
 from apps.creators.models import CreatorProfile
 
 from . import stripe_service
-from .forms import ProductForm
-from .models import Order, OrderItem, Product
+from .forms import ProductForm, ProductGroupForm, ProductImageForm
+from .models import Order, OrderItem, Product, ProductGroup, ProductGroupItem, ProductImage
 
 logger = logging.getLogger(__name__)
 
@@ -180,9 +180,11 @@ def my_products(request):
         return redirect("creators:setup")
     profile = request.user.creator_profile
     products = profile.products.order_by("-created_at")
+    groups = profile.product_groups.prefetch_related("items").order_by("-created_at")
     return render(request, "commerce/my_products.html", {
         "profile": profile,
         "products": products,
+        "groups": groups,
     })
 
 
@@ -252,6 +254,204 @@ def my_sales(request):
     return render(request, "commerce/my_sales.html", {
         "profile": profile,
         "items": items,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Product image management (HTMX)
+# ---------------------------------------------------------------------------
+
+
+def _get_owned_product(request, pk):
+    """Get a product the current user owns."""
+    if not hasattr(request.user, "creator_profile"):
+        return None
+    return get_object_or_404(Product, pk=pk, creator=request.user.creator_profile)
+
+
+@login_required
+def product_images(request, pk):
+    """List product images (HTMX partial)."""
+    product = _get_owned_product(request, pk)
+    if not product:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    return render(request, "commerce/_product_images.html", {
+        "product": product,
+        "images": product.images.all(),
+    })
+
+
+@login_required
+def add_product_image(request, pk):
+    """Add an image to a product via HTMX."""
+    product = _get_owned_product(request, pk)
+    if not product:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    if request.method == "POST":
+        form = ProductImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            img = form.save(commit=False)
+            img.product = product
+            img.save()
+            return render(request, "commerce/_product_images.html", {
+                "product": product,
+                "images": product.images.all(),
+            })
+    else:
+        next_order = product.images.count()
+        form = ProductImageForm(initial={"sort_order": next_order})
+
+    return render(request, "commerce/_product_image_form.html", {
+        "form": form,
+        "product": product,
+    })
+
+
+@login_required
+@require_POST
+def delete_product_image(request, pk, image_pk):
+    """Delete a product image via HTMX."""
+    product = _get_owned_product(request, pk)
+    if not product:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    img = get_object_or_404(ProductImage, pk=image_pk, product=product)
+    img.delete()
+    return render(request, "commerce/_product_images.html", {
+        "product": product,
+        "images": product.images.all(),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Product groups (collections & sets)
+# ---------------------------------------------------------------------------
+
+
+@require_GET
+def group_detail(request, creator_slug, group_slug):
+    """Public product group page."""
+    group = get_object_or_404(
+        ProductGroup.objects.select_related("creator").prefetch_related(
+            "items__product__images"
+        ),
+        creator__slug=creator_slug,
+        slug=group_slug,
+        is_active=True,
+    )
+    return render(request, "commerce/group_detail.html", {"group": group})
+
+
+@login_required
+def create_group(request):
+    """Create a product group."""
+    if not hasattr(request.user, "creator_profile"):
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
+
+    if not profile.can_accept_payments:
+        messages.info(request, "Set up Stripe Connect before creating product groups.")
+        return redirect("commerce:connect_onboarding")
+
+    if request.method == "POST":
+        form = ProductGroupForm(request.POST, request.FILES, creator=profile)
+        if form.is_valid():
+            group = form.save()
+            messages.success(request, f'Group "{group.title}" created. Now add products to it.')
+            return redirect("commerce:edit_group", pk=group.pk)
+    else:
+        form = ProductGroupForm(creator=profile)
+
+    return render(request, "commerce/group_form.html", {
+        "form": form,
+        "profile": profile,
+    })
+
+
+@login_required
+def edit_group(request, pk):
+    """Edit a product group."""
+    if not hasattr(request.user, "creator_profile"):
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
+    group = get_object_or_404(ProductGroup, pk=pk, creator=profile)
+
+    if request.method == "POST":
+        form = ProductGroupForm(request.POST, request.FILES, instance=group, creator=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Group "{group.title}" updated.')
+            return redirect("commerce:my_products")
+    else:
+        form = ProductGroupForm(instance=group, creator=profile)
+
+    return render(request, "commerce/group_form.html", {
+        "form": form,
+        "profile": profile,
+        "group": group,
+    })
+
+
+@login_required
+def group_items(request, pk):
+    """List items in a product group (HTMX partial)."""
+    if not hasattr(request.user, "creator_profile"):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    group = get_object_or_404(ProductGroup, pk=pk, creator=request.user.creator_profile)
+    return render(request, "commerce/_group_items.html", {
+        "group": group,
+        "items": group.items.select_related("product").all(),
+        "available_products": request.user.creator_profile.products.exclude(
+            pk__in=group.items.values_list("product_id", flat=True)
+        ).order_by("title"),
+    })
+
+
+@login_required
+@require_POST
+def add_group_item(request, pk):
+    """Add a product to a group via HTMX."""
+    if not hasattr(request.user, "creator_profile"):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    group = get_object_or_404(ProductGroup, pk=pk, creator=request.user.creator_profile)
+    product_id = request.POST.get("product_id")
+    if product_id:
+        product = get_object_or_404(Product, pk=product_id, creator=request.user.creator_profile)
+        next_order = group.items.count()
+        ProductGroupItem.objects.get_or_create(
+            group=group, product=product,
+            defaults={"sort_order": next_order},
+        )
+    return render(request, "commerce/_group_items.html", {
+        "group": group,
+        "items": group.items.select_related("product").all(),
+        "available_products": request.user.creator_profile.products.exclude(
+            pk__in=group.items.values_list("product_id", flat=True)
+        ).order_by("title"),
+    })
+
+
+@login_required
+@require_POST
+def remove_group_item(request, pk, item_pk):
+    """Remove a product from a group via HTMX."""
+    if not hasattr(request.user, "creator_profile"):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    group = get_object_or_404(ProductGroup, pk=pk, creator=request.user.creator_profile)
+    item = get_object_or_404(ProductGroupItem, pk=item_pk, group=group)
+    item.delete()
+    return render(request, "commerce/_group_items.html", {
+        "group": group,
+        "items": group.items.select_related("product").all(),
+        "available_products": request.user.creator_profile.products.exclude(
+            pk__in=group.items.values_list("product_id", flat=True)
+        ).order_by("title"),
     })
 
 

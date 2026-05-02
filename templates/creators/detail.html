@@ -123,9 +123,30 @@
         {% endif %}
 
         <!-- Products -->
-        {% if creator.products.exists %}
+        {% if creator.products.exists or creator.product_groups.exists %}
         <div class="bg-white rounded-lg shadow-sm p-6">
             <h2 class="font-semibold text-ink-800 mb-4">Shop</h2>
+
+            {% for group in creator.product_groups.all %}
+            {% if group.is_active %}
+            <a href="{{ group.get_absolute_url }}"
+               class="block border border-brand-200 bg-brand-50 rounded-lg p-4 hover:border-brand-400 transition mb-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-medium text-ink-700">{{ group.title }}</h3>
+                        <p class="text-xs text-ink-400">{{ group.get_group_type_display }} &middot; {{ group.items.count }} item{{ group.items.count|pluralize }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-brand-600 font-semibold">{{ group.bundle_price_display }}</p>
+                        {% if group.is_collection and group.savings_display %}
+                        <p class="text-xs text-green-600">Save {{ group.savings_display }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+            {% endfor %}
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {% for product in creator.products.all %}
                 {% if product.is_active %}

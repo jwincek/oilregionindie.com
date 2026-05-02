@@ -111,6 +111,116 @@ class ProductImage(models.Model):
         return self.alt_text or f"Image for {self.product.title}"
 
 
+class ProductGroup(models.Model):
+    """
+    A group of related products — either a collection (items sold individually
+    with a bundle discount) or a set (items only sold together).
+    """
+
+    class GroupType(models.TextChoices):
+        COLLECTION = "collection", "Collection"
+        SET = "set", "Set"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    creator = models.ForeignKey(
+        CreatorProfile, on_delete=models.CASCADE, related_name="product_groups",
+    )
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255)
+    description = RichTextField(blank=True)
+    group_type = models.CharField(
+        max_length=20, choices=GroupType.choices, default=GroupType.COLLECTION,
+    )
+    bundle_price_cents = models.IntegerField(
+        help_text="Price for the entire group",
+    )
+    image = models.ImageField(upload_to="commerce/groups/", blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+            while ProductGroup.objects.filter(
+                creator=self.creator, slug=slug
+            ).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("commerce:group_detail", kwargs={
+            "creator_slug": self.creator.slug,
+            "group_slug": self.slug,
+        })
+
+    @property
+    def bundle_price_display(self):
+        return f"${self.bundle_price_cents / 100:.2f}"
+
+    @property
+    def individual_total_cents(self):
+        """Sum of individual item prices."""
+        return sum(item.product.price_cents for item in self.items.select_related("product").all())
+
+    @property
+    def individual_total_display(self):
+        return f"${self.individual_total_cents / 100:.2f}"
+
+    @property
+    def savings_cents(self):
+        return self.individual_total_cents - self.bundle_price_cents
+
+    @property
+    def savings_display(self):
+        savings = self.savings_cents
+        if savings > 0:
+            return f"${savings / 100:.2f}"
+        return None
+
+    @property
+    def is_collection(self):
+        return self.group_type == self.GroupType.COLLECTION
+
+    @property
+    def is_set(self):
+        return self.group_type == self.GroupType.SET
+
+
+class ProductGroupItem(models.Model):
+    """A product within a group, with ordering."""
+
+    group = models.ForeignKey(
+        ProductGroup, on_delete=models.CASCADE, related_name="items",
+    )
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="group_memberships",
+    )
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["group", "product"],
+                name="unique_product_per_group",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.product.title} in {self.group.title}"
+
+
 class Order(models.Model):
     """
     A purchase transaction. Contains one or more OrderItems.

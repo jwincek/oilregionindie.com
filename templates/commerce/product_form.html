@@ -3,47 +3,179 @@
 {% block title %}{% if product %}Edit {{ product.title }}{% else %}Add Product{% endif %} — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl mx-auto"
+     x-data="{ step: 1, totalSteps: 2, isDigital: {{ form.is_digital.value|yesno:'true,false,false' }} }">
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">
         {% if product %}Edit Product{% else %}Add Product{% endif %}
     </h1>
-    <p class="text-ink-500 mb-8">
+    <p class="text-ink-500 mb-4">
         <a href="{% url 'commerce:my_products' %}" class="text-brand-600 hover:underline">&larr; Back to products</a>
     </p>
 
-    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+    {% if not product %}
+    <!-- Progress bar (create only) -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between text-xs text-ink-400 mb-2">
+            <span x-text="'Step ' + step + ' of ' + totalSteps"></span>
+            <span x-show="step === 1">Basics</span>
+            <span x-show="step === 2">Media & Shipping</span>
+        </div>
+        <div class="w-full bg-ink-100 rounded-full h-1.5">
+            <div class="bg-brand-500 h-1.5 rounded-full transition-all duration-300"
+                 :style="'width: ' + (step / totalSteps * 100) + '%'"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-700">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6">
         {% csrf_token %}
 
-        {% if form.non_field_errors %}
-        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-            {% for error in form.non_field_errors %}
-            <p class="text-sm text-red-700">{{ error }}</p>
-            {% endfor %}
-        </div>
-        {% endif %}
+        <!-- Step 1: Basics -->
+        <div x-show="{% if product %}true{% else %}step === 1{% endif %}" x-transition>
+            {% if not product %}<h2 class="text-lg font-semibold text-ink-800 mb-4">Product Details</h2>{% endif %}
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Title <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>{% endif %}
+                </div>
 
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
-        </div>
-        {% endfor %}
+                <div>
+                    <label for="{{ form.product_type.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Type</label>
+                    {{ form.product_type }}
+                </div>
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
-            <a href="{% url 'commerce:my_products' %}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
-            <button type="submit"
-                    class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
-                {% if product %}Save Changes{% else %}Create Product{% endif %}
-            </button>
+                <div>
+                    <label for="id_price_dollars" class="block text-sm font-medium text-ink-700 mb-1">
+                        Price ($) <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.price_dollars }}
+                    {% if form.price_dollars.errors %}<p class="mt-1 text-xs text-red-600">{{ form.price_dollars.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}<p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-ink-700 cursor-pointer">
+                        <input type="checkbox" name="is_digital" x-model="isDigital"
+                               class="rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+                               {% if form.is_digital.value %}checked{% endif %}>
+                        Digital product (download)
+                    </label>
+                </div>
+
+                {% if product %}
+                <div class="bg-ink-50 rounded-md p-4">
+                    <label class="flex items-center gap-2 text-sm font-medium text-ink-700">
+                        {{ form.is_active }}
+                        Active (visible to buyers)
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Step 2: Media & Shipping -->
+        <div x-show="{% if product %}true{% else %}step === 2{% endif %}" x-transition>
+            {% if not product %}<h2 class="text-lg font-semibold text-ink-800 mb-4">Media & Shipping</h2>{% endif %}
+            {% if product %}<h2 class="text-lg font-semibold text-ink-800 mt-8 mb-4 pt-6 border-t border-ink-100">Media & Shipping</h2>{% endif %}
+            <div class="space-y-5">
+                <!-- Digital file (only for digital products) -->
+                <div x-show="isDigital" x-transition>
+                    <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Digital File
+                    </label>
+                    {% if product and product.file %}
+                    <p class="mb-2 text-xs text-ink-500">Current file: {{ product.file.name }}</p>
+                    {% endif %}
+                    {{ form.file }}
+                    <p class="mt-1 text-xs text-ink-400">The file buyers will download after purchase.</p>
+                </div>
+
+                <!-- Inventory (only for physical products) -->
+                <div x-show="!isDigital" x-transition>
+                    <label for="{{ form.inventory_count.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Inventory Count
+                    </label>
+                    {{ form.inventory_count }}
+                    <p class="mt-1 text-xs text-ink-400">How many are available? Leave blank for unlimited.</p>
+                </div>
+
+                <!-- Shipping note (only for physical products) -->
+                <div x-show="!isDigital" x-transition>
+                    <label for="{{ form.shipping_note.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Shipping Note
+                    </label>
+                    {{ form.shipping_note }}
+                    <p class="mt-1 text-xs text-ink-400">Displayed to buyers — shipping times, methods, etc.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation / submit -->
+        <div class="flex justify-between items-center pt-6 mt-6 border-t border-ink-100">
+            <div>
+                {% if product %}
+                <a href="{% url 'commerce:my_products' %}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
+                {% else %}
+                <button type="button"
+                        x-show="step > 1"
+                        @click="step--; window.scrollTo(0, 0)"
+                        class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    &larr; Back
+                </button>
+                <a href="{% url 'commerce:my_products' %}" x-show="step === 1" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    Cancel
+                </a>
+                {% endif %}
+            </div>
+            <div>
+                {% if product %}
+                <button type="submit"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Save Changes
+                </button>
+                {% else %}
+                <button type="button"
+                        x-show="step < totalSteps"
+                        @click="step++; window.scrollTo(0, 0)"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Next &rarr;
+                </button>
+                <button type="submit"
+                        x-show="step === totalSteps"
+                        class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                    Create Product
+                </button>
+                {% endif %}
+            </div>
         </div>
     </form>
+
+    {% if product %}
+    <!-- Product images (HTMX, edit mode only) -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Product Images</h2>
+        <div hx-get="{% url 'commerce:product_images' pk=product.pk %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading images...</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

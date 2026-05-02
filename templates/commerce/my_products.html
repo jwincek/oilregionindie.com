@@ -11,6 +11,10 @@
                class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
                 View Sales
             </a>
+            <a href="{% url 'commerce:create_group' %}"
+               class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
+                Create Group
+            </a>
             <a href="{% url 'commerce:create_product' %}"
                class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
                 Add Product
@@ -68,6 +72,34 @@
             <a href="{% url 'commerce:connect_onboarding' %}" class="text-brand-600 hover:underline">Set up payments</a> first, then add products.
             {% endif %}
         </p>
+    </div>
+    {% endif %}
+
+    <!-- Product Groups -->
+    {% if groups %}
+    <h2 class="text-lg font-semibold text-ink-800 mt-10 mb-4">Product Groups</h2>
+    <div class="space-y-3">
+        {% for group in groups %}
+        <div class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+            <div>
+                <h3 class="font-medium text-ink-800">{{ group.title }}</h3>
+                <div class="flex items-center gap-3 mt-1 text-sm text-ink-500">
+                    <span class="bg-ink-100 text-ink-600 text-xs px-1.5 py-0.5 rounded">{{ group.get_group_type_display }}</span>
+                    <span>{{ group.bundle_price_display }}</span>
+                    <span>{{ group.items.count }} item{{ group.items.count|pluralize }}</span>
+                    {% if not group.is_active %}
+                    <span class="bg-ink-100 text-ink-500 text-xs px-1.5 py-0.5 rounded">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ group.get_absolute_url }}"
+                   class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">View</a>
+                <a href="{% url 'commerce:edit_group' pk=group.pk %}"
+                   class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">Edit</a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
     {% endif %}
 </div>

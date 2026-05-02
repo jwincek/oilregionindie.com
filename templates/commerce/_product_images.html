@@ -1,0 +1,35 @@
+<div id="product-images-container">
+    {% if images %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+        {% for img in images %}
+        <div class="relative group">
+            <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:'Product image' }}"
+                 class="w-full h-24 object-cover rounded-md">
+            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition rounded-md flex items-center justify-center">
+                <button hx-post="{% url 'commerce:delete_product_image' pk=product.pk image_pk=img.pk %}"
+                        hx-target="#product-images-container"
+                        hx-swap="outerHTML"
+                        hx-confirm="Remove this image?"
+                        class="opacity-0 group-hover:opacity-100 text-white text-xs bg-red-600 px-2 py-1 rounded transition">
+                    Remove
+                </button>
+            </div>
+            {% if img.alt_text %}
+            <p class="text-xs text-ink-400 mt-1 truncate">{{ img.alt_text }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-ink-400 mb-4">No images yet.</p>
+    {% endif %}
+
+    <button hx-get="{% url 'commerce:add_product_image' pk=product.pk %}"
+            hx-target="#product-image-form-area"
+            hx-swap="innerHTML"
+            class="text-sm text-brand-600 hover:text-brand-700 font-medium transition">
+        + Add Image
+    </button>
+
+    <div id="product-image-form-area" class="mt-3"></div>
+</div>

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.title }} by {{ group.creator.display_name }} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Group image -->
+        <div>
+            {% if group.image %}
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <img src="{{ group.image.url }}" alt="{{ group.title }}" class="w-full object-cover">
+            </div>
+            {% else %}
+            <div class="bg-ink-100 rounded-lg h-64 flex items-center justify-center">
+                <span class="text-ink-400 text-sm">No image</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Group info -->
+        <div>
+            <p class="text-sm text-ink-500 mb-1">
+                <a href="{{ group.creator.get_absolute_url }}" class="text-brand-600 hover:underline">{{ group.creator.display_name }}</a>
+            </p>
+            <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">{{ group.title }}</h1>
+
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-ink-100 text-ink-600 text-xs font-medium px-2 py-1 rounded">
+                    {{ group.get_group_type_display }}
+                </span>
+                <span class="text-xl font-semibold text-ink-800">{{ group.bundle_price_display }}</span>
+            </div>
+
+            {% if group.is_collection and group.savings_display %}
+            <p class="text-sm text-green-600 mb-4">
+                Save {{ group.savings_display }} vs. buying individually ({{ group.individual_total_display }})
+            </p>
+            {% endif %}
+
+            {% if group.description %}
+            <div class="prose prose-sm text-ink-600 mb-6">
+                {{ group.description|safe }}
+            </div>
+            {% endif %}
+
+            {% if group.creator.can_accept_payments %}
+            <form method="post" action="{% url 'commerce:create_checkout' product_id=group.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit"
+                        class="w-full bg-ink-800 text-white py-3 rounded-md font-medium hover:bg-ink-700 transition">
+                    {% if group.is_set %}
+                    Buy Set — {{ group.bundle_price_display }}
+                    {% else %}
+                    Buy All — {{ group.bundle_price_display }}
+                    {% endif %}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Items in this group -->
+    <div class="mt-12">
+        <h2 class="text-xl font-display font-bold text-ink-800 mb-6">
+            {% if group.is_collection %}What's Included{% else %}In This Set{% endif %}
+        </h2>
+        <div class="space-y-3">
+            {% for item in group.items.all %}
+            <div class="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <span class="text-xs text-ink-400 font-mono w-6 text-center">{{ item.sort_order|add:1 }}</span>
+                    <div>
+                        {% if group.is_collection %}
+                        <a href="{{ item.product.get_absolute_url }}" class="font-medium text-ink-800 hover:text-brand-600 transition">
+                            {{ item.product.title }}
+                        </a>
+                        {% else %}
+                        <span class="font-medium text-ink-800">{{ item.product.title }}</span>
+                        {% endif %}
+                        <p class="text-xs text-ink-400">{{ item.product.get_product_type_display }}</p>
+                    </div>
+                </div>
+                {% if group.is_collection %}
+                <div class="text-right">
+                    <span class="text-sm text-ink-600">{{ item.product.price_display }}</span>
+                    {% if item.product.is_active %}
+                    <a href="{{ item.product.get_absolute_url }}" class="block text-xs text-brand-600 hover:underline mt-0.5">Buy individually</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+<div id="group-items-container">
+    {% if items %}
+    <div class="space-y-2 mb-4">
+        {% for item in items %}
+        <div class="flex items-center justify-between bg-ink-50 rounded-md px-3 py-2 group">
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-ink-400 font-mono w-6 text-center">{{ item.sort_order|add:1 }}</span>
+                <div>
+                    <span class="text-sm font-medium text-ink-700">{{ item.product.title }}</span>
+                    <span class="text-xs text-ink-400 ml-2">{{ item.product.price_display }}</span>
+                </div>
+            </div>
+            <button hx-post="{% url 'commerce:remove_group_item' pk=group.pk item_pk=item.pk %}"
+                    hx-target="#group-items-container"
+                    hx-swap="outerHTML"
+                    hx-confirm="Remove this product from the group?"
+                    class="text-xs text-ink-400 hover:text-red-600 px-2 py-1 opacity-0 group-hover:opacity-100 transition">
+                Remove
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-ink-400 mb-4">No products in this group yet.</p>
+    {% endif %}
+
+    <!-- Add product selector -->
+    {% if available_products %}
+    <form hx-post="{% url 'commerce:add_group_item' pk=group.pk %}"
+          hx-target="#group-items-container"
+          hx-swap="outerHTML"
+          class="flex gap-2 items-end">
+        {% csrf_token %}
+        <div class="flex-1">
+            <label class="block text-xs font-medium text-ink-600 mb-1">Add a product</label>
+            <select name="product_id" class="w-full rounded-md border-ink-200 shadow-sm text-sm">
+                {% for product in available_products %}
+                <option value="{{ product.pk }}">{{ product.title }} ({{ product.price_display }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit"
+                class="bg-ink-800 text-white text-xs px-4 py-2 rounded-md font-medium hover:bg-ink-700 transition">
+            Add
+        </button>
+    </form>
+    {% elif not items %}
+    <p class="text-sm text-ink-400">
+        <a href="{% url 'commerce:create_product' %}" class="text-brand-600 hover:underline">Create products</a> first, then add them to this group.
+    </p>
+    {% else %}
+    <p class="text-xs text-ink-400">All your products are in this group.</p>
+    {% endif %}
+</div>
