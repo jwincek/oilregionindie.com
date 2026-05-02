@@ -3,34 +3,170 @@
 {% block title %}Register a Venue — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl mx-auto" x-data="{ step: 1, totalSteps: 4 }">
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Register a Venue</h1>
-    <p class="text-ink-500 mb-8">Add your bar, cafe, gallery, or community space to the hub.</p>
+    <p class="text-ink-500 mb-4">Add your bar, cafe, gallery, or community space to the hub.</p>
 
-    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+    <div class="mb-8 p-4 rounded-md bg-blue-50 border border-blue-200">
+        <p class="text-sm text-blue-800">
+            <span class="font-medium">How it works:</span>
+            Fill out your venue details below, then submit for review. We'll review and publish it within 48 hours.
+            You can add contacts, availability, and social links from the edit page after creating.
+        </p>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between text-xs text-ink-400 mb-2">
+            <span x-text="'Step ' + step + ' of ' + totalSteps"></span>
+            <span x-show="step === 1">Basics</span>
+            <span x-show="step === 2">About</span>
+            <span x-show="step === 3">Images</span>
+            <span x-show="step === 4">Review</span>
+        </div>
+        <div class="w-full bg-ink-100 rounded-full h-1.5">
+            <div class="bg-brand-500 h-1.5 rounded-full transition-all duration-300"
+                 :style="'width: ' + (step / totalSteps * 100) + '%'"></div>
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-700">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6">
         {% csrf_token %}
 
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
+        <!-- Step 1: Basics -->
+        <div x-show="step === 1" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Venue Details</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        {{ form.name.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.venue_type.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.venue_type.label }}</label>
+                    {{ form.venue_type }}
+                </div>
+                <div>
+                    <label for="{{ form.capacity.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.capacity.label }}</label>
+                    {{ form.capacity }}
+                </div>
+                <div>
+                    <label for="id_street" class="block text-sm font-medium text-ink-700 mb-1">Street Address</label>
+                    {{ form.street }}
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label for="id_address_city" class="block text-sm font-medium text-ink-700 mb-1">
+                            City <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.address_city }}
+                        {% if form.address_city.errors %}<p class="mt-1 text-xs text-red-600">{{ form.address_city.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="id_address_state" class="block text-sm font-medium text-ink-700 mb-1">
+                            State <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.address_state }}
+                    </div>
+                    <div>
+                        <label for="id_zip_code" class="block text-sm font-medium text-ink-700 mb-1">ZIP Code</label>
+                        {{ form.zip_code }}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-ink-700 mb-2">Amenities</label>
+                    <div class="flex flex-wrap gap-2">{{ form.amenities }}</div>
+                </div>
+            </div>
         </div>
-        {% endfor %}
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
-            <a href="{% url 'venues:directory' %}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
-            <button type="submit"
-                    class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
-                Register Venue
-            </button>
+        <!-- Step 2: About -->
+        <div x-show="step === 2" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">About Your Venue</h2>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    <p class="mt-1 text-xs text-ink-400">Describe your space, what kind of events you host, and what makes it unique.</p>
+                </div>
+                <div>
+                    <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.website.label }}</label>
+                    {{ form.website }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Images -->
+        <div x-show="step === 3" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Images</h2>
+            <p class="text-sm text-ink-500 mb-5">These are optional — you can add them later. A default banner will be generated from your venue name.</p>
+            <div class="space-y-5">
+                <div>
+                    <label for="{{ form.profile_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Profile Image</label>
+                    {{ form.profile_image }}
+                    <p class="mt-1 text-xs text-ink-400">A photo of your venue.</p>
+                </div>
+                <div>
+                    <label for="{{ form.header_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Header Image</label>
+                    {{ form.header_image }}
+                    <p class="mt-1 text-xs text-ink-400">Wide banner image for the top of your venue page.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Review -->
+        <div x-show="step === 4" x-transition>
+            <h2 class="text-lg font-semibold text-ink-800 mb-4">Review & Register</h2>
+            <p class="text-sm text-ink-500 mb-5">
+                Your venue will start as a draft. After registering, you can submit it for review to appear in the directory.
+            </p>
+            <div class="bg-ink-50 rounded-md p-4 text-sm text-ink-600 space-y-2">
+                <p>Click <strong>Register Venue</strong> to save. You'll then be able to:</p>
+                <ul class="list-disc list-inside space-y-1 text-ink-500">
+                    <li>Add booking and general contacts</li>
+                    <li>Set availability flags</li>
+                    <li>Add social media links</li>
+                    <li>Submit for review when you're ready</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="flex justify-between items-center pt-6 mt-6 border-t border-ink-100">
+            <div>
+                <button type="button"
+                        x-show="step > 1"
+                        @click="step--; window.scrollTo(0, 0)"
+                        class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    &larr; Back
+                </button>
+                <a href="{% url 'venues:directory' %}" x-show="step === 1" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">
+                    Cancel
+                </a>
+            </div>
+            <div>
+                <button type="button"
+                        x-show="step < totalSteps"
+                        @click="step++; window.scrollTo(0, 0)"
+                        class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+                    Next &rarr;
+                </button>
+                <button type="submit"
+                        x-show="step === totalSteps"
+                        class="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                    Register Venue
+                </button>
+            </div>
         </div>
     </form>
 </div>

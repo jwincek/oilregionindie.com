@@ -3,13 +3,13 @@
 {% block title %}Edit {{ venue.name }} — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Edit Venue</h1>
-    <p class="text-ink-500 mb-8">
+<div class="max-w-2xl mx-auto" x-data="{ tab: 'basics' }">
+    <div class="flex items-center justify-between mb-2">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Edit Venue</h1>
         {% if venue.is_published %}
-        <a href="{{ venue.get_absolute_url }}" class="text-brand-600 hover:underline">View public page</a>
+        <a href="{{ venue.get_absolute_url }}" class="text-sm text-brand-600 hover:underline">View page</a>
         {% endif %}
-    </p>
+    </div>
 
     {% if messages %}
     {% for message in messages %}
@@ -37,25 +37,103 @@
     </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+    <!-- Tab navigation -->
+    <div class="flex border-b border-ink-200 mb-6 overflow-x-auto">
+        <button @click="tab = 'basics'" :class="tab === 'basics' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Basics</button>
+        <button @click="tab = 'about'" :class="tab === 'about' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">About</button>
+        <button @click="tab = 'images'" :class="tab === 'images' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Images</button>
+        <button @click="tab = 'contacts'" :class="tab === 'contacts' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Contacts</button>
+        <button @click="tab = 'availability'" :class="tab === 'availability' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Availability</button>
+        <button @click="tab = 'social'" :class="tab === 'social' ? 'border-brand-500 text-brand-600' : 'border-transparent text-ink-500 hover:text-ink-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap">Social Links</button>
+    </div>
+
+    <!-- Venue form (tabs: basics, about, images) -->
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6"
+          x-show="tab === 'basics' || tab === 'about' || tab === 'images'">
         {% csrf_token %}
 
-        {% for field in form %}
-        <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
-                {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-            <p class="mt-1 text-xs text-ink-400">{{ field.help_text }}</p>
-            {% endif %}
-            {% if field.errors %}
-            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-            {% endif %}
+        <!-- Basics tab -->
+        <div x-show="tab === 'basics'" class="space-y-5">
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.venue_type.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.venue_type.label }}</label>
+                {{ form.venue_type }}
+            </div>
+            <div>
+                <label for="{{ form.capacity.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.capacity.label }}</label>
+                {{ form.capacity }}
+            </div>
+            <div>
+                <label for="id_street" class="block text-sm font-medium text-ink-700 mb-1">Street Address</label>
+                {{ form.street }}
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label for="id_address_city" class="block text-sm font-medium text-ink-700 mb-1">City</label>
+                    {{ form.address_city }}
+                    {% if form.address_city.errors %}<p class="mt-1 text-xs text-red-600">{{ form.address_city.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="id_address_state" class="block text-sm font-medium text-ink-700 mb-1">State</label>
+                    {{ form.address_state }}
+                </div>
+                <div>
+                    <label for="id_zip_code" class="block text-sm font-medium text-ink-700 mb-1">ZIP Code</label>
+                    {{ form.zip_code }}
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-2">Amenities</label>
+                <div class="flex flex-wrap gap-2">{{ form.amenities }}</div>
+            </div>
         </div>
-        {% endfor %}
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-ink-100">
+        <!-- About tab -->
+        <div x-show="tab === 'about'" class="space-y-5">
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.description.label }}</label>
+                {{ form.description }}
+            </div>
+            <div>
+                <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">{{ form.website.label }}</label>
+                {{ form.website }}
+            </div>
+        </div>
+
+        <!-- Images tab -->
+        <div x-show="tab === 'images'" class="space-y-5">
+            <div>
+                <label for="{{ form.profile_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Profile Image</label>
+                {% if venue.profile_image %}
+                <div class="mb-2">
+                    <img src="{{ venue.profile_image.url }}" alt="" class="w-16 h-16 rounded object-cover">
+                </div>
+                {% endif %}
+                {{ form.profile_image }}
+            </div>
+            <div>
+                <label for="{{ form.header_image.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Header Image</label>
+                {% if venue.header_image %}
+                <div class="mb-2">
+                    <img src="{{ venue.header_image.url }}" alt="" class="w-full h-20 object-cover rounded">
+                </div>
+                {% endif %}
+                {{ form.header_image }}
+            </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="flex justify-end gap-3 pt-4 mt-6 border-t border-ink-100">
             <a href="{{ venue.get_absolute_url }}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
             <button type="submit"
                     class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
@@ -64,39 +142,8 @@
         </div>
     </form>
 
-    <!-- Availability (managed via HTMX) -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-        <h2 class="font-semibold text-ink-800 mb-4">Availability</h2>
-        <div hx-get="{% url 'availability_list' profile_type='venue' slug=venue.slug %}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-            <p class="text-sm text-ink-400">Loading availability...</p>
-        </div>
-    </div>
-
-    <!-- Contacts (managed via HTMX) -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-        <h2 class="font-semibold text-ink-800 mb-4">Contacts</h2>
-        <div hx-get="{% url 'venues:contacts' venue.slug %}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-            <p class="text-sm text-ink-400">Loading contacts...</p>
-        </div>
-    </div>
-
-    <!-- Social links (managed via HTMX, outside the profile form) -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-        <h2 class="font-semibold text-ink-800 mb-4">Social Links</h2>
-        <div hx-get="{% url 'venues:social_links' venue.slug %}"
-             hx-trigger="load"
-             hx-swap="innerHTML">
-            <p class="text-sm text-ink-400">Loading social links...</p>
-        </div>
-    </div>
-
     {% if venue.is_draft %}
-    <!-- Submit for Review -->
-    <form method="post" action="{% url 'venues:submit_for_review' venue.slug %}" class="mt-4">
+    <form method="post" action="{% url 'venues:submit_for_review' venue.slug %}" class="mt-4" x-show="tab === 'basics'">
         {% csrf_token %}
         <div class="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
             <div>
@@ -110,5 +157,35 @@
         </div>
     </form>
     {% endif %}
+
+    <!-- Contacts tab (HTMX) -->
+    <div x-show="tab === 'contacts'" class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Contacts</h2>
+        <div hx-get="{% url 'venues:contacts' venue.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading contacts...</p>
+        </div>
+    </div>
+
+    <!-- Availability tab (HTMX) -->
+    <div x-show="tab === 'availability'" class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Availability</h2>
+        <div hx-get="{% url 'availability_list' profile_type='venue' slug=venue.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading availability...</p>
+        </div>
+    </div>
+
+    <!-- Social Links tab (HTMX) -->
+    <div x-show="tab === 'social'" class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Social Links</h2>
+        <div hx-get="{% url 'venues:social_links' venue.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="text-sm text-ink-400">Loading social links...</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
