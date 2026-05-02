@@ -19,6 +19,8 @@
         {% endif %}
     </p>
 
+    {% include "includes/_unpublished_reminder.html" %}
+
     <form method="post" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
         {% csrf_token %}
 

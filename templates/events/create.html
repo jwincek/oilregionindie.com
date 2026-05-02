@@ -5,7 +5,9 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Create an Event</h1>
-    <p class="text-ink-500 mb-8">Post a concert, art show, maker market, or other gathering.</p>
+    <p class="text-ink-500 mb-4">Post a concert, art show, maker market, or other gathering.</p>
+
+    {% include "includes/_unpublished_reminder.html" %}
 
     <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-sm p-6 space-y-6">
         {% csrf_token %}

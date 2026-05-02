@@ -4,7 +4,9 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
-    <h1 class="text-2xl font-display font-bold text-ink-800 mb-8">Booking Requests</h1>
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-4">Booking Requests</h1>
+
+    {% include "includes/_unpublished_reminder.html" %}
 
     {% if messages %}
     {% for message in messages %}
