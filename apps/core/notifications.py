@@ -41,6 +41,50 @@ def notify_admin_profile_submitted(profile):
     )
 
 
+def notify_profile_approved(profile):
+    """
+    Notify a creator or venue owner that their profile has been approved.
+    Sends both an in-app notification and an email.
+    """
+    from apps.creators.models import CreatorProfile
+    from .models import Notification
+
+    if isinstance(profile, CreatorProfile):
+        profile_type = "creator"
+        name = profile.display_name
+        url = profile.get_absolute_url()
+    else:
+        profile_type = "venue"
+        name = profile.name
+        url = profile.get_absolute_url()
+
+    # In-app notification
+    Notification.objects.create(
+        recipient=profile.user,
+        notification_type=Notification.NotificationType.PROFILE_APPROVED,
+        message=f"Your {profile_type} profile \"{name}\" has been approved and is now live!",
+        url=url,
+    )
+
+    # Email notification
+    site_name = getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
+    send_mail(
+        subject=f"[{site_name}] Your {profile_type} profile is live!",
+        message=(
+            f"Great news — your {profile_type} profile \"{name}\" has been approved "
+            f"and is now visible in the directory.\n\n"
+            f"View your profile: {url}\n\n"
+            f"You can continue editing your profile, adding media, setting availability, "
+            f"and managing social links at any time.\n\n"
+            f"Welcome to the community!\n"
+            f"{site_name}"
+        ),
+        from_email=None,
+        recipient_list=[profile.user.email],
+        fail_silently=True,
+    )
+
+
 def notify_booking_status_changed(booking):
     """
     Send an email notification when a booking request is created or responded to.

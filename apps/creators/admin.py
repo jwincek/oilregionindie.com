@@ -110,8 +110,15 @@ class CreatorProfileAdmin(admin.ModelAdmin):
 
     @admin.action(description="Approve selected profiles (publish)")
     def approve_profiles(self, request, queryset):
-        updated = queryset.exclude(publish_status="published").update(publish_status="published")
-        self.message_user(request, f"Approved {updated} profile(s).")
+        from apps.core.notifications import notify_profile_approved
+        profiles = queryset.exclude(publish_status="published")
+        count = 0
+        for profile in profiles:
+            profile.publish_status = "published"
+            profile.save(update_fields=["publish_status", "updated_at"])
+            notify_profile_approved(profile)
+            count += 1
+        self.message_user(request, f"Approved {count} profile(s).")
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
