@@ -62,7 +62,33 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+                {% if product.in_stock and not product.is_digital %}
+                <form method="post" action="{% url 'commerce:mark_sold' pk=product.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Mark as sold out?')"
+                            class="text-xs text-ink-400 hover:text-amber-600 px-2 py-1 transition">Sold</button>
+                </form>
+                {% elif not product.in_stock and not product.is_digital %}
+                <div x-data="{ restockOpen: false }" class="inline relative">
+                    <button @click="restockOpen = !restockOpen" type="button"
+                            class="text-xs text-ink-400 hover:text-green-600 px-2 py-1 transition">Restock</button>
+                    <div x-show="restockOpen" x-transition @click.away="restockOpen = false"
+                         class="absolute right-0 mt-1 bg-white border border-ink-200 rounded-md shadow-lg p-3 z-50 w-48">
+                        <form method="post" action="{% url 'commerce:restock' pk=product.pk %}">
+                            {% csrf_token %}
+                            <label class="block text-xs font-medium text-ink-600 mb-1">Quantity</label>
+                            <input type="number" name="quantity" min="1" value="1"
+                                   class="w-full rounded-md border-ink-200 text-sm mb-2">
+                            <div class="flex gap-2">
+                                <button type="submit" class="bg-ink-800 text-white text-xs px-3 py-1 rounded-md">Set</button>
+                                <button type="submit" name="quantity" value="unlimited"
+                                        class="text-xs text-ink-500 hover:text-ink-700 px-2 py-1">Unlimited</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
                 <a href="{{ product.get_absolute_url }}"
                    class="text-xs text-ink-400 hover:text-brand-600 px-2 py-1 transition">View</a>
                 <a href="{% url 'commerce:edit_product' pk=product.pk %}"

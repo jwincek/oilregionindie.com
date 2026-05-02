@@ -326,6 +326,41 @@ def delete_product_image(request, pk, image_pk):
     })
 
 
+@login_required
+@require_POST
+def mark_sold(request, pk):
+    """Mark a product as sold out (set inventory to 0)."""
+    product = _get_owned_product(request, pk)
+    if not product:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    product.inventory_count = 0
+    product.save(update_fields=["inventory_count", "updated_at"])
+    messages.success(request, f'"{product.title}" marked as sold out.')
+    return redirect("commerce:my_products")
+
+
+@login_required
+@require_POST
+def restock(request, pk):
+    """Restock a product (set inventory to a specified amount, or unlimited)."""
+    product = _get_owned_product(request, pk)
+    if not product:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    quantity = request.POST.get("quantity", "").strip()
+    if quantity == "" or quantity == "unlimited":
+        product.inventory_count = None
+    else:
+        try:
+            product.inventory_count = max(0, int(quantity))
+        except ValueError:
+            product.inventory_count = None
+    product.save(update_fields=["inventory_count", "updated_at"])
+    messages.success(request, f'"{product.title}" inventory updated.')
+    return redirect("commerce:my_products")
+
+
 # ---------------------------------------------------------------------------
 # Product groups (collections & sets)
 # ---------------------------------------------------------------------------
