@@ -151,9 +151,15 @@
         <div class="flex justify-between items-center pt-4 mt-6 border-t border-ink-100">
             <div>
                 {% if profile.can_accept_payments %}
-                <a href="{% url 'commerce:stripe_dashboard' %}" class="text-sm text-brand-600 hover:underline">Stripe Dashboard</a>
+                <a href="{% url 'commerce:connect_setup' %}" class="text-sm text-green-600 hover:underline">
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>Payments Active
+                </a>
+                {% elif profile.stripe_account_id %}
+                <a href="{% url 'commerce:connect_setup' %}" class="text-sm text-amber-600 hover:underline">
+                    <span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span>Finish Payment Setup
+                </a>
                 {% else %}
-                <a href="{% url 'commerce:connect_onboarding' %}" class="text-sm text-brand-600 hover:underline">Set Up Payments</a>
+                <a href="{% url 'commerce:connect_setup' %}" class="text-sm text-brand-600 hover:underline">Set Up Payments</a>
                 {% endif %}
             </div>
             <div class="flex gap-3">

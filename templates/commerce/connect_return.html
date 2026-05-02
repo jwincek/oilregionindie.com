@@ -14,10 +14,30 @@
     <p class="text-ink-500 mb-6">
         Your Stripe account is connected. You can now sell music, artwork, merch, and more through your profile.
     </p>
-    <div class="flex flex-col gap-3">
-        <a href="{% url 'creators:edit' %}" class="text-brand-600 hover:underline font-medium">Go to your profile</a>
-        <a href="{% url 'commerce:stripe_dashboard' %}" class="text-ink-500 hover:underline text-sm">Open Stripe Dashboard</a>
+    {% if account_status %}
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6 inline-block text-left">
+        <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div>
+                <dt class="text-ink-400">Charges</dt>
+                <dd class="font-medium {% if account_status.charges_enabled %}text-green-600{% else %}text-amber-600{% endif %}">
+                    {% if account_status.charges_enabled %}Enabled{% else %}Pending{% endif %}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Payouts</dt>
+                <dd class="font-medium {% if account_status.payouts_enabled %}text-green-600{% else %}text-amber-600{% endif %}">
+                    {% if account_status.payouts_enabled %}Enabled{% else %}Pending{% endif %}
+                </dd>
+            </div>
+        </dl>
     </div>
+    {% endif %}
+    <div class="flex flex-col gap-3">
+        <a href="{% url 'commerce:my_products' %}" class="text-brand-600 hover:underline font-medium">Add your first product</a>
+        <a href="{% url 'commerce:connect_setup' %}" class="text-ink-500 hover:underline text-sm">Payment settings</a>
+        <a href="{% url 'creators:edit' %}" class="text-ink-500 hover:underline text-sm">Back to profile</a>
+    </div>
+
     {% else %}
     <div class="bg-yellow-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
         <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,12 +46,16 @@
     </div>
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Almost There</h1>
     <p class="text-ink-500 mb-6">
-        Your Stripe account setup isn't complete yet. Please finish the onboarding process to start accepting payments.
+        Your Stripe account setup isn't complete yet. You may need to provide additional information
+        before you can start accepting payments.
     </p>
     <a href="{% url 'commerce:connect_onboarding' %}"
-       class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition inline-block">
+       class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition inline-block mb-3">
         Continue Setup
     </a>
+    <p>
+        <a href="{% url 'creators:edit' %}" class="text-ink-500 hover:underline text-sm">Back to profile</a>
+    </p>
     {% endif %}
 </div>
 {% endblock %}

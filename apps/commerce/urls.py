@@ -22,7 +22,8 @@ urlpatterns = [
     path("groups/<uuid:pk>/items/add/", views.add_group_item, name="add_group_item"),
     path("groups/<uuid:pk>/items/<int:item_pk>/remove/", views.remove_group_item, name="remove_group_item"),
     # Stripe Connect onboarding
-    path("connect/", views.connect_onboarding, name="connect_onboarding"),
+    path("connect/", views.connect_setup, name="connect_setup"),
+    path("connect/start/", views.connect_onboarding, name="connect_onboarding"),
     path("connect/return/", views.connect_return, name="connect_return"),
     path("connect/dashboard/", views.stripe_dashboard, name="stripe_dashboard"),
     # Checkout

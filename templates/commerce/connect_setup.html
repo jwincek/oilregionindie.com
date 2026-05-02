@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Set Up Payments — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Set Up Payments</h1>
+    <p class="text-ink-500 mb-8">
+        <a href="{% url 'creators:edit' %}" class="text-brand-600 hover:underline">&larr; Back to profile</a>
+    </p>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="mb-4 p-4 rounded-md text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if profile.stripe_onboarded %}
+    <!-- Already set up -->
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center gap-3 mb-3">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <h2 class="font-semibold text-green-800">Payments Enabled</h2>
+        </div>
+        <p class="text-sm text-green-700 mb-4">
+            Your Stripe account is connected and you can accept payments through the platform.
+        </p>
+        {% if account_status %}
+        <dl class="grid grid-cols-2 gap-3 text-sm mb-4">
+            <div>
+                <dt class="text-green-600">Charges</dt>
+                <dd class="font-medium text-green-800">{% if account_status.charges_enabled %}Enabled{% else %}Pending{% endif %}</dd>
+            </div>
+            <div>
+                <dt class="text-green-600">Payouts</dt>
+                <dd class="font-medium text-green-800">{% if account_status.payouts_enabled %}Enabled{% else %}Pending{% endif %}</dd>
+            </div>
+        </dl>
+        {% endif %}
+        <div class="flex gap-3">
+            <a href="{% url 'commerce:stripe_dashboard' %}"
+               class="text-sm text-green-700 hover:underline font-medium">Open Stripe Dashboard</a>
+            <a href="{% url 'commerce:my_products' %}"
+               class="text-sm text-green-700 hover:underline font-medium">My Products</a>
+        </div>
+    </div>
+
+    {% elif profile.stripe_account_id %}
+    <!-- Started but not complete -->
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center gap-3 mb-3">
+            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h2 class="font-semibold text-amber-800">Setup In Progress</h2>
+        </div>
+        <p class="text-sm text-amber-700 mb-4">
+            You've started connecting your Stripe account but haven't finished yet.
+            Pick up where you left off to start accepting payments.
+        </p>
+        <a href="{% url 'commerce:connect_onboarding' %}"
+           class="inline-block bg-amber-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-amber-700 transition">
+            Continue Setup
+        </a>
+    </div>
+
+    {% else %}
+    <!-- Not started -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="font-semibold text-ink-800 mb-4">How Payments Work</h2>
+        <div class="space-y-4 text-sm text-ink-600">
+            <div class="flex gap-3">
+                <span class="bg-brand-100 text-brand-700 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                <p>You connect your Stripe account to the platform. Stripe handles all payment processing, security, and compliance.</p>
+            </div>
+            <div class="flex gap-3">
+                <span class="bg-brand-100 text-brand-700 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                <p>When a buyer purchases your product, payment goes directly to your Stripe account. The platform never holds your money.</p>
+            </div>
+            <div class="flex gap-3">
+                <span class="bg-brand-100 text-brand-700 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                <p>Stripe deposits funds to your bank account on their standard schedule (typically 2 business days).</p>
+            </div>
+        </div>
+    </div>
+
+    {% if platform_fee %}
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="font-semibold text-ink-800 mb-2">Platform Fee</h2>
+        <p class="text-sm text-ink-600">
+            The platform takes a <strong>{{ platform_fee }}%</strong> fee on each transaction to cover hosting
+            and development costs. Stripe's own processing fees (2.9% + 30¢) are separate and deducted by Stripe.
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="font-semibold text-ink-800 mb-3">What You'll Need</h2>
+        <ul class="space-y-2 text-sm text-ink-600">
+            <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                </svg>
+                A bank account for receiving payouts
+            </li>
+            <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                </svg>
+                Your tax identification number (SSN or EIN)
+            </li>
+            <li class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                </svg>
+                A few minutes to complete Stripe's verification
+            </li>
+        </ul>
+    </div>
+
+    <a href="{% url 'commerce:connect_onboarding' %}"
+       class="block w-full text-center bg-brand-600 text-white py-3 rounded-md font-medium hover:bg-brand-700 transition">
+        Connect with Stripe
+    </a>
+    <p class="text-center text-xs text-ink-400 mt-3">
+        You'll be redirected to Stripe's secure onboarding. You can return here at any time.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

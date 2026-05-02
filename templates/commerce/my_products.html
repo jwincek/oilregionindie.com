@@ -37,7 +37,7 @@
     <div class="mb-6 p-4 rounded-md bg-amber-50 border border-amber-200">
         <p class="text-sm text-amber-800">
             <span class="font-medium">Payments not set up</span> —
-            <a href="{% url 'commerce:connect_onboarding' %}" class="underline">Connect with Stripe</a>
+            <a href="{% url 'commerce:connect_setup' %}" class="underline">Connect with Stripe</a>
             to start selling.
         </p>
     </div>
@@ -104,7 +104,7 @@
             {% if profile.can_accept_payments %}
             <a href="{% url 'commerce:create_product' %}" class="text-brand-600 hover:underline">Add your first product</a> to start selling.
             {% else %}
-            <a href="{% url 'commerce:connect_onboarding' %}" class="text-brand-600 hover:underline">Set up payments</a> first, then add products.
+            <a href="{% url 'commerce:connect_setup' %}" class="text-brand-600 hover:underline">Set up payments</a> first, then add products.
             {% endif %}
         </p>
     </div>

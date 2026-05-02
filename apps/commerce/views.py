@@ -197,7 +197,7 @@ def create_product(request):
 
     if not profile.can_accept_payments:
         messages.info(request, "Set up Stripe Connect before adding products.")
-        return redirect("commerce:connect_onboarding")
+        return redirect("commerce:connect_setup")
 
     if request.method == "POST":
         form = ProductForm(request.POST, request.FILES)
@@ -389,7 +389,7 @@ def create_group(request):
 
     if not profile.can_accept_payments:
         messages.info(request, "Set up Stripe Connect before creating product groups.")
-        return redirect("commerce:connect_onboarding")
+        return redirect("commerce:connect_setup")
 
     if request.method == "POST":
         form = ProductGroupForm(request.POST, request.FILES, creator=profile)
@@ -492,23 +492,54 @@ def remove_group_item(request, pk, item_pk):
 
 # --- Stripe Connect onboarding ---
 
+
+@login_required
+def connect_setup(request):
+    """Pre-onboarding page — explains payments before redirecting to Stripe."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+    platform_fee = settings.STRIPE_PLATFORM_FEE_PERCENT
+
+    # Check current status if they've started onboarding
+    account_status = None
+    if profile.stripe_account_id:
+        try:
+            account_status = stripe_service.check_account_status(profile.stripe_account_id)
+        except Exception:
+            account_status = None
+
+    return render(request, "commerce/connect_setup.html", {
+        "profile": profile,
+        "platform_fee": platform_fee,
+        "account_status": account_status,
+    })
+
+
 @login_required
 def connect_onboarding(request):
-    """Start Stripe Connect onboarding for a creator."""
+    """Start or resume Stripe Connect onboarding."""
     profile = get_object_or_404(CreatorProfile, user=request.user)
 
-    if not profile.stripe_account_id:
-        account_id = stripe_service.create_connect_account(profile)
-        profile.stripe_account_id = account_id
-        profile.save(update_fields=["stripe_account_id"])
+    try:
+        if not profile.stripe_account_id:
+            account_id = stripe_service.create_connect_account(profile)
+            profile.stripe_account_id = account_id
+            profile.save(update_fields=["stripe_account_id"])
 
-    return_url = request.build_absolute_uri(reverse("commerce:connect_return"))
-    refresh_url = request.build_absolute_uri(reverse("commerce:connect_onboarding"))
+        return_url = request.build_absolute_uri(reverse("commerce:connect_return"))
+        refresh_url = request.build_absolute_uri(reverse("commerce:connect_setup"))
 
-    onboarding_url = stripe_service.create_onboarding_link(
-        profile.stripe_account_id, return_url, refresh_url
-    )
-    return redirect(onboarding_url)
+        onboarding_url = stripe_service.create_onboarding_link(
+            profile.stripe_account_id, return_url, refresh_url
+        )
+        return redirect(onboarding_url)
+
+    except Exception:
+        logger.exception("Stripe Connect onboarding failed")
+        messages.error(
+            request,
+            "Unable to connect to Stripe right now. Please check that Stripe is configured correctly and try again."
+        )
+        return redirect("commerce:connect_setup")
 
 
 @login_required
@@ -516,13 +547,21 @@ def connect_return(request):
     """Return URL after Stripe Connect onboarding."""
     profile = get_object_or_404(CreatorProfile, user=request.user)
 
+    account_status = None
     if profile.stripe_account_id:
-        status = stripe_service.check_account_status(profile.stripe_account_id)
-        if status["details_submitted"] and status["charges_enabled"]:
-            profile.stripe_onboarded = True
-            profile.save(update_fields=["stripe_onboarded"])
+        try:
+            account_status = stripe_service.check_account_status(profile.stripe_account_id)
+            if account_status["details_submitted"] and account_status["charges_enabled"]:
+                profile.stripe_onboarded = True
+                profile.save(update_fields=["stripe_onboarded"])
+        except Exception:
+            logger.exception("Failed to check Stripe account status")
+            account_status = None
 
-    return render(request, "commerce/connect_return.html", {"profile": profile})
+    return render(request, "commerce/connect_return.html", {
+        "profile": profile,
+        "account_status": account_status,
+    })
 
 
 @login_required
@@ -531,7 +570,12 @@ def stripe_dashboard(request):
     profile = get_object_or_404(CreatorProfile, user=request.user)
 
     if not profile.stripe_account_id:
-        return redirect("commerce:connect_onboarding")
+        return redirect("commerce:connect_setup")
 
-    dashboard_url = stripe_service.create_login_link(profile.stripe_account_id)
-    return redirect(dashboard_url)
+    try:
+        dashboard_url = stripe_service.create_login_link(profile.stripe_account_id)
+        return redirect(dashboard_url)
+    except Exception:
+        logger.exception("Failed to create Stripe dashboard link")
+        messages.error(request, "Unable to access the Stripe dashboard right now. Please try again.")
+        return redirect("commerce:connect_setup")
