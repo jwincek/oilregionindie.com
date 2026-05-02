@@ -1,11 +1,15 @@
-{% if request.user.is_authenticated %}
+{% if request.user.is_authenticated and request.user.creator_profile %}
 {% with creator=request.user.creator_profile %}
-{% if creator and not creator.is_published %}
+{% if not creator.is_published %}
 <div class="mb-6 p-4 rounded-md bg-amber-50 border border-amber-200">
     <p class="text-sm text-amber-800">
         <span class="font-medium">Your profile isn't published yet</span> —
         {% if creator.is_draft %}
-        <a href="{% url 'creators:edit' %}" class="underline">submit it for review</a> to make your content publicly visible.
+        <form method="post" action="{% url 'creators:submit_for_review' %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="underline font-medium hover:text-amber-900">submit it for review</button>
+        </form>
+        to make your content publicly visible.
         {% else %}
         your profile is pending review. Your content won't appear in public listings until it's approved.
         {% endif %}
