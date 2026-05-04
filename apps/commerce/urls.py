@@ -28,8 +28,9 @@ urlpatterns = [
     path("connect/start/", views.connect_onboarding, name="connect_onboarding"),
     path("connect/return/", views.connect_return, name="connect_return"),
     path("connect/dashboard/", views.stripe_dashboard, name="stripe_dashboard"),
-    # Checkout
+    # Checkout & download
     path("checkout/<uuid:product_id>/", views.create_checkout, name="create_checkout"),
+    path("download/<uuid:item_pk>/", views.download, name="download"),
     path("checkout/success/", views.checkout_success, name="checkout_success"),
     # Stripe webhook
     path("webhooks/stripe/", views.stripe_webhook, name="stripe_webhook"),

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Address, AvailabilityType, BlockedWord, ProfileAvailability, Report, UserProfile
+from .models import Address, AvailabilityType, BlockedWord, Notification, ProfileAvailability, Report, UserProfile
 
 
 @admin.register(Address)
@@ -75,3 +75,11 @@ class BlockedWordAdmin(admin.ModelAdmin):
     list_display = ["word", "is_active", "created_at"]
     list_filter = ["is_active"]
     search_fields = ["word"]
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ["notification_type", "recipient", "message", "is_read", "created_at"]
+    list_filter = ["notification_type", "is_read", "created_at"]
+    search_fields = ["message", "recipient__email"]
+    readonly_fields = ["recipient", "actor", "notification_type", "message", "url", "created_at"]

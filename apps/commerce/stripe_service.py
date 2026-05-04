@@ -71,30 +71,45 @@ def create_checkout_session(product, quantity, success_url, cancel_url, buyer_em
     if not creator.can_accept_payments:
         raise ValueError("Creator has not completed Stripe onboarding")
 
-    # Calculate platform fee
+    # Calculate platform fee (on product price only, not shipping)
     fee_percent = settings.STRIPE_PLATFORM_FEE_PERCENT
     unit_amount = product.price_cents
     platform_fee = int(unit_amount * quantity * fee_percent / 100) if fee_percent else 0
 
-    session_params = {
-        "mode": "payment",
-        "line_items": [
-            {
-                "price_data": {
-                    "currency": product.currency.lower(),
-                    "unit_amount": unit_amount,
-                    "product_data": {
-                        "name": product.title,
-                        "description": product.get_product_type_display(),
-                        "metadata": {
-                            "product_id": str(product.id),
-                            "creator_id": str(creator.id),
-                        },
+    line_items = [
+        {
+            "price_data": {
+                "currency": product.currency.lower(),
+                "unit_amount": unit_amount,
+                "product_data": {
+                    "name": product.title,
+                    "description": product.get_product_type_display(),
+                    "metadata": {
+                        "product_id": str(product.id),
+                        "creator_id": str(creator.id),
                     },
                 },
-                "quantity": quantity,
-            }
-        ],
+            },
+            "quantity": quantity,
+        }
+    ]
+
+    # Add shipping as a separate line item for physical products
+    if not product.is_digital and product.shipping_cents > 0:
+        line_items.append({
+            "price_data": {
+                "currency": product.currency.lower(),
+                "unit_amount": product.shipping_cents,
+                "product_data": {
+                    "name": f"Shipping — {product.title}",
+                },
+            },
+            "quantity": 1,
+        })
+
+    session_params = {
+        "mode": "payment",
+        "line_items": line_items,
         "payment_intent_data": {
             "application_fee_amount": platform_fee,
             "transfer_data": {

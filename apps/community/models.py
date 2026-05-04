@@ -25,7 +25,7 @@ class Tag(models.Model):
 
 class CommunityPost(models.Model):
     """
-    Phase 3: Community discussion posts.
+    Community discussion posts.
     Uses plain TextField (not Wagtail RichTextField) since these are
     rendered through Django views, not Wagtail pages.
     """

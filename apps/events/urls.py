@@ -18,6 +18,7 @@ urlpatterns = [
     path("bookings/<uuid:pk>/create-event/", views.create_from_booking, name="create_from_booking"),
     # Endorsements
     path("endorse/<slug:creator_slug>/<slug:venue_slug>/", views.endorse, name="endorse"),
+    path("endorsement/<uuid:pk>/edit/", views.edit_endorsement, name="edit_endorsement"),
     path("endorsement/<uuid:pk>/delete/", views.delete_endorsement, name="delete_endorsement"),
     # Events (slug-based — must be last)
     path("<slug:slug>/", views.detail, name="detail"),

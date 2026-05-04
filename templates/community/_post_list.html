@@ -1,3 +1,4 @@
+{% load demo_tags %}
 <div id="post-list">
     {% if posts %}
     <div class="space-y-3">
@@ -12,6 +13,7 @@
                     <span class="bg-ink-100 text-ink-600 text-xs font-medium px-1.5 py-0.5 rounded">
                         {{ post.get_post_type_display }}
                     </span>
+                    {% if post|is_demo %}{% demo_badge %}{% endif %}
                     {% if post.title %}
                     <h2 class="font-semibold text-ink-800 mt-1.5">{{ post.title }}</h2>
                     {% endif %}

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Endorse — {{ SITE_NAME }}{% endblock %}
+{% block title %}{% if editing %}Edit{% else %}Write{% endif %} Endorsement — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">Write an Endorsement</h1>
+    <h1 class="text-2xl font-display font-bold text-ink-800 mb-2">{% if editing %}Edit Endorsement{% else %}Write an Endorsement{% endif %}</h1>
     <p class="text-ink-500 mb-8">
         {% if is_creator_side %}
             Endorsing <strong>{{ venue.name }}</strong> as <strong>{{ creator.display_name }}</strong>.
@@ -31,7 +31,7 @@
             <a href="{% url 'events:booking_inbox' %}" class="px-4 py-2 text-sm text-ink-600 hover:text-ink-800 transition">Cancel</a>
             <button type="submit"
                     class="bg-ink-800 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
-                Publish Endorsement
+                {% if editing %}Save Changes{% else %}Publish Endorsement{% endif %}
             </button>
         </div>
     </form>

@@ -589,6 +589,30 @@ def endorse(request, creator_slug, venue_slug):
 
 @login_required
 @require_POST
+def edit_endorsement(request, pk):
+    """Edit an endorsement (author only)."""
+    endorsement = get_object_or_404(Endorsement, pk=pk, author=request.user)
+
+    if request.method == "POST":
+        form = EndorsementForm(request.POST, instance=endorsement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Endorsement updated.")
+            return redirect(endorsement.creator.get_absolute_url())
+    else:
+        form = EndorsementForm(instance=endorsement)
+
+    return render(request, "events/endorse.html", {
+        "form": form,
+        "creator": endorsement.creator,
+        "venue": endorsement.venue,
+        "is_creator_side": endorsement.is_from_creator,
+        "editing": True,
+    })
+
+
+@login_required
+@require_POST
 def delete_endorsement(request, pk):
     """Delete an endorsement (author only)."""
     endorsement = get_object_or_404(Endorsement, pk=pk, author=request.user)

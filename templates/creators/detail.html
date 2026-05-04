@@ -318,7 +318,8 @@
                         {% endif %}
                         &middot; {{ e.created_at|date:"M Y" }}
                         {% if request.user == e.author %}
-                        <form method="post" action="{% url 'events:delete_endorsement' pk=e.pk %}" class="inline ml-2">
+                        <a href="{% url 'events:edit_endorsement' pk=e.pk %}" class="text-ink-400 hover:text-brand-600 ml-2">Edit</a>
+                        <form method="post" action="{% url 'events:delete_endorsement' pk=e.pk %}" class="inline ml-1">
                             {% csrf_token %}
                             <button type="submit" onclick="return confirm('Remove this endorsement?')"
                                     class="text-ink-400 hover:text-red-600">Remove</button>

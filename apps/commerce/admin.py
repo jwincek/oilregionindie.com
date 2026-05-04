@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Order, OrderItem, Product, ProductImage
+from .models import Order, OrderItem, Product, ProductGroup, ProductGroupItem, ProductImage
 
 
 class ProductImageInline(admin.TabularInline):
@@ -35,3 +35,19 @@ class OrderAdmin(admin.ModelAdmin):
     ]
     inlines = [OrderItemInline]
     date_hierarchy = "created_at"
+
+
+class ProductGroupItemInline(admin.TabularInline):
+    model = ProductGroupItem
+    extra = 1
+    fields = ["product", "sort_order"]
+    autocomplete_fields = ["product"]
+
+
+@admin.register(ProductGroup)
+class ProductGroupAdmin(admin.ModelAdmin):
+    list_display = ["title", "creator", "group_type", "bundle_price_display", "is_active", "created_at"]
+    list_filter = ["group_type", "is_active"]
+    search_fields = ["title", "description", "creator__display_name"]
+    prepopulated_fields = {"slug": ("title",)}
+    inlines = [ProductGroupItemInline]

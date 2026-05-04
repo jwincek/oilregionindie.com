@@ -11,24 +11,37 @@
     </div>
     <h1 class="text-2xl font-display font-bold text-ink-800 mb-3">Thank You!</h1>
     {% if order %}
-    <p class="text-ink-500 mb-6">
-        Your purchase of <strong>{{ order.product.title }}</strong> from
-        <strong>{{ order.creator.display_name }}</strong> is confirmed.
-    </p>
-    {% if order.product.is_digital %}
-    <p class="text-ink-500 mb-6">
-        A download link has been sent to <strong>{{ order.buyer_email }}</strong>.
-    </p>
-    {% else %}
-    <p class="text-ink-500 mb-6">
-        The creator will be in touch regarding shipping.
+    <p class="text-ink-500 mb-6">Your purchase is confirmed.</p>
+
+    {% for item in order.items.all %}
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-3 text-left">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="font-medium text-ink-800">{{ item.product.title }}</p>
+                <p class="text-sm text-ink-500">by {{ item.creator.display_name }}</p>
+            </div>
+            {% if item.product.is_digital and item.is_fulfilled and item.product.file %}
+            <a href="{% url 'commerce:download' item_pk=item.pk %}"
+               class="bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">
+                Download
+            </a>
+            {% elif item.product.is_digital %}
+            <span class="text-xs text-ink-400">Processing...</span>
+            {% else %}
+            <span class="text-xs text-ink-400">Ships soon</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <p class="text-sm text-ink-400 mt-4">
         A confirmation has been sent to <strong>{{ order.buyer_email }}</strong>.
     </p>
-    {% endif %}
+
     {% else %}
     <p class="text-ink-500 mb-6">Your purchase has been confirmed. Check your email for details.</p>
     {% endif %}
-    <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline font-medium">
+    <a href="{% url 'creators:directory' %}" class="text-brand-600 hover:underline font-medium mt-4 inline-block">
         Continue exploring creators
     </a>
 </div>

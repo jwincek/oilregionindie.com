@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BookingRequest, Event, EventSlot
+from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
 
 
 class EventSlotInline(admin.TabularInline):
@@ -37,3 +37,19 @@ class BookingRequestAdmin(admin.ModelAdmin):
     autocomplete_fields = ["venue", "creator", "resulting_event"]
     readonly_fields = ["initiated_by", "direction", "created_at", "updated_at"]
     date_hierarchy = "created_at"
+
+
+@admin.register(BookingFeedback)
+class BookingFeedbackAdmin(admin.ModelAdmin):
+    list_display = ["booking", "author", "would_work_again", "created_at"]
+    list_filter = ["would_work_again", "created_at"]
+    search_fields = ["body", "author__email"]
+    readonly_fields = ["booking", "author", "created_at"]
+
+
+@admin.register(Endorsement)
+class EndorsementAdmin(admin.ModelAdmin):
+    list_display = ["creator", "venue", "author", "created_at"]
+    list_filter = ["created_at"]
+    search_fields = ["body", "creator__display_name", "venue__name"]
+    readonly_fields = ["creator", "venue", "author", "created_at"]

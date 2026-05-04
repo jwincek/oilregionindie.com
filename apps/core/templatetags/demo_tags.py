@@ -16,6 +16,8 @@ def is_demo(obj):
         return obj.user.email.endswith(".example")
     if hasattr(obj, "created_by") and obj.created_by:
         return obj.created_by.email.endswith(".example")
+    if hasattr(obj, "author") and obj.author:
+        return obj.author.email.endswith(".example")
     return False
 
 

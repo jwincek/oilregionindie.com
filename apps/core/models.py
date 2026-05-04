@@ -190,7 +190,7 @@ class UserProfile(models.Model):
         help_text="Optional structured address for location-based features",
     )
 
-    # Follows (Phase 3 — ready in the schema now)
+    # Follows
     followed_creators = models.ManyToManyField(
         "creators.CreatorProfile", blank=True, related_name="followers"
     )

@@ -101,6 +101,37 @@ def checkout_success(request):
     return render(request, "commerce/checkout_success.html", {"order": order})
 
 
+@login_required
+def download(request, item_pk):
+    """Serve a digital product file to a buyer who has purchased it."""
+    from django.http import FileResponse
+
+    item = get_object_or_404(
+        OrderItem.objects.select_related("order", "product"),
+        pk=item_pk,
+        is_fulfilled=True,
+    )
+
+    # Verify the user owns this order
+    if item.order.buyer_user != request.user:
+        from django.http import Http404
+        raise Http404
+
+    if not item.product.is_digital or not item.product.file:
+        from django.http import Http404
+        raise Http404
+
+    # Increment download count
+    item.download_count += 1
+    item.save(update_fields=["download_count"])
+
+    return FileResponse(
+        item.product.file.open("rb"),
+        as_attachment=True,
+        filename=item.product.file.name.split("/")[-1],
+    )
+
+
 @csrf_exempt
 @require_POST
 def stripe_webhook(request):
