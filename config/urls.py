@@ -10,6 +10,7 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from apps.core.feeds import BlogFeed, UpcomingEventsFeed
+from apps.core.map_views import map_view
 from apps.core.sitemaps import sitemaps
 
 from apps.core.views import (
@@ -44,6 +45,9 @@ urlpatterns = [
     path("availability/<str:profile_type>/<slug:slug>/add/", add_availability, name="add_availability"),
     path("availability/<str:profile_type>/<slug:slug>/<uuid:pk>/edit/", edit_availability, name="edit_availability"),
     path("availability/<str:profile_type>/<slug:slug>/<uuid:pk>/delete/", delete_availability, name="delete_availability"),
+    # Follow / Like / Notifications
+    # Map
+    path("map/", map_view, name="map"),
     # Follow / Like / Notifications
     path("follow/creator/<slug:slug>/", follow_creator, name="follow_creator"),
     path("follow/venue/<slug:slug>/", follow_venue, name="follow_venue"),
