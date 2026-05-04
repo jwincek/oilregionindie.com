@@ -148,12 +148,21 @@ def detail(request, slug):
         is_active=True,
     ).exists()
 
+    # Similar creators — share disciplines or skills
+    similar_creators = CreatorProfile.objects.filter(
+        publish_status="published",
+    ).filter(
+        Q(disciplines__in=creator.disciplines.all()) |
+        Q(skills__in=creator.skills.all())
+    ).exclude(pk=creator.pk).distinct()[:4]
+
     return render(request, "creators/detail.html", {
         "creator": creator,
         "is_preview": not creator.is_published,
         "is_following": is_following,
         "upcoming_events": upcoming_events,
         "is_accepting_bookings": is_accepting_bookings,
+        "similar_creators": similar_creators,
     })
 
 

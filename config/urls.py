@@ -9,6 +9,7 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from apps.core.feeds import BlogFeed, UpcomingEventsFeed
 from apps.core.sitemaps import sitemaps
 
 from apps.core.views import (
@@ -25,6 +26,9 @@ urlpatterns = [
         "User-agent: *\nAllow: /\nSitemap: /sitemap.xml\n",
         content_type="text/plain",
     )),
+    # RSS feeds
+    path("feeds/events/", UpcomingEventsFeed(), name="events_feed"),
+    path("feeds/blog/", BlogFeed(), name="blog_feed"),
     # Django admin (keep but rarely used; Wagtail admin is primary)
     path("django-admin/", admin.site.urls),
     # Wagtail admin

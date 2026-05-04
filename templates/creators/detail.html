@@ -331,6 +331,34 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Similar creators -->
+        {% if similar_creators %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 text-sm mb-3">Similar Creators</h2>
+            <ul class="space-y-3">
+                {% for sc in similar_creators %}
+                <li class="flex items-center gap-3">
+                    {% if sc.profile_image %}
+                    <img src="{{ sc.profile_image.url }}" alt=""
+                         class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                    <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                        {% initials_avatar sc.display_name 32 %}
+                    </div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <a href="{{ sc.get_absolute_url }}"
+                           class="text-sm font-medium text-ink-700 hover:text-brand-600 transition truncate block">
+                            {{ sc.display_name }}
+                        </a>
+                        <p class="text-xs text-brand-600 truncate">{{ sc.discipline_list }}</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

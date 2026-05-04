@@ -41,5 +41,19 @@ class Command(BaseCommand):
             f"  [{status}] Daily booking expiration schedule"
         ))
 
+        # Daily email verification reminder
+        schedule, created = Schedule.objects.update_or_create(
+            name="daily-verification-reminder",
+            defaults={
+                "func": "apps.core.tasks.remind_unverified_users",
+                "schedule_type": Schedule.DAILY,
+                "repeats": -1,
+            },
+        )
+        status = "Created" if created else "Updated"
+        self.stdout.write(self.style.SUCCESS(
+            f"  [{status}] Daily verification reminder schedule"
+        ))
+
         self.stdout.write(self.style.SUCCESS("\nSchedules configured."))
         self.stdout.write("Run 'python manage.py qcluster' to start processing.")
