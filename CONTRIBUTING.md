@@ -19,51 +19,52 @@ Follow the [Getting Started guide](GETTING-STARTED.md) to get the project runnin
 
 ## Where Help Is Needed
 
-### Infrastructure & Performance
-
-- **Wagtail full-text search** — the search indexes are configured but views use basic `icontains`. Switching to Wagtail's search backend would add relevance ranking and typo tolerance.
-- **Distance-based filtering** — the `Address` model has lat/lng fields ready for geocoding. Needs a geocoding integration and distance filtering in directory views.
-- **Tailwind build pipeline** — currently using the CDN; a production build with purging would reduce page weight.
-
 ### Features
 
-- **Event calendar view** — a monthly grid alongside the current list view.
-- **RSS feeds** — for events and blog posts, using Django's feed framework.
-- **Search autocomplete** — typeahead suggestions for the global search.
-- **Digital product delivery** — download links for digital products after purchase.
+- **Distance-based filtering** — the Address model has lat/lng fields and geocoding works. Adding a "within X miles" filter to directories would connect with the existing map.
+- **Saved/bookmarked profiles and events** — let fans bookmark things they're interested in.
+- **Event RSVP/interest** — "Interested" or "Going" buttons on events for headcount signals.
+- **Social share links** — simple URL-based share buttons on profiles, events, and products.
+- **Image lightbox** — click-to-enlarge for media items and product images.
+- **REST API** — Django REST Framework or Django Ninja endpoints for potential mobile/desktop clients.
 
 ### Design & Frontend
 
-- **Template refinement** — the Tailwind-based templates are functional but could use design polish. All templates are in `templates/`.
-- **Responsive testing** — mobile layouts, touch interactions, and accessibility improvements.
-- **Initials avatar centering** — the SVG initials avatars may need CSS adjustments in some browsers due to Tailwind's box-sizing reset.
+- **Template refinement** — the Tailwind-based templates are functional but could use design polish.
+- **Responsive testing** — mobile layouts, touch interactions.
+- **Accessibility** — skip navigation links, ARIA labels on interactive elements, keyboard navigation improvements.
+- **Tailwind build pipeline** — currently using the CDN; a production build with purging would reduce page weight.
+- **SVG initials centering** — the initials avatars may need CSS adjustments in some browsers due to Tailwind's box-sizing reset.
 
 ### Testing
 
-- **Commerce app tests** — the Stripe Connect flow, checkout, and webhook handlers need test coverage.
+- **Commerce app tests** — the Stripe Connect flow, checkout, product groups, and order management need test coverage.
 - **Community app tests** — posts, replies, likes, and moderation.
 - **Integration tests** — the signup-to-published-profile flow, booking request lifecycle, and notification delivery.
 
-### Documentation
+### Infrastructure
 
-- **Deployment guides** — production setup on various platforms (Railway, Fly.io, DigitalOcean, etc.)
-- **API documentation** — if/when a REST or GraphQL API is added.
+- **Lightweight analytics** — Plausible or Umami integration for privacy-friendly traffic insights.
+- **Automated backups** — PostgreSQL backup strategy documentation or management command.
+- **Deployment guides** — production setup on various platforms (Railway, Fly.io, DigitalOcean, etc.).
 
 ## Code Style
 
-- **Python** — follow the existing patterns in the codebase. Standard Django conventions: function-based views, model/form/view organization per app.
-- **Templates** — Django template language with Tailwind utility classes. HTMX for dynamic interactions, Alpine.js for client-side state (dropdowns, searchable selects, dismissals).
-- **No JavaScript build step** — the frontend intentionally avoids a JS build pipeline. HTMX and Alpine.js are loaded via CDN.
+- **Python** — follow the existing patterns. Function-based views, model/form/view organization per app.
+- **Templates** — Django template language with Tailwind utility classes. HTMX for dynamic interactions, Alpine.js for client-side state.
+- **No JavaScript build step** — HTMX, Alpine.js, and Leaflet.js are loaded via CDN. The only custom JS is `static/js/searchable-select.js`.
 
 ## Project Conventions
 
-- **Apps live in `apps/`** — each Django app is a subdirectory of `apps/`.
-- **Shared models in `apps/core/`** — `PublishableProfile` is the abstract base for creator and venue profiles. `Notification`, `Report`, and `BlockedWord` are cross-app concerns.
-- **Seed data is idempotent** — `python manage.py seed_data` uses `get_or_create` for taxonomy. Running it multiple times is safe.
-- **Tests alongside apps** — each app has a `tests/` directory with `helpers.py` for factory functions. Use the existing `make_*` helpers rather than creating objects inline.
-- **HTMX partials** — templates prefixed with `_` (e.g., `_creator_list.html`) are HTMX partials returned for fragment swaps. Views check `request.htmx` to decide which template to render.
-- **Notifications** — use `apps.core.models.Notification` for in-app notifications and `apps.core.notifications` for email notifications.
-- **Reusable template includes** — `templates/includes/` has shared components: `_follow_button.html`, `_report_button.html`, `_searchable_select.html`.
+- **Apps live in `apps/`** — each Django app is a subdirectory.
+- **Shared models in `apps/core/`** — PublishableProfile (abstract base for profiles), Notification, Report, BlockedWord, ProfileView, Address.
+- **Seed data is idempotent** — `python manage.py seed_data` uses `get_or_create` for taxonomy.
+- **Tests alongside apps** — each app has a `tests/` directory with `helpers.py` for factory functions. Use the existing `make_*` helpers.
+- **HTMX partials** — templates prefixed with `_` (e.g., `_creator_list.html`) are HTMX partials. Views check `request.htmx` to decide which template to render.
+- **Notifications** — use `apps.core.models.Notification` for in-app and `apps.core.notifications` for email.
+- **Reusable template includes** — `templates/includes/` has shared components: `_follow_button.html`, `_report_button.html`, `_searchable_select.html`, `_multi_select.html`, `_availability_list.html`, `_unpublished_reminder.html`.
+- **Image optimization** — `apps.core.image_utils.optimize_image()` auto-resizes uploads in model `save()` methods.
+- **Prices in cents** — stored as integers in the database, displayed as dollars via form proxy fields (`price_dollars`, `shipping_dollars`, `bundle_price_dollars`).
 
 ## Reporting Issues
 
