@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.http import HttpResponse
@@ -146,6 +147,11 @@ def detail(request, slug):
         and request.user.profile.followed_creators.filter(pk=creator.pk).exists()
     )
 
+    # Track profile view (don't count owner viewing own profile)
+    if creator.is_published and (not request.user.is_authenticated or request.user != creator.user):
+        from apps.core.models import ProfileView
+        ProfileView.record_view(creator=creator)
+
     from apps.events.models import Event
     upcoming_events = Event.objects.filter(
         is_published=True,
@@ -201,6 +207,40 @@ def profile_events(request, slug):
         "events": events,
         "creator": creator,
         "show": show,
+    })
+
+
+@login_required
+def stats(request):
+    """Profile analytics for the current creator."""
+    from datetime import timedelta
+    from apps.core.models import ProfileView
+
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+
+    # View counts for the last 30 days
+    daily_views = list(
+        ProfileView.objects.filter(
+            creator=profile, date__gte=thirty_days_ago
+        ).order_by("date").values_list("date", "count")
+    )
+
+    total_views_30d = sum(c for _, c in daily_views)
+    total_views_all = ProfileView.objects.filter(creator=profile).aggregate(
+        total=models.Sum("count")
+    )["total"] or 0
+
+    follower_count = profile.followers.count()
+
+    return render(request, "creators/stats.html", {
+        "profile": profile,
+        "daily_views": daily_views,
+        "total_views_30d": total_views_30d,
+        "total_views_all": total_views_all,
+        "follower_count": follower_count,
     })
 
 
@@ -332,6 +372,52 @@ def add_media(request):
     if request.htmx:
         return render(request, "creators/_media_form.html", {"form": form})
     return render(request, "creators/add_media.html", {"form": form})
+
+
+@login_required
+@require_POST
+def bulk_upload_media(request):
+    """Upload multiple image files at once as media items."""
+    profile = get_object_or_404(CreatorProfile, user=request.user)
+    files = request.FILES.getlist("files")
+
+    if not files:
+        messages.error(request, "No files selected.")
+        return render(request, "creators/_media_items.html", {
+            "profile": profile,
+            "items": profile.media_items.all(),
+        })
+
+    next_order = profile.media_items.count()
+    created = 0
+    for f in files:
+        # Determine media type from content type
+        content_type = f.content_type or ""
+        if content_type.startswith("image/"):
+            media_type = "image"
+        elif content_type.startswith("video/"):
+            media_type = "video"
+        elif content_type.startswith("audio/"):
+            media_type = "audio"
+        else:
+            media_type = "image"
+
+        MediaItem.objects.create(
+            creator=profile,
+            title=f.name.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").title(),
+            media_type=media_type,
+            file=f,
+            sort_order=next_order + created,
+        )
+        created += 1
+
+    if request.htmx:
+        return render(request, "creators/_media_items.html", {
+            "profile": profile,
+            "items": profile.media_items.all(),
+        })
+    messages.success(request, f"Uploaded {created} file(s).")
+    return redirect("creators:edit")
 
 
 @login_required

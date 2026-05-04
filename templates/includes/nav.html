@@ -30,6 +30,7 @@
                          class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                         {% if user.creator_profile %}
                         <a href="{% url 'creators:edit' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Edit Profile</a>
+                        <a href="{% url 'creators:stats' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Profile Stats</a>
                         {% else %}
                         <a href="{% url 'creators:setup' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Create Profile</a>
                         {% endif %}

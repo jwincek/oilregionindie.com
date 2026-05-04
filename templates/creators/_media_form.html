@@ -36,13 +36,38 @@
             {% endif %}
         </div>
 
-        <!-- Embed URL -->
-        <div>
+        <!-- Embed URL with preview -->
+        <div x-data="{ previewHtml: '', previewTitle: '', loading: false, error: '' }">
             <label for="{{ form.embed_url.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">
                 Embed URL <span class="font-normal text-ink-400">(YouTube, SoundCloud, Vimeo)</span>
             </label>
-            {{ form.embed_url }}
+            <div class="relative">
+                {{ form.embed_url }}
+                <button type="button"
+                        @click="
+                            var url = document.getElementById('{{ form.embed_url.id_for_label }}').value;
+                            if (!url) return;
+                            loading = true; error = ''; previewHtml = '';
+                            fetch('https://noembed.com/embed?url=' + encodeURIComponent(url))
+                                .then(function(r) { return r.json(); })
+                                .then(function(data) {
+                                    loading = false;
+                                    if (data.error) { error = data.error; }
+                                    else { previewHtml = data.html || ''; previewTitle = data.title || ''; }
+                                })
+                                .catch(function() { loading = false; error = 'Could not load preview'; });
+                        "
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-brand-600 hover:text-brand-700">
+                    Preview
+                </button>
+            </div>
             {% if form.embed_url.errors %}<p class="text-xs text-red-600 mt-0.5">{{ form.embed_url.errors.0 }}</p>{% endif %}
+            <p x-show="loading" class="text-xs text-ink-400 mt-1">Loading preview...</p>
+            <p x-show="error" x-text="error" class="text-xs text-red-500 mt-1"></p>
+            <div x-show="previewHtml" class="mt-2 rounded-md overflow-hidden border border-ink-200">
+                <p x-show="previewTitle" x-text="previewTitle" class="text-xs font-medium text-ink-600 px-2 py-1 bg-ink-50"></p>
+                <div x-html="previewHtml" class="embed-audio"></div>
+            </div>
         </div>
 
         <!-- Embed code -->

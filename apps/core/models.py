@@ -350,6 +350,61 @@ class BlockedWord(models.Model):
 # ---------------------------------------------------------------------------
 
 
+class ProfileView(models.Model):
+    """
+    Daily view count for a profile. One row per profile per day.
+    Keeps the table small while providing useful analytics.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    creator = models.ForeignKey(
+        "creators.CreatorProfile",
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="view_counts",
+    )
+    venue = models.ForeignKey(
+        "venues.VenueProfile",
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="view_counts",
+    )
+    date = models.DateField()
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["creator", "date"],
+                condition=models.Q(creator__isnull=False),
+                name="unique_creator_view_per_day",
+            ),
+            models.UniqueConstraint(
+                fields=["venue", "date"],
+                condition=models.Q(venue__isnull=False),
+                name="unique_venue_view_per_day",
+            ),
+        ]
+
+    def __str__(self):
+        profile = self.creator or self.venue
+        return f"{profile} — {self.date}: {self.count} views"
+
+    @classmethod
+    def record_view(cls, creator=None, venue=None):
+        """Increment today's view count for a profile."""
+        from django.utils import timezone
+        today = timezone.now().date()
+        if creator:
+            obj, _ = cls.objects.get_or_create(creator=creator, date=today)
+        elif venue:
+            obj, _ = cls.objects.get_or_create(venue=venue, date=today)
+        else:
+            return
+        cls.objects.filter(pk=obj.pk).update(count=models.F("count") + 1)
+
+
 class AvailabilityType(models.Model):
     """
     A type of availability signal: "Available for Booking", "Accepting

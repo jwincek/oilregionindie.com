@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Stats — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Profile Stats</h1>
+        <a href="{% url 'creators:edit' %}" class="text-sm text-brand-600 hover:underline">&larr; Edit Profile</a>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-ink-800">{{ total_views_30d }}</p>
+            <p class="text-sm text-ink-500 mt-1">Views (30 days)</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-ink-800">{{ total_views_all }}</p>
+            <p class="text-sm text-ink-500 mt-1">Total Views</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-ink-800">{{ follower_count }}</p>
+            <p class="text-sm text-ink-500 mt-1">Followers</p>
+        </div>
+    </div>
+
+    <!-- Daily views chart (simple bar chart) -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="font-semibold text-ink-800 mb-4">Views — Last 30 Days</h2>
+        {% if daily_views %}
+        <div class="flex items-end gap-px h-32">
+            {% for date, count in daily_views %}
+            <div class="flex-1 group relative">
+                <div class="bg-brand-400 hover:bg-brand-500 transition rounded-t-sm mx-px"
+                     style="height: {% widthratio count total_views_30d 100 %}%{% if count == 0 %};min-height:2px{% endif %}"
+                     title="{{ date|date:'M d' }}: {{ count }} view{{ count|pluralize }}"></div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-ink-400">
+            {% if daily_views %}
+            <span>{{ daily_views.0.0|date:"M d" }}</span>
+            <span>{{ daily_views|last|first|date:"M d" }}</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-sm text-ink-400 text-center py-8">No views recorded yet. Views will appear as people visit your profile.</p>
+        {% endif %}
+    </div>
+
+    <!-- Profile status -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h2 class="font-semibold text-ink-800 mb-3">Profile Status</h2>
+        <dl class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <dt class="text-ink-400">Status</dt>
+                <dd class="font-medium text-ink-800">{{ profile.get_publish_status_display }}</dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Created</dt>
+                <dd class="text-ink-600">{{ profile.created_at|date:"N j, Y" }}</dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Products</dt>
+                <dd class="text-ink-600">{{ profile.products.count }}</dd>
+            </div>
+            <div>
+                <dt class="text-ink-400">Media Items</dt>
+                <dd class="text-ink-600">{{ profile.media_items.count }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{% endblock %}

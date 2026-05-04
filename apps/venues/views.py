@@ -100,6 +100,11 @@ def detail(request, slug):
         from django.http import Http404
         raise Http404
 
+    # Track profile view (don't count owner viewing own profile)
+    if venue.is_published and (not request.user.is_authenticated or request.user != venue.user):
+        from apps.core.models import ProfileView
+        ProfileView.record_view(venue=venue)
+
     is_following = (
         request.user.is_authenticated
         and hasattr(request.user, "profile")
