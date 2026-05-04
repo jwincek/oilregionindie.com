@@ -331,35 +331,44 @@ def search(request):
         from apps.community.models import CommunityPost
         from django.utils import timezone
 
-        results["creators"] = CreatorProfile.objects.filter(
-            publish_status="published",
-        ).filter(
-            Q(display_name__icontains=query)
-            | Q(bio__icontains=query)
-            | Q(location__icontains=query)
-            | Q(disciplines__name__icontains=query)
-            | Q(skills__name__icontains=query)
-            | Q(genres__name__icontains=query)
-        ).distinct()[:8]
+        # Wagtail full-text search for indexed models (with ORM fallback)
+        from wagtail.search.backends import get_search_backend
+        backend = get_search_backend()
 
-        results["venues"] = VenueProfile.objects.filter(
-            publish_status="published",
-        ).filter(
-            Q(name__icontains=query)
-            | Q(description__icontains=query)
-            | Q(city__icontains=query)
-            | Q(amenities__name__icontains=query)
-        ).distinct()[:8]
+        creator_qs = CreatorProfile.objects.filter(publish_status="published")
+        try:
+            cr = backend.search(query, creator_qs)
+            results["creators"] = cr[:8] if len(cr) > 0 else creator_qs.filter(
+                Q(display_name__icontains=query) | Q(bio__icontains=query) | Q(location__icontains=query)
+            ).distinct()[:8]
+        except Exception:
+            results["creators"] = creator_qs.filter(
+                Q(display_name__icontains=query) | Q(bio__icontains=query)
+            ).distinct()[:8]
 
-        results["events"] = Event.objects.filter(
-            is_published=True,
-            start_datetime__gte=timezone.now(),
-        ).filter(
-            Q(title__icontains=query)
-            | Q(description__icontains=query)
-            | Q(venue__name__icontains=query)
-        ).select_related("venue").distinct()[:8]
+        venue_qs = VenueProfile.objects.filter(publish_status="published")
+        try:
+            vr = backend.search(query, venue_qs)
+            results["venues"] = vr[:8] if len(vr) > 0 else venue_qs.filter(
+                Q(name__icontains=query) | Q(description__icontains=query) | Q(city__icontains=query)
+            ).distinct()[:8]
+        except Exception:
+            results["venues"] = venue_qs.filter(
+                Q(name__icontains=query) | Q(description__icontains=query)
+            ).distinct()[:8]
 
+        event_qs = Event.objects.filter(is_published=True, start_datetime__gte=timezone.now())
+        try:
+            er = backend.search(query, event_qs)
+            results["events"] = er[:8] if len(er) > 0 else event_qs.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            ).select_related("venue").distinct()[:8]
+        except Exception:
+            results["events"] = event_qs.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            ).select_related("venue").distinct()[:8]
+
+        # Community posts aren't Wagtail-indexed, use ORM search
         results["posts"] = CommunityPost.objects.filter(
             parent__isnull=True,
         ).filter(

@@ -56,17 +56,27 @@ def directory(request):
             Q(location__icontains=location) | Q(home_region__icontains=location)
         )
 
-    # Search
+    # Search — Wagtail full-text search with ORM fallback
     query = request.GET.get("q")
     if query:
-        creators = creators.filter(
-            Q(display_name__icontains=query)
-            | Q(bio__icontains=query)
-            | Q(location__icontains=query)
-            | Q(home_region__icontains=query)
-        )
-
-    creators = creators.distinct()
+        creators = creators.distinct()
+        from wagtail.search.backends import get_search_backend
+        try:
+            search_results = get_search_backend().search(query, creators)
+            if len(search_results) > 0:
+                creators = search_results
+            else:
+                creators = creators.filter(
+                    Q(display_name__icontains=query) | Q(bio__icontains=query)
+                    | Q(location__icontains=query) | Q(home_region__icontains=query)
+                )
+        except Exception:
+            creators = creators.filter(
+                Q(display_name__icontains=query) | Q(bio__icontains=query)
+                | Q(location__icontains=query) | Q(home_region__icontains=query)
+            )
+    else:
+        creators = creators.distinct()
     disciplines = Discipline.objects.prefetch_related("skills").all()
     from apps.creators.models import Genre
     genres = Genre.objects.all()

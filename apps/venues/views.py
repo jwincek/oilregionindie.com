@@ -44,11 +44,22 @@ def directory(request):
 
     query = request.GET.get("q")
     if query:
-        venues = venues.filter(
-            Q(name__icontains=query) | Q(description__icontains=query)
-        )
-
-    venues = venues.distinct()
+        venues = venues.distinct()
+        from wagtail.search.backends import get_search_backend
+        try:
+            search_results = get_search_backend().search(query, venues)
+            if len(search_results) > 0:
+                venues = search_results
+            else:
+                venues = venues.filter(
+                    Q(name__icontains=query) | Q(description__icontains=query)
+                )
+        except Exception:
+            venues = venues.filter(
+                Q(name__icontains=query) | Q(description__icontains=query)
+            )
+    else:
+        venues = venues.distinct()
     availability_types = AvailabilityType.for_venues()
 
     from apps.venues.models import Amenity

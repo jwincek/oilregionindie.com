@@ -45,9 +45,19 @@ def listing(request):
 
     query = request.GET.get("q")
     if query:
-        events = events.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        )
+        from wagtail.search.backends import get_search_backend
+        try:
+            search_results = get_search_backend().search(query, events)
+            if len(search_results) > 0:
+                events = search_results
+            else:
+                events = events.filter(
+                    Q(title__icontains=query) | Q(description__icontains=query)
+                )
+        except Exception:
+            events = events.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
 
     from apps.venues.models import VenueProfile
     venues = VenueProfile.objects.filter(publish_status="published").order_by("name")
@@ -79,6 +89,88 @@ def detail(request, slug):
         is_published=True,
     )
     return render(request, "events/detail.html", {"event": event})
+
+
+@require_GET
+def calendar_view(request):
+    """Monthly calendar view of events."""
+    import calendar
+    from datetime import date
+
+    # Get year/month from query params, default to current
+    today = timezone.now().date()
+    try:
+        year = int(request.GET.get("year", today.year))
+        month = int(request.GET.get("month", today.month))
+    except (ValueError, TypeError):
+        year, month = today.year, today.month
+
+    # Clamp to reasonable range
+    if year < 2020 or year > 2030:
+        year = today.year
+    month = max(1, min(12, month))
+
+    # Get events for this month
+    first_day = date(year, month, 1)
+    if month == 12:
+        last_day = date(year + 1, 1, 1)
+    else:
+        last_day = date(year, month + 1, 1)
+
+    events = Event.objects.filter(
+        is_published=True,
+        start_datetime__date__gte=first_day,
+        start_datetime__date__lt=last_day,
+    ).select_related("venue").order_by("start_datetime")
+
+    # Group events by day
+    events_by_day = {}
+    for event in events:
+        day = event.start_datetime.day
+        events_by_day.setdefault(day, []).append(event)
+
+    # Build calendar grid
+    cal = calendar.Calendar(firstweekday=6)  # Sunday first
+    weeks = cal.monthdayscalendar(year, month)
+
+    calendar_weeks = []
+    for week in weeks:
+        week_data = []
+        for day in week:
+            if day == 0:
+                week_data.append({"day": 0, "events": [], "is_today": False})
+            else:
+                week_data.append({
+                    "day": day,
+                    "events": events_by_day.get(day, []),
+                    "is_today": (day == today.day and month == today.month and year == today.year),
+                })
+        calendar_weeks.append(week_data)
+
+    # Previous/next month navigation
+    if month == 1:
+        prev_year, prev_month = year - 1, 12
+    else:
+        prev_year, prev_month = year, month - 1
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+
+    month_name = calendar.month_name[month]
+
+    return render(request, "events/calendar.html", {
+        "calendar_weeks": calendar_weeks,
+        "month_name": month_name,
+        "year": year,
+        "month": month,
+        "prev_year": prev_year,
+        "prev_month": prev_month,
+        "next_year": next_year,
+        "next_month": next_month,
+        "today": today,
+        "total_events": events.count(),
+    })
 
 
 @require_GET

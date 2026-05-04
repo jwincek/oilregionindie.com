@@ -6,6 +6,7 @@ app_name = "events"
 
 urlpatterns = [
     path("", views.listing, name="listing"),
+    path("calendar/", views.calendar_view, name="calendar"),
     path("past/", views.past, name="past"),
     path("create/", views.create, name="create"),
     # Booking requests
