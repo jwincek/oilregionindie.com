@@ -197,10 +197,6 @@ def create_product(request):
         return redirect("creators:setup")
     profile = request.user.creator_profile
 
-    if not profile.can_accept_payments:
-        messages.info(request, "Set up Stripe Connect before adding products.")
-        return redirect("commerce:connect_setup")
-
     if request.method == "POST":
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
@@ -452,10 +448,6 @@ def create_group(request):
     if not hasattr(request.user, "creator_profile"):
         return redirect("creators:setup")
     profile = request.user.creator_profile
-
-    if not profile.can_accept_payments:
-        messages.info(request, "Set up Stripe Connect before creating product groups.")
-        return redirect("commerce:connect_setup")
 
     if request.method == "POST":
         form = ProductGroupForm(request.POST, request.FILES, creator=profile)

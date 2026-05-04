@@ -11,7 +11,6 @@
                class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
                 View Sales
             </a>
-            {% if profile.can_accept_payments %}
             <a href="{% url 'commerce:create_group' %}"
                class="text-sm text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">
                 Create Group
@@ -20,25 +19,18 @@
                class="bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
                 Add Product
             </a>
-            {% else %}
-            <span class="text-sm text-ink-400 border border-ink-100 px-3 py-1.5 rounded-md cursor-not-allowed" title="Set up payments first">
-                Create Group
-            </span>
-            <span class="bg-ink-200 text-ink-400 px-4 py-2 rounded-md text-sm font-medium cursor-not-allowed" title="Set up payments first">
-                Add Product
-            </span>
-            {% endif %}
         </div>
     </div>
 
     {% include "includes/_unpublished_reminder.html" %}
 
     {% if not profile.can_accept_payments %}
-    <div class="mb-6 p-4 rounded-md bg-amber-50 border border-amber-200">
-        <p class="text-sm text-amber-800">
-            <span class="font-medium">Payments not set up</span> —
-            <a href="{% url 'commerce:connect_setup' %}" class="underline">Connect with Stripe</a>
-            to start selling.
+    <div class="mb-6 p-4 rounded-md bg-blue-50 border border-blue-200">
+        <p class="text-sm text-blue-800">
+            <span class="font-medium">Tip:</span>
+            You can add products and set up your shop now.
+            <a href="{% url 'commerce:connect_setup' %}" class="underline font-medium">Connect with Stripe</a>
+            when you're ready to accept payments — buyers won't be able to checkout until then.
         </p>
     </div>
     {% endif %}
@@ -104,7 +96,7 @@
             {% if profile.can_accept_payments %}
             <a href="{% url 'commerce:create_product' %}" class="text-brand-600 hover:underline">Add your first product</a> to start selling.
             {% else %}
-            <a href="{% url 'commerce:connect_setup' %}" class="text-brand-600 hover:underline">Set up payments</a> first, then add products.
+            <a href="{% url 'commerce:create_product' %}" class="text-brand-600 hover:underline">Add your first product</a> to start building your shop.
             {% endif %}
         </p>
     </div>
