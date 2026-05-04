@@ -141,6 +141,15 @@ class PublishableProfile(models.Model):
             counter += 1
         return slug
 
+    def save(self, *args, **kwargs):
+        # Optimize images on upload
+        from .image_utils import optimize_image, MAX_PROFILE_SIZE, MAX_HEADER_SIZE
+        if self.profile_image:
+            optimize_image(self.profile_image, MAX_PROFILE_SIZE)
+        if self.header_image:
+            optimize_image(self.header_image, MAX_HEADER_SIZE)
+        super().save(*args, **kwargs)
+
     @property
     def can_accept_payments(self):
         return bool(self.stripe_account_id and self.stripe_onboarded)

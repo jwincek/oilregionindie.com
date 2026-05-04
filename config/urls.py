@@ -13,9 +13,9 @@ from apps.core.feeds import BlogFeed, UpcomingEventsFeed
 from apps.core.sitemaps import sitemaps
 
 from apps.core.views import (
-    add_availability, availability_list, delete_account, delete_availability,
-    edit_availability, follow_creator, follow_venue, mark_all_read,
-    notification_inbox, preferences, report_content, search,
+    add_availability, admin_dashboard, availability_list, delete_account,
+    delete_availability, edit_availability, follow_creator, follow_venue,
+    mark_all_read, notification_inbox, preferences, report_content, search,
     submit_feedback, suspended, toggle_like, welcome,
 )
 
@@ -29,8 +29,9 @@ urlpatterns = [
     # RSS feeds
     path("feeds/events/", UpcomingEventsFeed(), name="events_feed"),
     path("feeds/blog/", BlogFeed(), name="blog_feed"),
-    # Django admin (keep but rarely used; Wagtail admin is primary)
+    # Admin
     path("django-admin/", admin.site.urls),
+    path("dashboard/", admin_dashboard, name="admin_dashboard"),
     # Wagtail admin
     path("cms/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),

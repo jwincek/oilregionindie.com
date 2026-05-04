@@ -117,6 +117,12 @@ class ProductImage(models.Model):
     class Meta:
         ordering = ["sort_order"]
 
+    def save(self, *args, **kwargs):
+        from apps.core.image_utils import optimize_image, MAX_PRODUCT_SIZE
+        if self.image:
+            optimize_image(self.image, MAX_PRODUCT_SIZE)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.alt_text or f"Image for {self.product.title}"
 

@@ -476,3 +476,59 @@ def submit_feedback(request):
 
     msg.success(request, "Thank you for your feedback!")
     return redirect("/feedback/")
+
+
+# ---------------------------------------------------------------------------
+# Admin dashboard
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def admin_dashboard(request):
+    """Overview dashboard for site administrators."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    from datetime import timedelta
+    from django.contrib.auth import get_user_model
+    from django.utils import timezone as tz
+    from apps.creators.models import CreatorProfile
+    from apps.venues.models import VenueProfile
+    from apps.events.models import BookingRequest, Event
+    from apps.community.models import CommunityPost
+
+    User = get_user_model()
+    now = tz.now()
+    seven_days_ago = now - timedelta(days=7)
+    thirty_days_ago = now - timedelta(days=30)
+
+    # Pending reviews
+    pending_creators = CreatorProfile.objects.filter(publish_status="pending").select_related("user")
+    pending_venues = VenueProfile.objects.filter(publish_status="pending").select_related("user")
+
+    # Open reports
+    open_reports = Report.objects.filter(status="pending").order_by("-created_at")[:10]
+
+    # Recent signups
+    recent_users = User.objects.order_by("-date_joined")[:10]
+
+    # Key metrics
+    metrics = {
+        "total_users": User.objects.count(),
+        "users_7d": User.objects.filter(date_joined__gte=seven_days_ago).count(),
+        "total_creators": CreatorProfile.objects.filter(publish_status="published").count(),
+        "total_venues": VenueProfile.objects.filter(publish_status="published").count(),
+        "upcoming_events": Event.objects.filter(is_published=True, start_datetime__gte=now).count(),
+        "posts_30d": CommunityPost.objects.filter(parent__isnull=True, created_at__gte=thirty_days_ago).count(),
+        "pending_bookings": BookingRequest.objects.filter(status="pending").count(),
+        "open_reports": Report.objects.filter(status="pending").count(),
+    }
+
+    return render(request, "core/admin_dashboard.html", {
+        "pending_creators": pending_creators,
+        "pending_venues": pending_venues,
+        "open_reports": open_reports,
+        "recent_users": recent_users,
+        "metrics": metrics,
+    })

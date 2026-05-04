@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-display font-bold text-ink-800">Dashboard</h1>
+        <div class="flex gap-3 text-sm">
+            <a href="/django-admin/" class="text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">Django Admin</a>
+            <a href="/cms/" class="text-ink-600 hover:text-brand-600 border border-ink-200 px-3 py-1.5 rounded-md transition">Wagtail CMS</a>
+        </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-ink-800">{{ metrics.total_users }}</p>
+            <p class="text-xs text-ink-500">Users</p>
+            {% if metrics.users_7d %}
+            <p class="text-xs text-green-600 mt-0.5">+{{ metrics.users_7d }} this week</p>
+            {% endif %}
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-ink-800">{{ metrics.total_creators }}</p>
+            <p class="text-xs text-ink-500">Creators</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-ink-800">{{ metrics.total_venues }}</p>
+            <p class="text-xs text-ink-500">Venues</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-ink-800">{{ metrics.upcoming_events }}</p>
+            <p class="text-xs text-ink-500">Upcoming Events</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Pending reviews -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-4">
+                Pending Reviews
+                {% if pending_creators or pending_venues %}
+                <span class="bg-amber-100 text-amber-700 text-xs font-medium px-1.5 py-0.5 rounded ml-2">
+                    {{ pending_creators|length|add:pending_venues|length }}
+                </span>
+                {% endif %}
+            </h2>
+            {% if pending_creators %}
+            <div class="mb-3">
+                <p class="text-xs font-medium text-ink-400 uppercase mb-2">Creators</p>
+                {% for c in pending_creators %}
+                <div class="flex items-center justify-between py-1.5">
+                    <div>
+                        <span class="text-sm font-medium text-ink-700">{{ c.display_name }}</span>
+                        <span class="text-xs text-ink-400 ml-2">{{ c.user.email }}</span>
+                    </div>
+                    <a href="/django-admin/creators/creatorprofile/{{ c.pk }}/change/"
+                       class="text-xs text-brand-600 hover:underline">Review</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if pending_venues %}
+            <div>
+                <p class="text-xs font-medium text-ink-400 uppercase mb-2">Venues</p>
+                {% for v in pending_venues %}
+                <div class="flex items-center justify-between py-1.5">
+                    <div>
+                        <span class="text-sm font-medium text-ink-700">{{ v.name }}</span>
+                        <span class="text-xs text-ink-400 ml-2">{{ v.user.email }}</span>
+                    </div>
+                    <a href="/django-admin/venues/venueprofile/{{ v.pk }}/change/"
+                       class="text-xs text-brand-600 hover:underline">Review</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if not pending_creators and not pending_venues %}
+            <p class="text-sm text-ink-400">No profiles pending review.</p>
+            {% endif %}
+        </div>
+
+        <!-- Open reports -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-4">
+                Open Reports
+                {% if open_reports %}
+                <span class="bg-red-100 text-red-700 text-xs font-medium px-1.5 py-0.5 rounded ml-2">{{ metrics.open_reports }}</span>
+                {% endif %}
+            </h2>
+            {% if open_reports %}
+            {% for report in open_reports %}
+            <div class="flex items-center justify-between py-1.5 border-b border-ink-100 last:border-0">
+                <div>
+                    <span class="bg-ink-100 text-ink-600 text-xs px-1.5 py-0.5 rounded">{{ report.get_content_type_display }}</span>
+                    <span class="text-sm text-ink-600 ml-2">{{ report.reason|truncatewords:10 }}</span>
+                </div>
+                <a href="/django-admin/core/report/{{ report.pk }}/change/"
+                   class="text-xs text-brand-600 hover:underline">Review</a>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="text-sm text-ink-400">No open reports.</p>
+            {% endif %}
+        </div>
+
+        <!-- Recent signups -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-4">Recent Signups</h2>
+            {% for user in recent_users %}
+            <div class="flex items-center justify-between py-1.5">
+                <div>
+                    <span class="text-sm text-ink-700">{{ user.email }}</span>
+                </div>
+                <span class="text-xs text-ink-400">{{ user.date_joined|timesince }} ago</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Quick stats -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="font-semibold text-ink-800 mb-4">Activity</h2>
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-ink-500">Community posts (30 days)</dt>
+                    <dd class="font-medium text-ink-800">{{ metrics.posts_30d }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-ink-500">Pending bookings</dt>
+                    <dd class="font-medium text-ink-800">{{ metrics.pending_bookings }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-ink-500">Open reports</dt>
+                    <dd class="font-medium {% if metrics.open_reports %}text-red-600{% else %}text-ink-800{% endif %}">{{ metrics.open_reports }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+{% endblock %}

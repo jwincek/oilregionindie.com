@@ -339,5 +339,14 @@ class MediaItem(models.Model):
     class Meta:
         ordering = ["sort_order", "-created_at"]
 
+    def save(self, *args, **kwargs):
+        # Optimize image files and thumbnails
+        from apps.core.image_utils import optimize_image, MAX_MEDIA_SIZE, MAX_PROFILE_SIZE
+        if self.file and self.media_type == self.MediaType.IMAGE:
+            optimize_image(self.file, MAX_MEDIA_SIZE)
+        if self.thumbnail:
+            optimize_image(self.thumbnail, MAX_PROFILE_SIZE)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.title} ({self.get_media_type_display()})"

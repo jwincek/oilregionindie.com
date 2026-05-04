@@ -47,6 +47,9 @@
                         <a href="{% url 'commerce:my_products' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">My Products</a>
                         {% endif %}
                         <a href="{% url 'preferences' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Preferences</a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'admin_dashboard' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Dashboard</a>
+                        {% endif %}
                         <a href="{% url 'account_logout' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Sign Out</a>
                     </div>
                 </div>
