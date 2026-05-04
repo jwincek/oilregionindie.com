@@ -23,6 +23,7 @@
                     <th class="text-right px-4 py-3 font-medium">Amount</th>
                     <th class="text-center px-4 py-3 font-medium">Status</th>
                     <th class="text-left px-4 py-3 font-medium">Date</th>
+                    <th class="px-4 py-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-ink-100">
@@ -40,6 +41,10 @@
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-ink-400">{{ item.order.created_at|date:"M j, Y" }}</td>
+                    <td class="px-4 py-3">
+                        <a href="{% url 'commerce:order_detail' pk=item.order.pk %}"
+                           class="text-xs text-brand-600 hover:underline">Details</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

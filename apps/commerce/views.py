@@ -63,13 +63,15 @@ def create_checkout(request, product_id):
 
         # Create pending order with item
         fee_percent = settings.STRIPE_PLATFORM_FEE_PERCENT
+        shipping = product.shipping_cents if not product.is_digital else 0
+        subtotal = product.price_cents * quantity + shipping
         item_fee = int(product.price_cents * quantity * fee_percent / 100)
 
         order = Order.objects.create(
             buyer_email=buyer_email or "",
             buyer_user=request.user if request.user.is_authenticated else None,
             stripe_checkout_session_id=session.id,
-            total_cents=product.price_cents * quantity,
+            total_cents=subtotal,
             platform_fee_cents=item_fee,
             status=Order.Status.PENDING,
         )
@@ -255,6 +257,70 @@ def my_sales(request):
         "profile": profile,
         "items": items,
     })
+
+
+@login_required
+def order_detail(request, pk):
+    """Creator view of a specific order's items."""
+    if not hasattr(request.user, "creator_profile"):
+        return redirect("creators:setup")
+    profile = request.user.creator_profile
+
+    order = get_object_or_404(Order, pk=pk)
+    items = order.items.filter(creator=profile).select_related("product")
+    if not items.exists():
+        from django.http import Http404
+        raise Http404
+
+    return render(request, "commerce/order_detail.html", {
+        "order": order,
+        "items": items,
+        "profile": profile,
+    })
+
+
+@login_required
+@require_POST
+def mark_shipped(request, item_pk):
+    """Mark an order item as shipped with optional tracking number."""
+    if not hasattr(request.user, "creator_profile"):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    item = get_object_or_404(OrderItem, pk=item_pk, creator=request.user.creator_profile)
+    tracking = request.POST.get("tracking_number", "").strip()
+
+    item.is_fulfilled = True
+    item.fulfilled_at = timezone.now()
+    item.tracking_number = tracking
+    item.save(update_fields=["is_fulfilled", "fulfilled_at", "tracking_number"])
+
+    # Check if all items in the order are fulfilled
+    order = item.order
+    if not order.items.filter(is_fulfilled=False).exists():
+        order.status = Order.Status.FULFILLED
+        order.save(update_fields=["status"])
+
+    # Notify the buyer
+    if order.buyer_email:
+        from django.core.mail import send_mail
+        site_name = getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
+        tracking_line = f"\nTracking number: {tracking}\n" if tracking else ""
+        send_mail(
+            subject=f"[{site_name}] Your order has shipped!",
+            message=(
+                f"Good news — {item.product.title} from {item.creator.display_name} has shipped!\n"
+                f"{tracking_line}\n"
+                f"If you have questions, contact the creator directly.\n\n"
+                f"{site_name}"
+            ),
+            from_email=None,
+            recipient_list=[order.buyer_email],
+            fail_silently=True,
+        )
+
+    messages.success(request, f'"{item.product.title}" marked as shipped.')
+    return redirect("commerce:order_detail", pk=order.pk)
 
 
 # ---------------------------------------------------------------------------

@@ -47,6 +47,10 @@ class Product(models.Model):
     )
 
     is_active = models.BooleanField(default=True)
+    shipping_cents = models.PositiveIntegerField(
+        default=0,
+        help_text="Flat-rate shipping cost in cents (0 = free shipping)",
+    )
     shipping_note = models.TextField(blank=True, help_text="Shipping info for physical items")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -86,6 +90,12 @@ class Product(models.Model):
     @property
     def price_display(self):
         return f"${self.price_cents / 100:.2f}"
+
+    @property
+    def shipping_display(self):
+        if self.is_digital or self.shipping_cents == 0:
+            return "Free shipping" if not self.is_digital else None
+        return f"${self.shipping_cents / 100:.2f} shipping"
 
     @property
     def in_stock(self):
@@ -300,6 +310,7 @@ class OrderItem(models.Model):
     # Fulfillment
     is_fulfilled = models.BooleanField(default=False)
     fulfilled_at = models.DateTimeField(null=True, blank=True)
+    tracking_number = models.CharField(max_length=255, blank=True)
     download_count = models.PositiveIntegerField(default=0)
 
     class Meta:

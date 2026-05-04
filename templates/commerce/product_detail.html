@@ -49,6 +49,10 @@
             </div>
             {% endif %}
 
+            {% if not product.is_digital and product.shipping_display %}
+            <p class="text-sm text-ink-500 mb-2">{{ product.shipping_display }}</p>
+            {% endif %}
+
             {% if product.shipping_note %}
             <p class="text-sm text-ink-500 mb-4">{{ product.shipping_note }}</p>
             {% endif %}
@@ -59,7 +63,7 @@
                 <input type="hidden" name="quantity" value="1">
                 <button type="submit"
                         class="w-full bg-ink-800 text-white py-3 rounded-md font-medium hover:bg-ink-700 transition">
-                    Buy Now — {{ product.price_display }}
+                    Buy Now — {{ product.price_display }}{% if product.shipping_cents %} + {{ product.shipping_display }}{% endif %}
                 </button>
             </form>
             {% elif not product.in_stock %}

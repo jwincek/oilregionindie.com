@@ -115,6 +115,15 @@
                     <p class="mt-1 text-xs text-ink-400">How many are available? Leave blank for unlimited.</p>
                 </div>
 
+                <!-- Shipping cost (only for physical products) -->
+                <div x-show="!isDigital" x-transition>
+                    <label for="id_shipping_dollars" class="block text-sm font-medium text-ink-700 mb-1">
+                        Shipping Cost ($)
+                    </label>
+                    {{ form.shipping_dollars }}
+                    <p class="mt-1 text-xs text-ink-400">{{ form.shipping_dollars.help_text }}</p>
+                </div>
+
                 <!-- Shipping note (only for physical products) -->
                 <div x-show="!isDigital" x-transition>
                     <label for="{{ form.shipping_note.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">

@@ -22,6 +22,20 @@ class ProductForm(forms.ModelForm):
         label="Price ($)",
     )
 
+    shipping_dollars = forms.DecimalField(
+        required=False,
+        max_digits=7,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            "class": "form-input",
+            "placeholder": "0.00",
+            "step": "0.01",
+            "min": "0",
+        }),
+        label="Shipping ($)",
+        help_text="Flat-rate shipping cost. Leave blank or 0 for free shipping.",
+    )
+
     class Meta:
         model = Product
         fields = [
@@ -44,22 +58,25 @@ class ProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk and self.instance.price_cents:
-            self.fields["price_dollars"].initial = self.instance.price_cents / 100
+        if self.instance and self.instance.pk:
+            if self.instance.price_cents:
+                self.fields["price_dollars"].initial = self.instance.price_cents / 100
+            if self.instance.shipping_cents:
+                self.fields["shipping_dollars"].initial = self.instance.shipping_cents / 100
         self.fields["is_active"].initial = True
 
     def clean(self):
         cleaned = super().clean()
         price = cleaned.get("price_dollars")
-        if price:
-            cleaned["price_cents"] = int(price * 100)
-        else:
-            cleaned["price_cents"] = 0
+        cleaned["price_cents"] = int(price * 100) if price else 0
+        shipping = cleaned.get("shipping_dollars")
+        cleaned["shipping_cents"] = int(shipping * 100) if shipping else 0
         return cleaned
 
     def save(self, commit=True):
         product = super().save(commit=False)
         product.price_cents = self.cleaned_data.get("price_cents", 0)
+        product.shipping_cents = self.cleaned_data.get("shipping_cents", 0)
         if commit:
             product.save()
             self.save_m2m()

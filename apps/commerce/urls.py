@@ -15,6 +15,8 @@ urlpatterns = [
     path("my-products/<uuid:pk>/mark-sold/", views.mark_sold, name="mark_sold"),
     path("my-products/<uuid:pk>/restock/", views.restock, name="restock"),
     path("my-sales/", views.my_sales, name="my_sales"),
+    path("my-sales/<uuid:pk>/", views.order_detail, name="order_detail"),
+    path("my-sales/ship/<uuid:item_pk>/", views.mark_shipped, name="mark_shipped"),
     # Product groups
     path("groups/add/", views.create_group, name="create_group"),
     path("groups/<uuid:pk>/edit/", views.edit_group, name="edit_group"),
