@@ -13,7 +13,7 @@
                     <li><a href="{% url 'creators:directory' %}" class="hover:text-brand-300 transition">Creator Directory</a></li>
                     <li><a href="{% url 'venues:directory' %}" class="hover:text-brand-300 transition">Venues</a></li>
                     <li><a href="{% url 'events:listing' %}" class="hover:text-brand-300 transition">Upcoming Events</a></li>
-                    <li><a href="{% url 'community:index' %}" class="hover:text-brand-300 transition">Community</a></li>
+                    {% if FEATURE_COMMUNITY %}<li><a href="{% url 'community:index' %}" class="hover:text-brand-300 transition">Community</a></li>{% endif %}
                 </ul>
             </div>
             <div>

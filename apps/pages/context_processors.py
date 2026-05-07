@@ -10,6 +10,8 @@ def site_settings(request):
         "SITE_NAME": branding.site_name or getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub"),
         "STRIPE_PUBLIC_KEY": getattr(settings, "STRIPE_PUBLIC_KEY", ""),
         "SOFT_LAUNCH": getattr(settings, "SOFT_LAUNCH", False),
+        "FEATURE_COMMERCE": getattr(settings, "FEATURE_COMMERCE", True),
+        "FEATURE_COMMUNITY": getattr(settings, "FEATURE_COMMUNITY", True),
     }
     if hasattr(request, "user") and request.user.is_authenticated:
         ctx["unread_notification_count"] = request.user.notifications.filter(

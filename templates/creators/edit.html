@@ -150,6 +150,7 @@
         <!-- Save button (visible on all form tabs) -->
         <div class="flex justify-between items-center pt-4 mt-6 border-t border-ink-100">
             <div>
+                {% if FEATURE_COMMERCE %}
                 {% if profile.can_accept_payments %}
                 <a href="{% url 'commerce:connect_setup' %}" class="text-sm text-green-600 hover:underline">
                     <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>Payments Active
@@ -160,6 +161,7 @@
                 </a>
                 {% else %}
                 <a href="{% url 'commerce:connect_setup' %}" class="text-sm text-brand-600 hover:underline">Set Up Payments</a>
+                {% endif %}
                 {% endif %}
             </div>
             <div class="flex gap-3">

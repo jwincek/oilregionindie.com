@@ -123,6 +123,7 @@
         {% endif %}
 
         <!-- Products -->
+        {% if FEATURE_COMMERCE %}
         {% if creator.products.exists or creator.product_groups.exists %}
         <div class="bg-white rounded-lg shadow-sm p-6">
             <h2 class="font-semibold text-ink-800 mb-4">Shop</h2>
@@ -160,6 +161,7 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
         {% endif %}
     </div>
 

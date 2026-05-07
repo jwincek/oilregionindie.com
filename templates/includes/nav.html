@@ -13,7 +13,7 @@
                 <a href="{% url 'creators:directory' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Creators</a>
                 <a href="{% url 'venues:directory' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Venues</a>
                 <a href="{% url 'events:listing' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Events</a>
-                <a href="{% url 'community:index' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Community</a>
+                {% if FEATURE_COMMUNITY %}<a href="{% url 'community:index' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Community</a>{% endif %}
                 <a href="{% url 'map' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">Map</a>
                 <a href="{% url 'search' %}" class="text-ink-100 hover:text-brand-300 text-sm font-medium transition">
                     <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -44,7 +44,7 @@
                         </a>
                         <a href="{% url 'events:create' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Create Event</a>
                         {% endif %}
-                        {% if user.creator_profile %}
+                        {% if user.creator_profile and FEATURE_COMMERCE %}
                         <a href="{% url 'commerce:my_products' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">My Products</a>
                         {% endif %}
                         <a href="{% url 'preferences' %}" class="block px-4 py-2 text-sm text-ink-700 hover:bg-brand-50">Preferences</a>
@@ -76,7 +76,7 @@
             <a href="{% url 'creators:directory' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Creators</a>
             <a href="{% url 'venues:directory' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Venues</a>
             <a href="{% url 'events:listing' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Events</a>
-            <a href="{% url 'community:index' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Community</a>
+            {% if FEATURE_COMMUNITY %}<a href="{% url 'community:index' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Community</a>{% endif %}
             {% if user.is_authenticated %}
             <a href="{% url 'account_logout' %}" class="block text-ink-100 hover:text-brand-300 text-sm font-medium py-1">Sign Out</a>
             {% else %}

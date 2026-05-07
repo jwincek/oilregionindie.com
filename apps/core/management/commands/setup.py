@@ -149,6 +149,16 @@ class Command(BaseCommand):
         soft_default = env.get("SOFT_LAUNCH", "False").lower() in ("true", "1", "yes")
         env.set("SOFT_LAUNCH", "True" if _confirm("Show soft-launch banner?", default=soft_default) else "False")
 
+        # Feature toggles — apps stay installed, only URL routing/nav gated.
+        commerce_default = env.get("FEATURE_COMMERCE", "True").lower() in ("true", "1", "yes")
+        env.set("FEATURE_COMMERCE", "True" if _confirm(
+            "Enable commerce (shop, Stripe Connect)?", default=commerce_default,
+        ) else "False")
+        community_default = env.get("FEATURE_COMMUNITY", "True").lower() in ("true", "1", "yes")
+        env.set("FEATURE_COMMUNITY", "True" if _confirm(
+            "Enable community (discussion posts, follows)?", default=community_default,
+        ) else "False")
+
         # Database & cache
         env.set("DATABASE_URL", _prompt(
             "DATABASE_URL",

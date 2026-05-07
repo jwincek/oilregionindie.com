@@ -64,11 +64,18 @@ urlpatterns = [
     path("creators/", include("apps.creators.urls", namespace="creators")),
     path("venues/", include("apps.venues.urls", namespace="venues")),
     path("events/", include("apps.events.urls", namespace="events")),
-    path("shop/", include("apps.commerce.urls", namespace="commerce")),
-    path("community/", include("apps.community.urls", namespace="community")),
-    # Wagtail catch-all (must be last)
-    path("", include(wagtail_urls)),
 ]
+
+# Optional features — gated by env-driven flags. URL include is omitted
+# when disabled, so reverse() against namespaced names will fail; templates
+# wrap their links in {% if FEATURE_X %} accordingly.
+if settings.FEATURE_COMMERCE:
+    urlpatterns.append(path("shop/", include("apps.commerce.urls", namespace="commerce")))
+if settings.FEATURE_COMMUNITY:
+    urlpatterns.append(path("community/", include("apps.community.urls", namespace="community")))
+
+# Wagtail catch-all (must remain last).
+urlpatterns.append(path("", include(wagtail_urls)))
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

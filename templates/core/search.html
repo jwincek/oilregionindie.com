@@ -84,7 +84,7 @@
     {% endif %}
 
     <!-- Community Posts -->
-    {% if results.posts %}
+    {% if FEATURE_COMMUNITY and results.posts %}
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-ink-700 mb-3">Community</h2>
         <div class="space-y-2">

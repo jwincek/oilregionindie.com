@@ -20,6 +20,12 @@ DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
 SOFT_LAUNCH = env.bool("SOFT_LAUNCH", default=False)
 
+# Feature toggles — disable optional surfaces for deployments that don't
+# need them. Apps stay in INSTALLED_APPS (migrations preserved); these
+# flags only gate URL routing and template rendering.
+FEATURE_COMMERCE = env.bool("FEATURE_COMMERCE", default=True)
+FEATURE_COMMUNITY = env.bool("FEATURE_COMMUNITY", default=True)
+
 # ---------------------------------------------------------------------------
 # Applications
 # ---------------------------------------------------------------------------
