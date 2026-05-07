@@ -1,0 +1,7 @@
+{
+  "name": "Midnight",
+  "version": "1.0.0",
+  "author": "Oil Region Creative Hub",
+  "description": "A cool, dark variant — deep indigo on charcoal. Demonstrates how a theme overrides only CSS variables, no template changes needed.",
+  "license": "AGPL-3.0"
+}

@@ -1,0 +1,32 @@
+/*
+ * Midnight theme — a cool, dark palette.
+ *
+ * Each variable is an "R G B" triplet (no rgb() wrapper) so Tailwind
+ * utilities can apply opacity at use sites. See base.html for the
+ * variable list and Tailwind config that consumes them.
+ */
+:root {
+    /* Brand: indigo accents */
+    --color-brand-50:  238 242 255;
+    --color-brand-100: 224 231 255;
+    --color-brand-200: 199 210 254;
+    --color-brand-300: 165 180 252;
+    --color-brand-400: 129 140 248;
+    --color-brand-500: 99 102 241;
+    --color-brand-600: 79 70 229;
+    --color-brand-700: 67 56 202;
+    --color-brand-800: 55 48 163;
+    --color-brand-900: 49 46 129;
+
+    /* Ink: deep charcoal greys */
+    --color-ink-50:  248 250 252;
+    --color-ink-100: 241 245 249;
+    --color-ink-200: 226 232 240;
+    --color-ink-300: 203 213 225;
+    --color-ink-400: 148 163 184;
+    --color-ink-500: 100 116 139;
+    --color-ink-600: 71 85 105;
+    --color-ink-700: 51 65 85;
+    --color-ink-800: 30 41 59;
+    --color-ink-900: 15 23 42;
+}

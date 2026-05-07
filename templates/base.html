@@ -21,6 +21,43 @@
     <link rel="alternate" type="application/rss+xml" title="Blog" href="/feeds/blog/">
     <meta name="twitter:card" content="summary_large_image">
 
+    <!--
+      Theme palette as CSS custom properties (R G B triplets, no rgb()
+      wrapper) so Tailwind's <alpha-value> syntax can compose opacity at
+      use sites. The active theme's theme.css overrides any of these.
+    -->
+    <style>
+        :root {
+            --color-brand-50:  245 241 235;
+            --color-brand-100: 232 224 212;
+            --color-brand-200: 212 196 168;
+            --color-brand-300: 212 168 67;
+            --color-brand-400: 196 154 53;
+            --color-brand-500: 176 138 42;
+            --color-brand-600: 138 108 31;
+            --color-brand-700: 101 78 21;
+            --color-brand-800: 63 49 13;
+            --color-brand-900: 26 19 6;
+
+            --color-ink-50:  240 244 248;
+            --color-ink-100: 217 226 236;
+            --color-ink-200: 188 204 220;
+            --color-ink-300: 159 179 200;
+            --color-ink-400: 130 154 177;
+            --color-ink-500: 98 125 152;
+            --color-ink-600: 72 101 129;
+            --color-ink-700: 51 78 104;
+            --color-ink-800: 26 58 92;
+            --color-ink-900: 13 31 45;
+
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-display: 'Inter', system-ui, sans-serif;
+        }
+    </style>
+
+    <!-- Active theme overrides (loaded after the defaults above). -->
+    <link rel="stylesheet" href="/static/themes/{{ active_theme|default:'default' }}/theme.css">
+
     <!-- Tailwind CSS (CDN for dev; build for production) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -29,33 +66,33 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#f5f1eb',
-                            100: '#e8e0d4',
-                            200: '#d4c4a8',
-                            300: '#d4a843',
-                            400: '#c49a35',
-                            500: '#b08a2a',
-                            600: '#8a6c1f',
-                            700: '#654e15',
-                            800: '#3f310d',
-                            900: '#1a1306',
+                            50:  'rgb(var(--color-brand-50)  / <alpha-value>)',
+                            100: 'rgb(var(--color-brand-100) / <alpha-value>)',
+                            200: 'rgb(var(--color-brand-200) / <alpha-value>)',
+                            300: 'rgb(var(--color-brand-300) / <alpha-value>)',
+                            400: 'rgb(var(--color-brand-400) / <alpha-value>)',
+                            500: 'rgb(var(--color-brand-500) / <alpha-value>)',
+                            600: 'rgb(var(--color-brand-600) / <alpha-value>)',
+                            700: 'rgb(var(--color-brand-700) / <alpha-value>)',
+                            800: 'rgb(var(--color-brand-800) / <alpha-value>)',
+                            900: 'rgb(var(--color-brand-900) / <alpha-value>)',
                         },
                         ink: {
-                            50: '#f0f4f8',
-                            100: '#d9e2ec',
-                            200: '#bcccdc',
-                            300: '#9fb3c8',
-                            400: '#829ab1',
-                            500: '#627d98',
-                            600: '#486581',
-                            700: '#334e68',
-                            800: '#1a3a5c',
-                            900: '#0d1f2d',
+                            50:  'rgb(var(--color-ink-50)  / <alpha-value>)',
+                            100: 'rgb(var(--color-ink-100) / <alpha-value>)',
+                            200: 'rgb(var(--color-ink-200) / <alpha-value>)',
+                            300: 'rgb(var(--color-ink-300) / <alpha-value>)',
+                            400: 'rgb(var(--color-ink-400) / <alpha-value>)',
+                            500: 'rgb(var(--color-ink-500) / <alpha-value>)',
+                            600: 'rgb(var(--color-ink-600) / <alpha-value>)',
+                            700: 'rgb(var(--color-ink-700) / <alpha-value>)',
+                            800: 'rgb(var(--color-ink-800) / <alpha-value>)',
+                            900: 'rgb(var(--color-ink-900) / <alpha-value>)',
                         },
                     },
                     fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        display: ['Inter', 'system-ui', 'sans-serif'],
+                        sans: ['var(--font-sans)'],
+                        display: ['var(--font-display)'],
                     },
                 },
             },

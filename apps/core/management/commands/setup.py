@@ -260,6 +260,20 @@ class Command(BaseCommand):
         )
         b.contact_email = _prompt("Contact email", b.contact_email)
         b.source_repo_url = _prompt("Source repo URL (blank to hide)", b.source_repo_url)
+
+        # Theme picker — show the discovered themes; pressing Enter keeps current.
+        from apps.core.theming import discover_themes
+        themes = discover_themes()
+        if themes:
+            self.stdout.write("  Available themes: " + ", ".join(sorted(themes.keys())))
+            chosen = _prompt("Active theme", b.active_theme or "default")
+            if chosen in themes:
+                b.active_theme = chosen
+            else:
+                self.stdout.write(self.style.WARNING(
+                    f"  Theme {chosen!r} not found on disk — keeping {b.active_theme!r}."
+                ))
+
         b.save()
         self.stdout.write(self.style.SUCCESS("  SiteBranding updated."))
 

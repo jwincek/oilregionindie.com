@@ -12,6 +12,7 @@ def site_settings(request):
         "SOFT_LAUNCH": getattr(settings, "SOFT_LAUNCH", False),
         "FEATURE_COMMERCE": getattr(settings, "FEATURE_COMMERCE", True),
         "FEATURE_COMMUNITY": getattr(settings, "FEATURE_COMMUNITY", True),
+        "active_theme": branding.active_theme or "default",
     }
     if hasattr(request, "user") and request.user.is_authenticated:
         ctx["unread_notification_count"] = request.user.notifications.filter(

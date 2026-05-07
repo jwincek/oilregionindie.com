@@ -9,6 +9,14 @@ from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
 
 
+def _theme_choices():
+    # Lazy: discover at call time so themes added on disk show up without
+    # a code change. Returning a list (not a generator) so Django's
+    # migration autodetector serializes consistently.
+    from apps.core.theming import theme_choices
+    return theme_choices()
+
+
 @register_setting(icon="cog")
 class SiteBranding(BaseGenericSetting):
     """
@@ -21,6 +29,13 @@ class SiteBranding(BaseGenericSetting):
         max_length=120,
         default="Oil Region Creative Hub",
         help_text="Displayed in the page title, footer, and emails.",
+    )
+    active_theme = models.CharField(
+        max_length=80,
+        default="default",
+        choices=_theme_choices,
+        help_text="Picks a theme directory under ./themes/. Overrides only "
+                  "CSS variables and (optionally) templates — no code runs.",
     )
     tagline = models.CharField(
         max_length=200,
@@ -65,6 +80,10 @@ class SiteBranding(BaseGenericSetting):
         MultiFieldPanel(
             [FieldPanel("logo"), FieldPanel("og_image")],
             heading="Imagery",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("active_theme")],
+            heading="Theme",
         ),
     ]
 

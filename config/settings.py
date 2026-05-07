@@ -109,8 +109,15 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
+        # Explicit loader chain (rather than APP_DIRS=True) so the active
+        # theme's templates/ directory can override anything by sitting at
+        # the front. See apps.core.theming.ActiveThemeLoader.
         "OPTIONS": {
+            "loaders": [
+                "apps.core.theming.ActiveThemeLoader",
+                "django.template.loaders.filesystem.Loader",
+                "django.template.loaders.app_directories.Loader",
+            ],
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
@@ -203,7 +210,12 @@ ADMINS = [tuple(a.split(":")) for a in _admins_raw if ":" in a]
 # Static & Media
 # ---------------------------------------------------------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# `themes/` is exposed at /static/themes/<name>/... so any theme's
+# theme.css and assets are reachable regardless of which is active.
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    ("themes", BASE_DIR / "themes"),
+]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"

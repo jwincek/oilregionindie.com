@@ -1,0 +1,7 @@
+/*
+ * Default theme.
+ *
+ * The base palette lives in templates/base.html as CSS custom properties
+ * on :root. Other themes override those variables here. The default
+ * theme is intentionally empty — it ships the values from base.html.
+ */
