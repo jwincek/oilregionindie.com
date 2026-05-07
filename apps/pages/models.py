@@ -2,10 +2,74 @@ from django.db import models
 
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
+from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Page, Orderable
 from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
+
+
+@register_setting(icon="cog")
+class SiteBranding(BaseGenericSetting):
+    """
+    Site-wide branding and contact info, editable from the Wagtail admin.
+    Populated initially by the `setup` management command; can be tweaked
+    later under Settings → Site branding.
+    """
+
+    site_name = models.CharField(
+        max_length=120,
+        default="Oil Region Creative Hub",
+        help_text="Displayed in the page title, footer, and emails.",
+    )
+    tagline = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Short phrase used in social/OG meta tags.",
+    )
+    origin_story = models.TextField(
+        blank=True,
+        help_text="One-paragraph blurb shown in the site footer.",
+    )
+    contact_email = models.EmailField(
+        blank=True,
+        help_text="Address shown to suspended users and in 'contact us' links.",
+    )
+    source_repo_url = models.URLField(
+        blank=True,
+        help_text="Link to the source code repository (footer + soft-launch banner).",
+    )
+    logo = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    og_image = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Default Open Graph / social-share image.",
+    )
+
+    panels = [
+        MultiFieldPanel(
+            [FieldPanel("site_name"), FieldPanel("tagline"), FieldPanel("origin_story")],
+            heading="Identity",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("contact_email"), FieldPanel("source_repo_url")],
+            heading="Contact & links",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("logo"), FieldPanel("og_image")],
+            heading="Imagery",
+        ),
+    ]
+
+    class Meta:
+        verbose_name = "Site branding"
 
 
 class HomePage(Page):

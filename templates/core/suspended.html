@@ -11,9 +11,11 @@
         <a href="/code-of-conduct/" class="text-brand-600 hover:underline">Code of Conduct</a>
         or <a href="/terms/" class="text-brand-600 hover:underline">Terms of Service</a>.
     </p>
+    {% if site_branding.contact_email %}
     <p class="text-ink-500">
         If you believe this is an error, please contact us at
-        <a href="mailto:feedback@oilregionindie.com" class="text-brand-600 hover:underline">feedback@oilregionindie.com</a>.
+        <a href="mailto:{{ site_branding.contact_email }}" class="text-brand-600 hover:underline">{{ site_branding.contact_email }}</a>.
     </p>
+    {% endif %}
 </div>
 {% endblock %}

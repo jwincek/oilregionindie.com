@@ -4,8 +4,7 @@
             <div>
                 <h3 class="font-display font-bold text-brand-300 text-lg mb-3">{{ SITE_NAME }}</h3>
                 <p class="text-ink-300 text-sm leading-relaxed">
-                    A community platform for independent musicians, visual artists, makers,
-                    venues, and fans. Born from the Oil Region Indie Music Festival.
+                    {{ site_branding.origin_story }}
                 </p>
             </div>
             <div>
@@ -35,7 +34,7 @@
                 <a href="/code-of-conduct/" class="text-ink-300 hover:text-brand-300 transition ml-2">Code of Conduct</a>
                 <a href="/feedback/" class="text-ink-300 hover:text-brand-300 transition ml-2">Feedback</a>
                 <a href="{% url 'events_feed' %}" class="text-ink-300 hover:text-brand-300 transition ml-2">Events RSS</a>
-                <a href="https://github.com/jwincek/oilregionindie.com" class="text-ink-300 hover:text-brand-300 transition ml-2">GitHub</a>
+                {% if site_branding.source_repo_url %}<a href="{{ site_branding.source_repo_url }}" class="text-ink-300 hover:text-brand-300 transition ml-2">GitHub</a>{% endif %}
             </p>
         </div>
     </div>
