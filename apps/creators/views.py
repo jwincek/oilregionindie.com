@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.facets import decorate_options, facet_counts
 from apps.core.models import AvailabilityType
 from apps.core.notifications import notify_admin_profile_submitted
 
@@ -18,44 +19,79 @@ from .models import CreatorProfile, CreatorSocialLink, Discipline, Genre, MediaI
 @require_GET
 def directory(request):
     """Browsable creator directory with filtering."""
-    creators = CreatorProfile.objects.filter(publish_status="published").prefetch_related(
+    base = CreatorProfile.objects.filter(publish_status="published").prefetch_related(
         "disciplines", "genres", "skills", "availabilities__availability_type"
     )
 
-    # Filter by profile type (individual, band, collective)
-    profile_type = request.GET.get("profile_type")
-    if profile_type:
-        creators = creators.filter(profile_type=profile_type)
+    profile_type = request.GET.get("profile_type") or ""
+    discipline_slug = request.GET.get("discipline") or ""
+    skill_slug = request.GET.get("skill") or ""
+    genre_slug = request.GET.get("genre") or ""
+    availability_slug = request.GET.get("availability") or ""
+    location = request.GET.get("location") or ""
 
-    # Filter by discipline
-    discipline_slug = request.GET.get("discipline")
-    if discipline_slug:
-        creators = creators.filter(disciplines__slug=discipline_slug)
+    # Each filter as an applier — taken together they're the structured
+    # filter state. Text search (`q`) is applied separately at the end and
+    # does not feed into facet counts (it composes badly with the search
+    # backend's result type and would slow the page down).
+    def _apply_profile_type(qs):
+        return qs.filter(profile_type=profile_type) if profile_type else qs
 
-    # Filter by skill
-    skill_slug = request.GET.get("skill")
-    if skill_slug:
-        creators = creators.filter(skills__slug=skill_slug)
+    def _apply_discipline(qs):
+        return qs.filter(disciplines__slug=discipline_slug) if discipline_slug else qs
 
-    # Filter by genre
-    genre_slug = request.GET.get("genre")
-    if genre_slug:
-        creators = creators.filter(genres__slug=genre_slug)
+    def _apply_skill(qs):
+        return qs.filter(skills__slug=skill_slug) if skill_slug else qs
 
-    # Filter by availability
-    availability_slug = request.GET.get("availability")
-    if availability_slug:
-        creators = creators.filter(
+    def _apply_genre(qs):
+        return qs.filter(genres__slug=genre_slug) if genre_slug else qs
+
+    def _apply_availability(qs):
+        if not availability_slug:
+            return qs
+        return qs.filter(
             availabilities__availability_type__slug=availability_slug,
             availabilities__is_active=True,
         )
 
-    # Filter by location
-    location = request.GET.get("location")
-    if location:
-        creators = creators.filter(
+    def _apply_location(qs):
+        if not location:
+            return qs
+        return qs.filter(
             Q(location__icontains=location) | Q(home_region__icontains=location)
         )
+
+    appliers = {
+        "profile_type": _apply_profile_type,
+        "discipline": _apply_discipline,
+        "skill": _apply_skill,
+        "genre": _apply_genre,
+        "availability": _apply_availability,
+        "location": _apply_location,
+    }
+
+    def _filtered_except(skip):
+        qs = base
+        for name, fn in appliers.items():
+            if name != skip:
+                qs = fn(qs)
+        return qs
+
+    # Facet counts — each dropdown's options reflect "what would happen if
+    # I changed just this filter, holding the others constant."
+    profile_type_counts = facet_counts(_filtered_except("profile_type"), "profile_type")
+    discipline_counts = facet_counts(_filtered_except("discipline"), "disciplines__slug")
+    skill_counts = facet_counts(_filtered_except("skill"), "skills__slug")
+    genre_counts = facet_counts(_filtered_except("genre"), "genres__slug")
+    availability_counts = facet_counts(
+        _filtered_except("availability"),
+        "availabilities__availability_type__slug",
+    )
+
+    # Apply all structured filters for the actual result set.
+    creators = base
+    for fn in appliers.values():
+        creators = fn(creators)
 
     # Search — Wagtail full-text search with ORM fallback
     query = request.GET.get("q")
@@ -78,16 +114,29 @@ def directory(request):
             )
     else:
         creators = creators.distinct()
-    disciplines = Discipline.objects.prefetch_related("skills").all()
-    from apps.creators.models import Genre
-    genres = Genre.objects.all()
-    availability_types = AvailabilityType.for_creators()
 
-    # Build skills list — if a discipline is selected, show only its skills
+    # Decorated option lists for the dropdowns: include count, drop zeros
+    # except for the currently-selected value.
+    profile_type_options = decorate_options(
+        list(CreatorProfile.ProfileType.choices),
+        profile_type_counts, profile_type,
+    )
+    discipline_options = decorate_options(
+        Discipline.objects.all(), discipline_counts, discipline_slug,
+    )
+    genre_options = decorate_options(
+        Genre.objects.all(), genre_counts, genre_slug,
+    )
+    availability_options = decorate_options(
+        AvailabilityType.for_creators(), availability_counts, availability_slug,
+    )
+    skills_qs = Skill.objects.select_related("discipline")
     if discipline_slug:
-        available_skills = Skill.objects.filter(discipline__slug=discipline_slug)
-    else:
-        available_skills = Skill.objects.select_related("discipline").all()
+        skills_qs = skills_qs.filter(discipline__slug=discipline_slug)
+    skill_options = decorate_options(
+        skills_qs, skill_counts, skill_slug,
+        extras={"discipline": lambda s: s.discipline.name if s.discipline_id else ""},
+    )
 
     # Resolve labels for searchable selects
     current_skill_label = ""
@@ -106,11 +155,11 @@ def directory(request):
 
     return render(request, template, {
         "creators": creators,
-        "disciplines": disciplines,
-        "available_skills": available_skills,
-        "genres": genres,
-        "availability_types": availability_types,
-        "profile_types": CreatorProfile.ProfileType.choices,
+        "profile_type_options": profile_type_options,
+        "discipline_options": discipline_options,
+        "skill_options": skill_options,
+        "genre_options": genre_options,
+        "availability_options": availability_options,
         "current_profile_type": profile_type,
         "current_discipline": discipline_slug,
         "current_skill": skill_slug,

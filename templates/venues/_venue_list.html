@@ -1,7 +1,7 @@
 {% load demo_tags banner filter_tags %}
 
 <!-- Active filters & result count -->
-<div class="flex flex-wrap items-center gap-2 mb-4">
+<div class="flex flex-wrap items-center gap-2 mb-4" role="status" aria-live="polite">
     <p class="text-sm text-ink-500 mr-2">{{ venues|length }} venue{{ venues|length|pluralize }}</p>
 
     {% if query %}
@@ -84,6 +84,13 @@
 {% else %}
 <div class="text-center py-12 text-ink-400">
     <p class="text-lg">No venues found matching your filters.</p>
-    <p class="mt-2">Try broadening your search or <a href="{% url 'venues:directory' %}" class="text-brand-600 hover:underline">view all venues</a>.</p>
+    {% if current_type or current_amenity or current_availability or current_location or query %}
+    <a href="{% url 'venues:directory' %}"
+       class="inline-block mt-4 bg-ink-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700 transition">
+        Clear all filters
+    </a>
+    {% else %}
+    <p class="mt-2">Check back soon as more venues join.</p>
+    {% endif %}
 </div>
 {% endif %}

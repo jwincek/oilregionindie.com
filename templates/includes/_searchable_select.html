@@ -38,9 +38,13 @@
         <template x-for="(opt, idx) in filtered" :key="opt.value + '-' + idx">
             <button type="button"
                     @click="select(opt.value, opt.label)"
-                    class="w-full text-left px-3 py-1.5 text-sm text-ink-700 hover:bg-brand-50 transition truncate"
-                    :class="opt.value === selectedValue ? 'bg-brand-50 font-medium' : ''"
-                    x-text="opt.label"></button>
+                    class="w-full flex items-center justify-between gap-2 text-left px-3 py-1.5 text-sm text-ink-700 hover:bg-brand-50 transition"
+                    :class="opt.value === selectedValue ? 'bg-brand-50 font-medium' : ''">
+                <span class="truncate" x-text="opt.label"></span>
+                <span x-show="opt.count !== undefined"
+                      class="text-xs text-ink-400 shrink-0"
+                      x-text="'(' + opt.count + ')'"></span>
+            </button>
         </template>
     </div>
 

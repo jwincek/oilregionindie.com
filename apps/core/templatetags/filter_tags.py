@@ -8,17 +8,33 @@ register = template.Library()
 
 
 @register.simple_tag
-def searchable_options_json(queryset, value_field="slug", label_field="name", group_field=""):
-    """Serialize a queryset to JSON for the searchable select Alpine component."""
+def searchable_options_json(items, value_field="slug", label_field="name", group_field=""):
+    """
+    Serialize an iterable to JSON for the searchable-select Alpine component.
+
+    Accepts either model instances (uses ``getattr``) or pre-decorated
+    dicts (uses ``.get``). Dict items may carry ``count`` and arbitrary
+    extra fields (e.g. ``discipline`` for skill grouping); both flow
+    through to the template so the dropdown can render them inline
+    without polluting the chip label that gets shown after selection.
+    """
     options = []
-    for obj in queryset:
-        label = getattr(obj, label_field, str(obj))
-        value = getattr(obj, value_field, "")
+    for item in items:
+        if isinstance(item, dict):
+            value = item.get(value_field, item.get("value", ""))
+            label = item.get(label_field, item.get("label", ""))
+            count = item.get("count")
+            group = item.get(group_field) if group_field else None
+        else:
+            value = getattr(item, value_field, "")
+            label = getattr(item, label_field, str(item))
+            count = None
+            group = getattr(item, group_field, None) if group_field else None
         entry = {"value": str(value), "label": str(label)}
-        if group_field:
-            group = getattr(obj, group_field, None)
-            if group:
-                entry["label"] = f"{label} ({group})"
+        if group:
+            entry["label"] = f"{label} ({group})"
+        if count is not None:
+            entry["count"] = count
         options.append(entry)
     return mark_safe(json.dumps(options))
 

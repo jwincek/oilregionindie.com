@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.facets import decorate_options, facet_counts
 from apps.core.models import AvailabilityType
 from apps.core.notifications import notify_admin_profile_submitted
 
@@ -17,30 +18,62 @@ from .models import VenueContact, VenueProfile, VenueSocialLink
 @require_GET
 def directory(request):
     """Browsable venue directory."""
-    venues = VenueProfile.objects.filter(publish_status="published").prefetch_related(
+    from apps.venues.models import Amenity
+
+    base = VenueProfile.objects.filter(publish_status="published").prefetch_related(
         "amenities", "availabilities__availability_type"
     )
 
-    venue_type = request.GET.get("type")
-    if venue_type:
-        venues = venues.filter(venue_type=venue_type)
+    venue_type = request.GET.get("type") or ""
+    amenity = request.GET.get("amenity") or ""
+    availability_slug = request.GET.get("availability") or ""
+    location = request.GET.get("location") or ""
 
-    amenity = request.GET.get("amenity")
-    if amenity:
-        venues = venues.filter(amenities__slug=amenity)
+    def _apply_type(qs):
+        return qs.filter(venue_type=venue_type) if venue_type else qs
 
-    availability_slug = request.GET.get("availability")
-    if availability_slug:
-        venues = venues.filter(
+    def _apply_amenity(qs):
+        return qs.filter(amenities__slug=amenity) if amenity else qs
+
+    def _apply_availability(qs):
+        if not availability_slug:
+            return qs
+        return qs.filter(
             availabilities__availability_type__slug=availability_slug,
             availabilities__is_active=True,
         )
 
-    location = request.GET.get("location")
-    if location:
-        venues = venues.filter(
+    def _apply_location(qs):
+        if not location:
+            return qs
+        return qs.filter(
             Q(city__icontains=location) | Q(state__icontains=location)
         )
+
+    appliers = {
+        "type": _apply_type,
+        "amenity": _apply_amenity,
+        "availability": _apply_availability,
+        "location": _apply_location,
+    }
+
+    def _filtered_except(skip):
+        qs = base
+        for name, fn in appliers.items():
+            if name != skip:
+                qs = fn(qs)
+        return qs
+
+    type_counts = facet_counts(_filtered_except("type"), "venue_type")
+    amenity_counts = facet_counts(_filtered_except("amenity"), "amenities__slug")
+    availability_counts = facet_counts(
+        _filtered_except("availability"),
+        "availabilities__availability_type__slug",
+    )
+
+    venues = base
+    for fn in appliers.values():
+        venues = fn(venues)
 
     query = request.GET.get("q")
     if query:
@@ -60,10 +93,16 @@ def directory(request):
             )
     else:
         venues = venues.distinct()
-    availability_types = AvailabilityType.for_venues()
 
-    from apps.venues.models import Amenity
-    amenities = Amenity.objects.all()
+    type_options = decorate_options(
+        list(VenueProfile.VenueType.choices), type_counts, venue_type,
+    )
+    amenity_options = decorate_options(
+        Amenity.objects.all(), amenity_counts, amenity,
+    )
+    availability_options = decorate_options(
+        AvailabilityType.for_venues(), availability_counts, availability_slug,
+    )
 
     current_amenity_label = ""
     if amenity:
@@ -75,9 +114,9 @@ def directory(request):
 
     return render(request, template, {
         "venues": venues,
-        "venue_types": VenueProfile.VenueType.choices,
-        "availability_types": availability_types,
-        "amenities": amenities,
+        "type_options": type_options,
+        "amenity_options": amenity_options,
+        "availability_options": availability_options,
         "current_type": venue_type,
         "current_amenity": amenity,
         "current_amenity_label": current_amenity_label,

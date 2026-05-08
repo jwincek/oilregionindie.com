@@ -36,8 +36,8 @@
                     hx-include="closest form" hx-push-url="true"
                     class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
                 <option value="">Everyone</option>
-                {% for value, label in profile_types %}
-                <option value="{{ value }}" {% if current_profile_type == value %}selected{% endif %}>{{ label }}s</option>
+                {% for opt in profile_type_options %}
+                <option value="{{ opt.value }}" {% if current_profile_type == opt.value %}selected{% endif %}>{{ opt.label }}s ({{ opt.count }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -48,20 +48,20 @@
                     hx-include="closest form" hx-push-url="true"
                     class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
                 <option value="">All Disciplines</option>
-                {% for d in disciplines %}
-                <option value="{{ d.slug }}" {% if current_discipline == d.slug %}selected{% endif %}>{{ d.name }}</option>
+                {% for opt in discipline_options %}
+                <option value="{{ opt.value }}" {% if current_discipline == opt.value %}selected{% endif %}>{{ opt.label }} ({{ opt.count }})</option>
                 {% endfor %}
             </select>
         </div>
 
         <!-- Searchable skill select -->
-        {% searchable_options_json available_skills "slug" "name" "discipline" as skill_options %}
+        {% searchable_options_json skill_options "value" "label" "discipline" as skill_options_json %}
         {% url 'creators:directory' as dir_url %}
-        {% include "includes/_searchable_select.html" with ss_name="skill" ss_label="Skill" ss_options_json=skill_options ss_current=current_skill ss_current_label=current_skill_label ss_placeholder="Type to filter skills..." ss_hx_url=dir_url ss_hx_target="#creator-grid" %}
+        {% include "includes/_searchable_select.html" with ss_name="skill" ss_label="Skill" ss_options_json=skill_options_json ss_current=current_skill ss_current_label=current_skill_label ss_placeholder="Type to filter skills..." ss_hx_url=dir_url ss_hx_target="#creator-grid" %}
 
         <!-- Searchable genre select -->
-        {% searchable_options_json genres "slug" "name" as genre_options %}
-        {% include "includes/_searchable_select.html" with ss_name="genre" ss_label="Genre" ss_options_json=genre_options ss_current=current_genre ss_current_label=current_genre_label ss_placeholder="Type to filter genres..." ss_hx_url=dir_url ss_hx_target="#creator-grid" %}
+        {% searchable_options_json genre_options "value" "label" as genre_options_json %}
+        {% include "includes/_searchable_select.html" with ss_name="genre" ss_label="Genre" ss_options_json=genre_options_json ss_current=current_genre ss_current_label=current_genre_label ss_placeholder="Type to filter genres..." ss_hx_url=dir_url ss_hx_target="#creator-grid" %}
 
         <div class="min-w-[140px]">
             <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
@@ -76,8 +76,8 @@
                     hx-include="closest form" hx-push-url="true"
                     class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
                 <option value="">Any Status</option>
-                {% for at in availability_types %}
-                <option value="{{ at.slug }}" {% if current_availability == at.slug %}selected{% endif %}>{{ at.name }}</option>
+                {% for opt in availability_options %}
+                <option value="{{ opt.value }}" {% if current_availability == opt.value %}selected{% endif %}>{{ opt.label }} ({{ opt.count }})</option>
                 {% endfor %}
             </select>
         </div>

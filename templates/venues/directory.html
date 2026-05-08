@@ -36,16 +36,16 @@
                     hx-include="closest form" hx-push-url="true"
                     class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
                 <option value="">All Types</option>
-                {% for value, label in venue_types %}
-                <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                {% for opt in type_options %}
+                <option value="{{ opt.value }}" {% if current_type == opt.value %}selected{% endif %}>{{ opt.label }} ({{ opt.count }})</option>
                 {% endfor %}
             </select>
         </div>
 
         <!-- Searchable amenity select -->
-        {% searchable_options_json amenities "slug" "name" as amenity_options %}
+        {% searchable_options_json amenity_options "value" "label" as amenity_options_json %}
         {% url 'venues:directory' as dir_url %}
-        {% include "includes/_searchable_select.html" with ss_name="amenity" ss_label="Amenity" ss_options_json=amenity_options ss_current=current_amenity ss_current_label=current_amenity_label ss_placeholder="Type to filter..." ss_hx_url=dir_url ss_hx_target="#venue-grid" %}
+        {% include "includes/_searchable_select.html" with ss_name="amenity" ss_label="Amenity" ss_options_json=amenity_options_json ss_current=current_amenity ss_current_label=current_amenity_label ss_placeholder="Type to filter..." ss_hx_url=dir_url ss_hx_target="#venue-grid" %}
 
         <div class="min-w-[140px]">
             <label for="location" class="block text-sm font-medium text-ink-600 mb-1">Location</label>
@@ -60,8 +60,8 @@
                     hx-include="closest form" hx-push-url="true"
                     class="w-full rounded-md border-ink-200 shadow-sm focus:border-brand-300 focus:ring-brand-300 text-sm">
                 <option value="">Any Status</option>
-                {% for at in availability_types %}
-                <option value="{{ at.slug }}" {% if current_availability == at.slug %}selected{% endif %}>{{ at.name }}</option>
+                {% for opt in availability_options %}
+                <option value="{{ opt.value }}" {% if current_availability == opt.value %}selected{% endif %}>{{ opt.label }} ({{ opt.count }})</option>
                 {% endfor %}
             </select>
         </div>
