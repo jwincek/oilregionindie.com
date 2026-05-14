@@ -1,5 +1,5 @@
-# Core
-Django>=6.0.3,<6.1
+# Core — Django 5.2 LTS (security support through April 2028).
+Django>=5.2,<5.3
 wagtail>=7.3,<7.4
 Pillow>=10.0
 
