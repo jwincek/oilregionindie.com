@@ -5,6 +5,7 @@ Pillow>=10.0
 
 # Authentication
 django-allauth>=65.0
+django-axes>=7.0
 
 # Frontend interactivity
 django-htmx>=1.19

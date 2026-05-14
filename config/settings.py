@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "axes",
     "django_htmx",
     "easy_thumbnails",
     "django_q",
@@ -94,6 +95,9 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "apps.core.middleware.SuspensionMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    # axes must come last so login attempts have already passed through
+    # AuthenticationMiddleware and AccountMiddleware.
+    "axes.middleware.AxesMiddleware",
 ]
 
 if DEBUG:
@@ -159,9 +163,23 @@ if REDIS_URL:
 # Authentication (django-allauth)
 # ---------------------------------------------------------------------------
 AUTHENTICATION_BACKENDS = [
+    # axes' standalone backend only counts failures; the real auth is
+    # still done by ModelBackend/allauth below.
+    "axes.backends.AxesStandaloneBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
+
+# Brute-force lockout (django-axes): lock after 5 failures for the same
+# (username, ip) pair, cooloff 30 minutes, reset counter on success.
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.5  # hours
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = None  # 403 with default body; can be customized later
+# Allauth posts the identifier as "login" (it accepts either email or
+# username). Tell axes to pull the tracking key from that field.
+AXES_USERNAME_FORM_FIELD = "login"
 # New allauth settings format (v65+)
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
