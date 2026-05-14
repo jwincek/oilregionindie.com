@@ -1,79 +1,60 @@
-# Contributing to Oil Region Creative Hub
+# Contributing
 
-Thanks for your interest in contributing. This project is built to serve independent arts communities, and contributions of all kinds are welcome — code, design, documentation, testing, and feedback.
+Thanks for your interest. Code, design, documentation, tests, and feedback are all welcome.
 
-## Getting Set Up
-
-Follow the [Getting Started guide](GETTING-STARTED.md) to get the project running locally. The full setup takes under five minutes with Python and pip.
-
-## How to Contribute
-
-1. **Find something to work on** — check the [Issues](https://github.com/jwincek/oilregionindie.com/issues) page. Issues labeled `good first issue` are scoped for newcomers. If you want to work on something not listed, open an issue first to discuss.
-2. **Fork the repo** and create a branch from `main`.
-3. **Make your changes** — keep commits focused and write descriptive messages.
-4. **Run the tests** before submitting:
-   ```bash
-   python manage.py test apps.core.tests apps.creators.tests apps.venues.tests apps.events.tests -v 2
-   ```
-5. **Open a pull request** against `main` with a clear description of what changed and why.
+For setup, see [GETTING-STARTED.md](GETTING-STARTED.md). The short version: `python manage.py setup` walks you through the whole bootstrap in a few minutes.
 
 ## Where Help Is Needed
 
 ### Features
 
-- **Distance-based filtering** — the Address model has lat/lng fields and geocoding works. Adding a "within X miles" filter to directories would connect with the existing map.
+- **Distance-based filtering** — the Address model has lat/lng fields and geocoding works. A "within X miles" filter on the directories would compose with the existing map and the new faceted-counts pattern.
 - **Saved/bookmarked profiles and events** — let fans bookmark things they're interested in.
 - **Event RSVP/interest** — "Interested" or "Going" buttons on events for headcount signals.
 - **Social share links** — simple URL-based share buttons on profiles, events, and products.
 - **Image lightbox** — click-to-enlarge for media items and product images.
 - **REST API** — Django REST Framework or Django Ninja endpoints for potential mobile/desktop clients.
+- **Pagination prefetch on hover** — the pet-listing-grid reference pattern; HTMX has `hx-ext="preload"` or `hx-trigger="mouseenter once"`. Only worth it if pagination feels slow.
 
 ### Design & Frontend
 
-- **Template refinement** — the Tailwind-based templates are functional but could use design polish.
+- **Template refinement** — Tailwind templates are functional but could use design polish.
 - **Responsive testing** — mobile layouts, touch interactions.
-- **Accessibility** — skip navigation links, ARIA labels on interactive elements, keyboard navigation improvements.
-- **Tailwind build pipeline** — currently using the CDN; a production build with purging would reduce page weight.
-- **SVG initials centering** — the initials avatars may need CSS adjustments in some browsers due to Tailwind's box-sizing reset.
+- **Accessibility** — skip navigation links, keyboard navigation, more `aria-live` regions beyond the directory result counts already wired up.
+- **Tailwind build pipeline** — currently using the CDN; a production build with purging would reduce page weight. Compatible with the CSS-variables theming pattern, just needs build configuration.
+- **More themes in `themes/`** — `default` and `midnight` ship; a high-contrast theme, a print stylesheet, or community-contributed palettes are all welcome additions.
 
 ### Testing
 
-- **Commerce app tests** — the Stripe Connect flow, checkout, product groups, and order management need test coverage.
+- **Commerce app tests** — Stripe Connect flow, checkout, product groups, and order management need coverage.
 - **Community app tests** — posts, replies, likes, and moderation.
-- **Integration tests** — the signup-to-published-profile flow, booking request lifecycle, and notification delivery.
+- **Integration tests** — signup-to-published-profile flow, booking request lifecycle, notification delivery.
 
 ### Infrastructure
 
 - **Lightweight analytics** — Plausible or Umami integration for privacy-friendly traffic insights.
-- **Automated backups** — PostgreSQL backup strategy documentation or management command.
-- **Deployment guides** — production setup on various platforms (Railway, Fly.io, DigitalOcean, etc.).
-
-## Code Style
-
-- **Python** — follow the existing patterns. Function-based views, model/form/view organization per app.
-- **Templates** — Django template language with Tailwind utility classes. HTMX for dynamic interactions, Alpine.js for client-side state.
-- **No JavaScript build step** — HTMX, Alpine.js, and Leaflet.js are loaded via CDN. The only custom JS is `static/js/searchable-select.js`.
+- **Automated backups** — PostgreSQL backup strategy management command.
+- **Deployment guides for other platforms** — current [DEPLOYMENT.md](DEPLOYMENT.md) covers Docker Compose; Railway, Fly.io, and DigitalOcean App Platform recipes would help.
 
 ## Project Conventions
 
-- **Apps live in `apps/`** — each Django app is a subdirectory.
-- **Shared models in `apps/core/`** — PublishableProfile (abstract base for profiles), Notification, Report, BlockedWord, ProfileView, Address.
-- **Seed data is idempotent** — `python manage.py seed_data` uses `get_or_create` for taxonomy.
-- **Tests alongside apps** — each app has a `tests/` directory with `helpers.py` for factory functions. Use the existing `make_*` helpers.
-- **HTMX partials** — templates prefixed with `_` (e.g., `_creator_list.html`) are HTMX partials. Views check `request.htmx` to decide which template to render.
-- **Notifications** — use `apps.core.models.Notification` for in-app and `apps.core.notifications` for email.
-- **Reusable template includes** — `templates/includes/` has shared components: `_follow_button.html`, `_report_button.html`, `_searchable_select.html`, `_multi_select.html`, `_availability_list.html`, `_unpublished_reminder.html`.
+These aren't obvious from reading the code and save you from style-nit feedback in code review.
+
+- **Apps live in `apps/`.** Each Django app is a subdirectory.
+- **Shared models in `apps/core/`** — `PublishableProfile` (abstract base for creator/venue profiles), Notification, Report, BlockedWord, ProfileView, Address.
+- **Function-based views**, not class-based. Match what's there.
+- **HTMX partials are prefixed with `_`** (e.g., `_creator_list.html`). Views check `request.htmx` to decide which template to render.
+- **Reusable template includes live in `templates/includes/`** — `_follow_button.html`, `_report_button.html`, `_searchable_select.html`, `_multi_select.html`, `_availability_list.html`, `_unpublished_reminder.html`.
+- **Notifications** — use `apps.core.models.Notification` for in-app, `apps.core.notifications` for email.
 - **Image optimization** — `apps.core.image_utils.optimize_image()` auto-resizes uploads in model `save()` methods.
-- **Prices in cents** — stored as integers in the database, displayed as dollars via form proxy fields (`price_dollars`, `shipping_dollars`, `bundle_price_dollars`).
-
-## Reporting Issues
-
-If you find a bug or have a suggestion, [open an issue](https://github.com/jwincek/oilregionindie.com/issues) or use the [feedback form](https://oilregionindie.com/feedback/) on the live site. Include:
-
-- What you expected to happen
-- What actually happened
-- Steps to reproduce (if a bug)
-- Your Python/Django version and OS
+- **Prices in cents** — stored as integers, exposed as dollars via form proxy fields (`price_dollars`, `shipping_dollars`, `bundle_price_dollars`).
+- **Seed data is idempotent** — `seed_data` uses `get_or_create` for taxonomy.
+- **Tests alongside apps** — each app has a `tests/` directory with `helpers.py` for factory functions. Use the existing `make_*` helpers.
+- **No JavaScript build step.** HTMX, Alpine.js, Leaflet.js, and Tailwind load from CDNs. The only custom JS is `static/js/searchable-select.js`.
+- **Default to `--parallel auto`** when running tests. The suite is parallel-safe (374+ tests in ~50s).
+- **Faceted filter helpers** — when adding a new directory-style view, use `apps.core.facets.facet_counts()` and `decorate_options()` to render per-option result counts. See [creators/views.py](apps/creators/views.py) for the canonical pattern.
+- **Hardcoded branding is a bug.** Anything user-facing that says "Oil Region" should be a `SiteBranding` field. Wire it through `apps.pages.context_processors`.
+- **Audit-trail-friendly model design.** If you add a model where state transitions could be disputed, attach `HistoricalRecords()` and register it with `SimpleHistoryAdmin`.
 
 ## License
 

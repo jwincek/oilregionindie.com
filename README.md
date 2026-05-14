@@ -12,25 +12,19 @@ Creators build profiles showcasing their work across disciplines — a guitar-pl
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py seed_data --full
+python manage.py setup
 python manage.py runserver
 ```
 
-Visit **http://localhost:8000**. Wagtail admin: **http://localhost:8000/cms/**. Admin dashboard: **http://localhost:8000/dashboard/**.
+`manage.py setup` is an interactive wizard that walks through three sections — infrastructure (`.env`: secret key, database, email, Stripe, Turnstile, S3, feature toggles), branding (site name, tagline, footer copy, contact email, active theme), and bootstrap (migrate, create superuser, seed Wagtail starter pages, register Django Q schedules). Re-runnable: pressing Enter at any prompt keeps the current value.
 
-Sample accounts use `@oilregion-demo.example` emails with password `testpass123`. For a detailed walkthrough, see [GETTING-STARTED.md](GETTING-STARTED.md).
+Visit **http://localhost:8000**. Wagtail admin: **http://localhost:8000/cms/**. Admin dashboard: **http://localhost:8000/dashboard/**. For a detailed walkthrough, see [GETTING-STARTED.md](GETTING-STARTED.md).
 
 ### Docker
 
 ```bash
-cp .env.example .env
 docker compose up -d
-docker compose exec web python manage.py migrate
-docker compose exec web python manage.py createsuperuser
-docker compose exec web python manage.py seed_data --full
+docker compose exec web python manage.py setup
 ```
 
 ## Project Structure
@@ -40,8 +34,9 @@ oilregion-hub/
 ├── config/                 # Settings, URLs, sitemaps
 ├── apps/
 │   ├── core/               # UserProfile, Notification, Report, BlockedWord,
-│   │                         ProfileView, Address, Availability, digest,
-│   │                         geocoding, image optimization, feeds, middleware
+│   │                         ProfileView, Address, Availability, theming,
+│   │                         facets, checks, digest, geocoding, image
+│   │                         optimization, feeds, middleware
 │   ├── creators/           # CreatorProfile, Discipline, Skill, Genre,
 │   │                         MediaItem, Memberships, Social Links, Embeds
 │   ├── venues/             # VenueProfile, VenueContact, VenueArea, Amenity
@@ -49,7 +44,9 @@ oilregion-hub/
 │   │                         BookingFeedback, Endorsement
 │   ├── commerce/           # Product, ProductGroup, Order, Stripe Connect
 │   ├── community/          # CommunityPost, Tag, likes
-│   └── pages/              # Wagtail CMS: HomePage, ContentPage, Blog
+│   └── pages/              # Wagtail CMS: HomePage, ContentPage, Blog,
+│                             SiteBranding settings snippet
+├── themes/                 # Filesystem-based themes (default, midnight, …)
 ├── templates/              # Django templates + HTMX partials
 ├── static/                 # JS, SVG icons, favicon
 ├── docker-compose.yml
@@ -61,17 +58,30 @@ oilregion-hub/
 
 | Component | Technology |
 |-----------|-----------|
-| Backend | Python 3.13, Django 6.0.3 |
-| CMS | Wagtail 7.3.1 |
-| Frontend | HTMX + Alpine.js + Tailwind CSS |
+| Backend | Python 3.13, Django 5.2 LTS |
+| CMS | Wagtail 7.3.x |
+| Frontend | HTMX + Alpine.js + Tailwind CSS (CDN) |
 | Database | PostgreSQL (SQLite for dev) |
 | Payments | Stripe Connect Express |
 | Search | Wagtail full-text search (PostgreSQL) with ORM fallback |
 | Maps | Leaflet.js + OpenStreetMap |
 | Cache/Queue | Redis + Django Q2 |
-| Auth | django-allauth (email + username) |
+| Auth | django-allauth (email + username) + django-axes (brute-force lockout) |
+| Audit trails | django-simple-history on moderation-adjacent models |
 | Bot Protection | Cloudflare Turnstile |
 | Deployment | Docker Compose |
+
+Django 5.2 LTS is supported through April 2028 — deployers can pin a version and forget.
+
+## Built for Forks
+
+This isn't just a site running at oilregionindie.com — it's a platform designed for other independent arts communities to deploy their own instance. Three concerns are first-class:
+
+- **Branding lives in a Wagtail snippet** ([SiteBranding](apps/pages/models.py)), not source code. Site name, tagline, origin-story blurb, contact email, source-repo URL, logo, and OG image are all editable from `/cms/` → Settings → Site branding.
+- **Themes are filesystem directories** under [themes/](themes/). A theme is `theme.json` (metadata) + optional `theme.css` (CSS variable overrides) + optional `templates/` (Django template overrides). Switching themes is one save in the Wagtail admin — no restart, no PHP, no hooks. Two themes ship: `default` and `midnight` (a dark variant).
+- **Feature toggles** (`FEATURE_COMMERCE`, `FEATURE_COMMUNITY`) gate optional surfaces in URLs and templates. Apps stay in `INSTALLED_APPS` (migrations preserved); the flags only affect routing and rendering. A community that doesn't want commerce or a forum can turn either off.
+
+`python manage.py check --deploy` runs production-readiness invariants (placeholder secret key, default `ALLOWED_HOSTS`, dev email backend, Stripe key validity, Turnstile recommended) and refuses to start when any error-level rule fails.
 
 ## Features
 
@@ -135,10 +145,14 @@ oilregion-hub/
 - Word filter on all user-submitted content
 - Bleach HTML sanitization on all rich text fields
 - User suspension with middleware enforcement
+- Audit trails on UserProfile, Report, CreatorProfile, VenueProfile, BookingRequest — every save records who-changed-what (django-simple-history); browsable from each model's admin change form
+- Brute-force login lockout via django-axes (5 failures from a (username, IP) pair triggers 30-minute cooloff)
 - Terms of Service and Code of Conduct (editable in Wagtail CMS)
 - Cloudflare Turnstile on signup
 
 ### Platform Operations
+- Interactive setup wizard (`manage.py setup`) for first-deploy and reconfiguration
+- Deploy-time invariant checks (`manage.py check --deploy`) — placeholder secrets, default ALLOWED_HOSTS, dev email backend, Stripe key validity, Turnstile recommended
 - Admin dashboard with pending reviews, open reports, recent signups, and key metrics
 - Profile approval with creator notification on publish
 - Email verification reminders for unverified accounts
@@ -151,6 +165,8 @@ oilregion-hub/
 ## Management Commands
 
 ```bash
+python manage.py setup                  # Interactive first-deploy / reconfiguration wizard
+python manage.py check --deploy         # Production-readiness invariant checks
 python manage.py seed_data              # Taxonomy only (safe to re-run)
 python manage.py seed_data --pages      # Taxonomy + Wagtail pages (production)
 python manage.py seed_data --full       # Full sample content (dev/demo)
@@ -166,36 +182,37 @@ python manage.py refresh_embeds         # Backfill oEmbed HTML
 
 ## Tests
 
-348 tests across core, creators, venues, and events:
+379 tests across core, creators, venues, and events. Default to `--parallel auto` — the suite runs cleanly in parallel and lands in ~50s vs ~150s serial:
 
 ```bash
-python manage.py test apps.core.tests apps.creators.tests apps.venues.tests apps.events.tests -v 2
+python manage.py test --parallel auto apps.core.tests apps.creators.tests apps.venues.tests apps.events.tests
 ```
 
 ## Environment Variables
 
-See [.env.example](.env.example) for the full list. Key settings:
+The wizard writes these for you. See [.env.example](.env.example) for the full list and ranges; key settings:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `SOFT_LAUNCH` | Enable soft-launch banner and demo badges | `False` |
-| `TURNSTILE_SITE_KEY` | Cloudflare Turnstile public key | (disabled) |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key | (disabled) |
-| `DJANGO_ADMINS` | Admin emails for notifications (`Name:email`) | (none) |
-| `DEFAULT_FROM_EMAIL` | Sender address for emails | `noreply@oilregionindie.com` |
-| `STRIPE_PUBLIC_KEY` | Stripe publishable key | (required for commerce) |
-| `STRIPE_SECRET_KEY` | Stripe secret key | (required for commerce) |
+| `DJANGO_SECRET_KEY` | Cryptographic signing key | (auto-generated by wizard) |
 | `DJANGO_DEBUG` | Debug mode | `False` |
-| `DATABASE_URL` | PostgreSQL connection string | (required in production) |
+| `DJANGO_ALLOWED_HOSTS` | Allowed hostnames (comma-separated) | `localhost,127.0.0.1` |
+| `DATABASE_URL` | PostgreSQL connection string | `sqlite:///db.sqlite3` |
+| `REDIS_URL` | Redis URL (blank disables cache + async tasks) | (blank) |
+| `FEATURE_COMMERCE` | Enable shop, Stripe Connect surfaces | `True` |
+| `FEATURE_COMMUNITY` | Enable discussion posts, follows | `True` |
+| `SOFT_LAUNCH` | Enable soft-launch banner and demo badges | `False` |
+| `STRIPE_PUBLIC_KEY` / `STRIPE_SECRET_KEY` | Stripe keys | (required when `FEATURE_COMMERCE=True`) |
+| `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile | (disabled if blank) |
+| `DJANGO_ADMINS` | Admin emails for notifications (`Name:email`) | (none) |
+| `DEFAULT_FROM_EMAIL` | Sender address for emails | `noreply@example.com` |
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, coding conventions, and areas where help is needed.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for coding conventions and areas where help is needed. For setup, see [GETTING-STARTED.md](GETTING-STARTED.md); for deployment, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## License
 
 AGPL-3.0 — see [LICENSE](LICENSE) for details.
-
-Other independent arts communities can deploy their own instance with their own branding and creator base.
 
 Built with care for independent creators everywhere, from Oil City, Pennsylvania.
