@@ -101,6 +101,24 @@ class EventListingViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "events/_event_list.html")
 
+    def test_filter_by_venue_slug(self):
+        response = self.client.get(self.url, {"venue": self.venue_franklin.slug})
+        self.assertContains(response, "Holiday Maker Market")
+        self.assertNotContains(response, "Friday Night Concert")
+
+    def test_filter_by_cost_free(self):
+        """`make_event` defaults to is_free=True; flip one to paid."""
+        Event.objects.filter(pk=self.market.pk).update(is_free=False)
+        response = self.client.get(self.url, {"cost": "free"})
+        self.assertContains(response, "Friday Night Concert")
+        self.assertNotContains(response, "Holiday Maker Market")
+
+    def test_filter_by_cost_paid(self):
+        Event.objects.filter(pk=self.market.pk).update(is_free=False)
+        response = self.client.get(self.url, {"cost": "paid"})
+        self.assertContains(response, "Holiday Maker Market")
+        self.assertNotContains(response, "Friday Night Concert")
+
 
 # ---------------------------------------------------------------------------
 # Detail view
