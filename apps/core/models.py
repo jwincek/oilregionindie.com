@@ -308,8 +308,12 @@ class Report(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reporter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="reports_filed",
+        null=True,
+        blank=True,
+        help_text="Null for anonymous feedback-form submissions; also "
+                  "null after the reporter deletes their account.",
     )
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
     content_id = models.CharField(
