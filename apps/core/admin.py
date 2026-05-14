@@ -1,4 +1,5 @@
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
 
 from .models import Address, AvailabilityType, BlockedWord, Notification, ProfileAvailability, Report, UserProfile
 
@@ -11,7 +12,7 @@ class AddressAdmin(admin.ModelAdmin):
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(SimpleHistoryAdmin):
     list_display = ["get_display_name", "user", "location", "is_suspended", "email_digest", "created_at"]
     search_fields = ["display_name", "user__email", "location"]
     list_filter = ["is_suspended", "email_digest", "created_at"]
@@ -47,7 +48,7 @@ class ProfileAvailabilityAdmin(admin.ModelAdmin):
 
 
 @admin.register(Report)
-class ReportAdmin(admin.ModelAdmin):
+class ReportAdmin(SimpleHistoryAdmin):
     list_display = ["content_type", "reporter", "status", "created_at"]
     list_filter = ["status", "content_type", "created_at"]
     search_fields = ["reason", "admin_notes", "reporter__email"]

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
 
 from apps.core.models import ProfileAvailability
 
@@ -98,7 +99,7 @@ class CreatorAvailabilityInline(admin.TabularInline):
 
 
 @admin.register(CreatorProfile)
-class CreatorProfileAdmin(admin.ModelAdmin):
+class CreatorProfileAdmin(SimpleHistoryAdmin):
     list_display = ["display_name", "profile_type", "discipline_list", "location", "publish_status", "created_at"]
     list_filter = ["publish_status", "profile_type", "disciplines", "created_at"]
     search_fields = ["display_name", "bio", "location", "home_region"]

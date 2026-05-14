@@ -1,4 +1,5 @@
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
 
 from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
 
@@ -28,7 +29,7 @@ class EventAdmin(admin.ModelAdmin):
 
 
 @admin.register(BookingRequest)
-class BookingRequestAdmin(admin.ModelAdmin):
+class BookingRequestAdmin(SimpleHistoryAdmin):
     list_display = ["__str__", "direction", "event_type", "status", "created_at"]
     list_filter = ["status", "direction", "event_type", "created_at"]
     search_fields = [

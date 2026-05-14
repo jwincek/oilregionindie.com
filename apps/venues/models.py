@@ -5,6 +5,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
+from simple_history.models import HistoricalRecords
 from wagtail.fields import RichTextField
 from wagtail.search import index
 
@@ -103,6 +104,8 @@ class VenueProfile(PublishableProfile, index.Indexed):
         index.FilterField("publish_status"),
         index.FilterField("venue_type"),
     ]
+
+    history = HistoricalRecords(excluded_fields=["updated_at"])
 
     class Meta:
         ordering = ["name"]

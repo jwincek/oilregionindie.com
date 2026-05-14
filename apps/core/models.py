@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+from simple_history.models import HistoricalRecords
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +223,11 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    history = HistoricalRecords(
+        excluded_fields=["updated_at"],
+        m2m_fields=[],  # follows are noisy and not security-sensitive
+    )
+
     class Meta:
         ordering = ["-created_at"]
 
@@ -318,6 +324,8 @@ class Report(models.Model):
     admin_notes = models.TextField(blank=True, help_text="Internal notes (not shown to reporter)")
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["-created_at"]

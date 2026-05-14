@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "axes",
+    "simple_history",
     "django_htmx",
     "easy_thumbnails",
     "django_q",
@@ -95,6 +96,9 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "apps.core.middleware.SuspensionMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    # Captures request.user on every save so historical records know
+    # who made the change.
+    "simple_history.middleware.HistoryRequestMiddleware",
     # axes must come last so login attempts have already passed through
     # AuthenticationMiddleware and AccountMiddleware.
     "axes.middleware.AxesMiddleware",

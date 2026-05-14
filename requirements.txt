@@ -7,6 +7,9 @@ Pillow>=10.0
 django-allauth>=65.0
 django-axes>=7.0
 
+# Audit history (UserProfile, Report, CreatorProfile, VenueProfile, BookingRequest)
+django-simple-history>=3.0
+
 # Frontend interactivity
 django-htmx>=1.19
 

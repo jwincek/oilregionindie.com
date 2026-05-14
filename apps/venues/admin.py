@@ -1,4 +1,5 @@
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
 
 from apps.core.models import ProfileAvailability
 
@@ -40,7 +41,7 @@ class VenueAvailabilityInline(admin.TabularInline):
 
 
 @admin.register(VenueProfile)
-class VenueProfileAdmin(admin.ModelAdmin):
+class VenueProfileAdmin(SimpleHistoryAdmin):
     list_display = ["name", "venue_type", "city", "state", "publish_status", "created_at"]
     list_filter = ["publish_status", "venue_type", "state", "amenities"]
     search_fields = ["name", "description", "city"]

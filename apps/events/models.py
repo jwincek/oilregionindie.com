@@ -5,6 +5,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
+from simple_history.models import HistoricalRecords
 from wagtail.fields import RichTextField
 from wagtail.search import index
 
@@ -292,6 +293,8 @@ class BookingRequest(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    history = HistoricalRecords(excluded_fields=["updated_at"])
 
     class Meta:
         ordering = ["-created_at"]
