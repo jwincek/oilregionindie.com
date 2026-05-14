@@ -21,9 +21,11 @@ _DEV_SECRET_PLACEHOLDER = "change-me-to-a-real-secret-key"
 
 @register(Tags.security, deploy=True)
 def check_secret_key_not_placeholder(app_configs, **kwargs):
-    if settings.SECRET_KEY == _DEV_SECRET_PLACEHOLDER or not settings.SECRET_KEY:
+    # Empty/unset SECRET_KEY is already an ImproperlyConfigured error at
+    # settings-load time, so we only need to catch the example value here.
+    if settings.SECRET_KEY == _DEV_SECRET_PLACEHOLDER:
         return [Error(
-            "DJANGO_SECRET_KEY is unset or set to the example placeholder.",
+            "DJANGO_SECRET_KEY is set to the example placeholder.",
             hint="Run `python manage.py setup` (it auto-generates a key) "
                  "or set DJANGO_SECRET_KEY in .env to a long random value.",
             id="oilregion.E001",
