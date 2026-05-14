@@ -23,6 +23,12 @@ tmp_emails/
 # Environment
 .env
 
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
 # IDE
 .vscode/
 .idea/

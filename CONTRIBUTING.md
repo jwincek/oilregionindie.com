@@ -51,7 +51,8 @@ These aren't obvious from reading the code and save you from style-nit feedback 
 - **Seed data is idempotent** — `seed_data` uses `get_or_create` for taxonomy.
 - **Tests alongside apps** — each app has a `tests/` directory with `helpers.py` for factory functions. Use the existing `make_*` helpers.
 - **No JavaScript build step.** HTMX, Alpine.js, Leaflet.js, and Tailwind load from CDNs. The only custom JS is `static/js/searchable-select.js`.
-- **Default to `--parallel auto`** when running tests. The suite is parallel-safe (374+ tests in ~50s).
+- **Default to `--parallel auto`** when running tests. The suite is parallel-safe (379+ tests in ~50s).
+- **Measure coverage when adding tests.** Project ships a [.coveragerc](.coveragerc) tuned for parallel runs. Workflow: `coverage run manage.py test --parallel auto apps.core.tests apps.creators.tests apps.venues.tests apps.events.tests && coverage combine && coverage report`. Generate browsable HTML with `coverage html` (output goes to `htmlcov/`, gitignored).
 - **Faceted filter helpers** — when adding a new directory-style view, use `apps.core.facets.facet_counts()` and `decorate_options()` to render per-option result counts. See [creators/views.py](apps/creators/views.py) for the canonical pattern.
 - **Hardcoded branding is a bug.** Anything user-facing that says "Oil Region" should be a `SiteBranding` field. Wire it through `apps.pages.context_processors`.
 - **Audit-trail-friendly model design.** If you add a model where state transitions could be disputed, attach `HistoricalRecords()` and register it with `SimpleHistoryAdmin`.

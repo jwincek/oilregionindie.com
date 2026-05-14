@@ -38,6 +38,7 @@ gunicorn>=23.0
 # Development
 django-debug-toolbar>=4.4
 django-extensions>=3.2
+coverage>=7.6
 
 # Media processing
 easy-thumbnails>=2.10

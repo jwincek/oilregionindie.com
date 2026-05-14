@@ -1,0 +1,35 @@
+[run]
+source = apps
+branch = True
+
+# These two are what make coverage work with Django's `manage.py test
+# --parallel auto`. parallel=True writes per-process .coverage.<pid>
+# files; concurrency=multiprocessing tells coverage how processes are
+# spawned so it can stitch them together with `coverage combine`.
+parallel = True
+concurrency = multiprocessing
+
+omit =
+    */migrations/*
+    */tests/*
+    */__init__.py
+    */apps.py
+    */admin.py
+    */urls.py
+    apps/core/management/commands/seed_data*.py
+
+[report]
+# Show only lines that aren't covered.
+skip_covered = False
+show_missing = True
+precision = 1
+sort = -cover
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    \.\.\.
+
+[html]
+directory = htmlcov
