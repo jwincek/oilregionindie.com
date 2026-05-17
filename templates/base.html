@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load theme_tags %}
 <html lang="en" class="h-full">
 <head>
     <meta charset="utf-8">
@@ -55,8 +56,10 @@
         }
     </style>
 
-    <!-- Active theme overrides (loaded after the defaults above). -->
-    <link rel="stylesheet" href="/static/themes/{{ active_theme|default:'default' }}/theme.css">
+    <!-- Active theme overrides (loaded after the defaults above).
+         Resolved through staticfiles_storage so ManifestStaticFilesStorage
+         can append a content hash for cache busting in production. -->
+    <link rel="stylesheet" href="{% theme_static active_theme %}">
 
     <!-- Tailwind CSS (CDN for dev; build for production) -->
     <script src="https://cdn.tailwindcss.com"></script>

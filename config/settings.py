@@ -295,7 +295,12 @@ WAGTAILIMAGES_MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 # Django-Q2 (task queue)
 # ---------------------------------------------------------------------------
 Q_CLUSTER = {
-    "name": "oilregion",
+    # Name is the per-instance cluster identifier in Django Q's DB.
+    # When two hubs share a Postgres cluster (as they will on omwom),
+    # this MUST be unique per instance or workers will steal each
+    # other's scheduled tasks. The wizard / Ansible playbook should
+    # set this to the deployer's hub name; defaults to "oilregion".
+    "name": env("Q_CLUSTER_NAME", default="oilregion"),
     "workers": 2,
     "recycle": 500,
     "timeout": 60,

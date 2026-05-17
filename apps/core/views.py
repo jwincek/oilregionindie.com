@@ -420,8 +420,9 @@ def report_content(request):
 
     admin_emails = [email for _, email in getattr(conf, "ADMINS", [])]
     if admin_emails:
+        site_name = getattr(conf, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
         send_mail(
-            subject=f"[Oil Region Hub] New {content_type} report",
+            subject=f"[{site_name}] New {content_type} report",
             message=f"A {content_type} has been reported.\n\nReason: {reason}\n\nURL: {content_url}",
             from_email=None,
             recipient_list=admin_emails,
@@ -466,8 +467,9 @@ def submit_feedback(request):
     # Email admins
     admin_emails = [e for _, e in getattr(conf, "ADMINS", [])]
     if admin_emails:
+        site_name = getattr(conf, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
         send_mail(
-            subject=f"[Oil Region Hub] {feedback_type.title()} feedback",
+            subject=f"[{site_name}] {feedback_type.title()} feedback",
             message=f"Type: {feedback_type}\nFrom: {sender}\n\n{body}",
             from_email=None,
             recipient_list=admin_emails,

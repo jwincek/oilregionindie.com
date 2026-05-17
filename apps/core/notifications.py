@@ -17,7 +17,8 @@ def notify_admin_profile_submitted(profile):
         profile_type = "Venue"
         name = profile.name
 
-    subject = f"[Oil Region Hub] New {profile_type} profile submitted: {name}"
+    site_name = getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
+    subject = f"[{site_name}] New {profile_type} profile submitted: {name}"
     message = (
         f"A new {profile_type.lower()} profile has been submitted for review.\n\n"
         f"Name: {name}\n"
@@ -92,12 +93,13 @@ def notify_booking_status_changed(booking):
     """
     creator_name = booking.creator.display_name
     venue_name = booking.venue.name
+    site_name = getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
 
     if booking.status == "pending":
         # New request — notify the recipient
         recipient = booking.recipient_email
         if booking.is_creator_initiated:
-            subject = f"[Oil Region Hub] Booking request from {creator_name}"
+            subject = f"[{site_name}] Booking request from {creator_name}"
             message = (
                 f"{creator_name} has sent a booking request to {venue_name}.\n\n"
                 f"Event type: {booking.get_event_type_display()}\n"
@@ -106,7 +108,7 @@ def notify_booking_status_changed(booking):
                 f"View and respond to this request in your booking inbox."
             )
         else:
-            subject = f"[Oil Region Hub] Booking invitation from {venue_name}"
+            subject = f"[{site_name}] Booking invitation from {venue_name}"
             message = (
                 f"{venue_name} has sent a booking invitation to {creator_name}.\n\n"
                 f"Event type: {booking.get_event_type_display()}\n"
@@ -119,9 +121,9 @@ def notify_booking_status_changed(booking):
         recipient = booking.initiated_by.email
         status_word = "accepted" if booking.status == "accepted" else "declined"
         if booking.is_creator_initiated:
-            subject = f"[Oil Region Hub] {venue_name} {status_word} your booking request"
+            subject = f"[{site_name}] {venue_name} {status_word} your booking request"
         else:
-            subject = f"[Oil Region Hub] {creator_name} {status_word} your booking invitation"
+            subject = f"[{site_name}] {creator_name} {status_word} your booking invitation"
         message = (
             f"Your booking request has been {status_word}.\n\n"
             f"Creator: {creator_name}\n"
