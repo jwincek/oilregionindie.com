@@ -35,6 +35,9 @@ django-redis>=5.4
 # Production server
 gunicorn>=23.0
 
+# Error monitoring (only active when SENTRY_DSN is set in .env)
+sentry-sdk[django]>=2.18
+
 # Development
 django-debug-toolbar>=4.4
 django-extensions>=3.2

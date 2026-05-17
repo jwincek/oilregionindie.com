@@ -483,6 +483,29 @@ class DeleteAccountViewTest(TestCase):
         self.assertTemplateUsed(r, "core/account_deleted.html")
         self.assertFalse(User.objects.filter(pk=user.pk).exists())
 
+    def test_account_deletion_preserves_reports_as_anonymous(self):
+        """A user's prior reports must survive account deletion — the
+        recent migration switched Report.reporter to nullable with
+        on_delete=SET_NULL so moderation history isn't lost when the
+        reporter walks away. Without this, deleting a user would
+        cascade-delete every Report they ever filed."""
+        user = make_user()
+        report = Report.objects.create(
+            reporter=user,
+            content_type=Report.ContentType.PROFILE,
+            content_id="abc-123",
+            reason="Spam profile",
+        )
+        self.client.force_login(user)
+        self.client.post(reverse("delete_account"), {"confirm": "DELETE"})
+
+        # User row gone, report still exists with reporter=NULL.
+        self.assertFalse(User.objects.filter(pk=user.pk).exists())
+        report.refresh_from_db()
+        self.assertIsNone(report.reporter)
+        self.assertEqual(report.content_id, "abc-123")
+        self.assertEqual(report.reason, "Spam profile")
+
 
 # ---------------------------------------------------------------------------
 # Global search

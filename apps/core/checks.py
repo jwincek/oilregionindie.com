@@ -104,3 +104,17 @@ def check_turnstile_configured(app_configs, **kwargs):
             id="oilregion.W007",
         )]
     return []
+
+
+@register(Tags.security, deploy=True)
+def check_sentry_configured(app_configs, **kwargs):
+    if not getattr(settings, "SENTRY_DSN", ""):
+        return [Warning(
+            "SENTRY_DSN is not set — application errors will only surface "
+            "in logs, not in a queryable monitoring tool.",
+            hint="Get a free DSN at https://sentry.io/ (or self-host "
+                 "GlitchTip) and set SENTRY_DSN in .env. Without it, you "
+                 "won't know a user hit a 500 until they tell you.",
+            id="oilregion.W008",
+        )]
+    return []

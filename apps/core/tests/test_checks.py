@@ -168,6 +168,18 @@ class StripeKeyCheckTest(SimpleTestCase):
 # ---------------------------------------------------------------------------
 
 
+class SentryCheckTest(SimpleTestCase):
+    @override_settings(SENTRY_DSN="https://abc@sentry.io/123")
+    def test_passes_when_dsn_set(self):
+        self.assertEqual(checks.check_sentry_configured(None), [])
+
+    @override_settings(SENTRY_DSN="")
+    def test_warns_when_dsn_blank(self):
+        issues = checks.check_sentry_configured(None)
+        self.assertEqual(_ids(issues), ["oilregion.W008"])
+        self.assertIsInstance(issues[0], Warning)
+
+
 class TurnstileCheckTest(SimpleTestCase):
     @override_settings(
         TURNSTILE_SITE_KEY="0x4AAAAAAA_real_site",
@@ -211,5 +223,6 @@ class ChecksAreRegisteredTest(SimpleTestCase):
             "check_email_backend_not_filebased",
             "check_stripe_keys_when_commerce_enabled",
             "check_turnstile_configured",
+            "check_sentry_configured",
         ):
             self.assertIn(expected, names, f"{expected} not registered")

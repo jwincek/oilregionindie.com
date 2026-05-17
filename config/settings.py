@@ -243,16 +243,26 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Default storage backends — overridden below when S3 is configured.
+# In production (not DEBUG), use ManifestStaticFilesStorage so each
+# collectstatic run rewrites filenames with a content hash. Without
+# this, deploys that change CSS/JS may serve stale assets to repeat
+# visitors despite long Cache-Control headers.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage" if DEBUG
+            else "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+        ),
+    },
+}
+
 # S3-compatible storage (production)
 if env("AWS_STORAGE_BUCKET_NAME", default=""):
-    STORAGES = {
-        "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
+    STORAGES["default"]["BACKEND"] = "storages.backends.s3boto3.S3Boto3Storage"
     AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
@@ -356,3 +366,29 @@ LOGGING = {
         "apps": {"handlers": ["console"], "level": "DEBUG" if DEBUG else "INFO"},
     },
 }
+
+# ---------------------------------------------------------------------------
+# Error monitoring (Sentry)
+#
+# Activated only when SENTRY_DSN is set in .env. Without a DSN, sentry_sdk
+# is initialised with empty arguments and is a no-op — safe to keep the
+# import unconditional. Add your DSN at https://sentry.io/ (or GlitchTip
+# self-hosted) and paste it into .env to start receiving error reports.
+# ---------------------------------------------------------------------------
+SENTRY_DSN = env("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        # Performance monitoring sample rate. Soft-launch default of 0.1
+        # means 10 % of requests are traced — plenty of signal without
+        # filling the free-tier quota.
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.1),
+        # Send the user.id only — never PII like email or username.
+        send_default_pii=False,
+        environment=env("SENTRY_ENVIRONMENT", default="production" if not DEBUG else "development"),
+        release=env("SENTRY_RELEASE", default=""),
+    )
