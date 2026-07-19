@@ -37,7 +37,7 @@ jobs:
       # Unlike local runs (SQLite), CI exercises the database production uses.
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/oilregion
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -49,7 +49,7 @@ jobs:
     name: Production image builds
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # A clean build from requirements.txt alone is the regression test for
       # "works in the venv, breaks in the image" failures (missing deps,
       # .dockerignore mistakes, base-image drift).
