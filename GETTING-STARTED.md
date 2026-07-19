@@ -25,8 +25,10 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ### 2. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
+
+(That file pulls in the runtime dependencies plus the dev/test tools; production images install `requirements.txt` alone.)
 
 ### 3. Run the setup wizard
 

@@ -1,0 +1,11 @@
+# Development and test tooling — NOT installed in the production image.
+# Local dev, CI, and dev-in-Docker (INSTALL_DEV=true build arg) use this
+# file; it pulls the runtime dependencies in via -r.
+-r requirements.txt
+
+django-debug-toolbar>=4.4
+django-extensions>=3.2
+coverage>=7.15.2
+# Without tblib, a test failure under --parallel crashes the runner with
+# "cannot pickle 'traceback' object" instead of reporting the failure
+tblib>=3.0
