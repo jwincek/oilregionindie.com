@@ -11,7 +11,7 @@ django-axes>=7.0
 django-simple-history>=3.0
 
 # Frontend interactivity
-django-htmx>=1.19
+django-htmx>=1.28.0
 
 # Configuration
 django-environ>=0.11
