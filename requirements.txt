@@ -42,6 +42,9 @@ sentry-sdk[django]>=2.66.0
 django-debug-toolbar>=4.4
 django-extensions>=3.2
 coverage>=7.15.2
+# Without tblib, a test failure under --parallel crashes the runner with
+# "cannot pickle 'traceback' object" instead of reporting the failure
+tblib>=3.0
 
 # Media processing
 easy-thumbnails>=2.10

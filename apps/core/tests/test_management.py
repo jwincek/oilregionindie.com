@@ -205,7 +205,7 @@ class SendDigestsCommandTest(TestCase):
 
 
 class SetupSchedulesCommandTest(TestCase):
-    def test_creates_all_three_schedules(self):
+    def test_creates_all_four_schedules(self):
         Schedule.objects.all().delete()
         out = StringIO()
         call_command("setup_schedules", stdout=out)
@@ -214,12 +214,13 @@ class SetupSchedulesCommandTest(TestCase):
             "weekly-email-digest",
             "daily-booking-expiration",
             "daily-verification-reminder",
+            "daily-geocode-addresses",
         })
         # Output mentions each schedule.
         text = out.getvalue()
         for label in (
             "Weekly email digest", "Daily booking expiration",
-            "Daily verification reminder",
+            "Daily verification reminder", "Daily address geocoding",
         ):
             self.assertIn(label, text)
 

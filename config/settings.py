@@ -149,6 +149,17 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ---------------------------------------------------------------------------
+# Internationalization
+# ---------------------------------------------------------------------------
+LANGUAGE_CODE = "en-us"
+# Without this, Django's global fallback is America/Chicago — every event
+# time an hour off for this platform's Pennsylvania audience. Env-driven
+# so forks in other regions set their own zone.
+TIME_ZONE = env("TIME_ZONE", default="America/New_York")
+USE_I18N = True
+USE_TZ = True
+
+# ---------------------------------------------------------------------------
 # Cache & Sessions
 # ---------------------------------------------------------------------------
 REDIS_URL = env("REDIS_URL", default="")
@@ -352,9 +363,13 @@ if not DEBUG:
     # sets this header (see docker/nginx.prod.conf). Without it, SSL_REDIRECT
     # loops forever behind a TLS-terminating proxy.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_HSTS_SECONDS = 31536000
+    # HSTS is staged: one hour by default so a TLS misstep during launch
+    # week is recoverable. Raise SECURE_HSTS_SECONDS to 31536000 in .env
+    # after a stable week; enable preload only after actually submitting
+    # the domain to the preload list.
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
 
 # ---------------------------------------------------------------------------
 # Logging
