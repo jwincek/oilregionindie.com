@@ -114,6 +114,7 @@ STRIPE_PLATFORM_FEE_PERCENT=0  # Set your platform fee (e.g., 5 for 5%)
 Set up the webhook at `https://oilregionindie.com/shop/webhooks/stripe/` for events:
 - `checkout.session.completed`
 - `payment_intent.payment_failed`
+- `charge.refunded` — marks the order refunded and revokes digital download access
 
 ### Cloudflare Turnstile
 

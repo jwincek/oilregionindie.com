@@ -3,6 +3,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core import signing
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -101,27 +102,25 @@ def checkout_success(request):
     return render(request, "commerce/checkout_success.html", {"order": order})
 
 
-@login_required
-def download(request, item_pk):
-    """Serve a digital product file to a buyer who has purchased it."""
-    from django.http import FileResponse
+DOWNLOAD_TOKEN_SALT = "commerce.download"
 
-    item = get_object_or_404(
-        OrderItem.objects.select_related("order", "product"),
-        pk=item_pk,
-        is_fulfilled=True,
-    )
 
-    # Verify the user owns this order
-    if item.order.buyer_user != request.user:
-        from django.http import Http404
+def download_token(item_pk):
+    """Signed download credential embedded in fulfillment emails."""
+    return signing.dumps(str(item_pk), salt=DOWNLOAD_TOKEN_SALT)
+
+
+def _serve_download(item):
+    """Stream a digital file if the item is currently fulfilled.
+
+    Both download routes funnel through here, so revoking fulfillment
+    (e.g. on refund) cuts off tokened links and logged-in buyers alike.
+    """
+    from django.http import FileResponse, Http404
+
+    if not item.is_fulfilled or not item.product.is_digital or not item.product.file:
         raise Http404
 
-    if not item.product.is_digital or not item.product.file:
-        from django.http import Http404
-        raise Http404
-
-    # Increment download count
     item.download_count += 1
     item.save(update_fields=["download_count"])
 
@@ -130,6 +129,43 @@ def download(request, item_pk):
         as_attachment=True,
         filename=item.product.file.name.split("/")[-1],
     )
+
+
+@login_required
+def download(request, item_pk):
+    """Serve a digital product file to a logged-in buyer."""
+    item = get_object_or_404(
+        OrderItem.objects.select_related("order", "product"),
+        pk=item_pk,
+    )
+
+    # Verify the user owns this order
+    if item.order.buyer_user != request.user:
+        from django.http import Http404
+        raise Http404
+
+    return _serve_download(item)
+
+
+@require_GET
+def download_by_token(request, token):
+    """Serve a digital purchase via the signed link from the fulfillment
+    email. Guest buyers have no account to log into, so the email is the
+    credential — possession of the token proves control of the inbox the
+    purchase receipt went to.
+    """
+    from django.http import Http404
+
+    try:
+        item_pk = signing.loads(token, salt=DOWNLOAD_TOKEN_SALT)
+    except signing.BadSignature:
+        raise Http404
+
+    item = get_object_or_404(
+        OrderItem.objects.select_related("order", "product"),
+        pk=item_pk,
+    )
+    return _serve_download(item)
 
 
 @csrf_exempt
@@ -151,6 +187,9 @@ def stripe_webhook(request):
     elif event["type"] == "payment_intent.payment_failed":
         intent = event["data"]["object"]
         _handle_payment_failed(intent)
+    elif event["type"] == "charge.refunded":
+        charge = event["data"]["object"]
+        _handle_charge_refunded(charge)
 
     return HttpResponse(status=200)
 
@@ -193,11 +232,77 @@ def _handle_checkout_completed(session):
         order.save(update_fields=["status"])
         logger.info("Order %s marked as %s", order.id, order.status)
 
+        _send_download_email(order)
+
+
+def _send_download_email(order):
+    """Email signed download links for fulfilled digital items.
+
+    This is the delivery step for digital goods — and the only download
+    path guest buyers have, since the tokened link needs no account.
+    """
+    digital_items = [
+        item for item in order.items.select_related("product").all()
+        if item.is_fulfilled and item.product.is_digital and item.product.file
+    ]
+    if not digital_items or not order.buyer_email:
+        return
+
+    from django.core.mail import send_mail
+
+    site_name = getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
+    base_url = settings.WAGTAILADMIN_BASE_URL.rstrip("/")
+    lines = [
+        f"- {item.product.title}: "
+        f"{base_url}{reverse('commerce:download_token', args=[download_token(item.pk)])}"
+        for item in digital_items
+    ]
+    send_mail(
+        subject=f"[{site_name}] Your downloads are ready",
+        message=(
+            "Thanks for your purchase! Your files are ready:\n\n"
+            + "\n".join(lines)
+            + "\n\nKeep this email — the links above are your access to the files.\n\n"
+            + site_name
+        ),
+        from_email=None,
+        recipient_list=[order.buyer_email],
+        fail_silently=True,
+    )
+
 
 def _handle_payment_failed(intent):
     """Mark order as failed."""
     orders = Order.objects.filter(stripe_payment_id=intent["id"])
     orders.update(status=Order.Status.FAILED)
+
+
+def _handle_charge_refunded(charge):
+    """Mark a fully refunded order and revoke digital download access.
+
+    Stripe sends charge.refunded for partial refunds too; the charge's
+    "refunded" flag is only true when the full amount was returned, and
+    partial refunds deliberately leave the order untouched.
+    """
+    if not charge.get("refunded"):
+        logger.info(
+            "Partial refund on charge %s — order left unchanged", charge.get("id")
+        )
+        return
+
+    payment_intent = charge.get("payment_intent")
+    if not payment_intent:
+        return
+
+    order = Order.objects.filter(stripe_payment_id=payment_intent).first()
+    if order is None:
+        logger.warning("charge.refunded for unknown payment_intent %s", payment_intent)
+        return
+
+    order.status = Order.Status.REFUNDED
+    order.save(update_fields=["status"])
+    order.items.update(is_fulfilled=False)
+    logger.info("Order %s refunded; download access revoked", order.id)
 
 
 # ---------------------------------------------------------------------------

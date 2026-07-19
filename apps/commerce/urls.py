@@ -31,6 +31,7 @@ urlpatterns = [
     # Checkout & download
     path("checkout/<uuid:product_id>/", views.create_checkout, name="create_checkout"),
     path("download/<uuid:item_pk>/", views.download, name="download"),
+    path("download/t/<str:token>/", views.download_by_token, name="download_token"),
     path("checkout/success/", views.checkout_success, name="checkout_success"),
     # Stripe webhook
     path("webhooks/stripe/", views.stripe_webhook, name="stripe_webhook"),
