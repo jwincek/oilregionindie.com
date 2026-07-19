@@ -180,7 +180,7 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 0.5  # hours
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
-AXES_LOCKOUT_TEMPLATE = None  # 403 with default body; can be customized later
+AXES_LOCKOUT_TEMPLATE = None  # 403 with default body; branded page: issue #28
 # Allauth posts the identifier as "login" (it accepts either email or
 # username). Tell axes to pull the tracking key from that field.
 AXES_USERNAME_FORM_FIELD = "login"
@@ -304,6 +304,7 @@ Q_CLUSTER = {
     # this MUST be unique per instance or workers will steal each
     # other's scheduled tasks. The wizard / Ansible playbook should
     # set this to the deployer's hub name; defaults to "oilregion".
+    # Full multi-hub deployment doc is tracked in issue #27.
     "name": env("Q_CLUSTER_NAME", default="oilregion"),
     "workers": 2,
     "recycle": 500,
