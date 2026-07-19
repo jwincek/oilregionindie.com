@@ -261,6 +261,8 @@ class BookingRequest(models.Model):
         choices=Event.EventType.choices,
         default=Event.EventType.CONCERT,
     )
+    # Deliberately freeform, not structured dates — rationale and revisit
+    # criteria recorded in issue #25.
     preferred_dates = models.TextField(
         help_text="Preferred dates or date ranges, freeform text",
     )
@@ -375,6 +377,7 @@ class Endorsement(models.Model):
     """
     A public endorsement between a creator and a venue.
     Positive-only — like a recommendation. Displayed on both profiles.
+    No ratings or negative reviews by design; rationale in issue #26.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
