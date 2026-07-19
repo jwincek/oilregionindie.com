@@ -55,5 +55,20 @@ class Command(BaseCommand):
             f"  [{status}] Daily verification reminder schedule"
         ))
 
+        # Daily geocoding sweep — new addresses appear on the map without
+        # anyone running geocode_addresses by hand (issue #36)
+        schedule, created = Schedule.objects.update_or_create(
+            name="daily-geocode-addresses",
+            defaults={
+                "func": "apps.core.tasks.geocode_pending_addresses",
+                "schedule_type": Schedule.DAILY,
+                "repeats": -1,
+            },
+        )
+        status = "Created" if created else "Updated"
+        self.stdout.write(self.style.SUCCESS(
+            f"  [{status}] Daily address geocoding schedule"
+        ))
+
         self.stdout.write(self.style.SUCCESS("\nSchedules configured."))
         self.stdout.write("Run 'python manage.py qcluster' to start processing.")

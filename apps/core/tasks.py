@@ -61,3 +61,15 @@ def remind_unverified_users():
         sent += 1
 
     return f"Sent {sent} verification reminder(s)"
+
+
+def geocode_pending_addresses():
+    """
+    Task for Django Q scheduler — daily sweep so newly registered
+    venue/creator addresses appear on the map without an operator
+    running geocode_addresses by hand.
+    """
+    from apps.core.geocoding import geocode_all_pending
+
+    success, total = geocode_all_pending()
+    return f"Geocoded {success} of {total} pending address(es)"
