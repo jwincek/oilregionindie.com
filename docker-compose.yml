@@ -26,7 +26,7 @@ services:
       POSTGRES_USER: oilregion
       POSTGRES_PASSWORD: oilregion
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U oilregion"]
       interval: 5s
@@ -37,7 +37,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     restart: unless-stopped
 
   worker:

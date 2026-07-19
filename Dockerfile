@@ -18,9 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Application code
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput 2>/dev/null || true
-
 # Volume mountpoints must exist before the chown, or Docker creates them
 # root-owned at mount time and appuser can't write uploads/static
 RUN mkdir -p /app/media /app/staticfiles
