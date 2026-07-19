@@ -13,7 +13,7 @@ Creators build profiles showcasing their work across disciplines — a guitar-pl
 ```bash
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 python manage.py setup
 python manage.py runserver
 ```

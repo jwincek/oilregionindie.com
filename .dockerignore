@@ -2,6 +2,9 @@
 .env
 .env.*
 
+# Test code — CI owns testing; the production artifact doesn't run it
+apps/*/tests
+
 # Local state and artifacts
 db.sqlite3
 media/

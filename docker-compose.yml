@@ -1,6 +1,9 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALL_DEV: "true"
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload
     volumes:
       - .:/app
@@ -41,7 +44,10 @@ services:
     restart: unless-stopped
 
   worker:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALL_DEV: "true"
     command: python manage.py qcluster
     volumes:
       - .:/app
