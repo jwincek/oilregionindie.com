@@ -184,11 +184,13 @@ python manage.py refresh_embeds         # Backfill oEmbed HTML
 
 ## Tests
 
-379 tests across core, creators, venues, and events. Default to `--parallel auto` — the suite runs cleanly in parallel and lands in ~50s vs ~150s serial:
+Run the full suite (all apps) with:
 
 ```bash
-python manage.py test --parallel auto apps.core.tests apps.creators.tests apps.venues.tests apps.events.tests
+python manage.py test --parallel auto
 ```
+
+CI runs the same suite against PostgreSQL on every push and pull request — the badge at the top of this README is the live answer to "do the tests pass." Locally the suite uses your configured database (SQLite by default).
 
 ## Environment Variables
 
