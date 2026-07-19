@@ -94,6 +94,41 @@ def check_stripe_keys_when_commerce_enabled(app_configs, **kwargs):
 
 
 @register(Tags.security, deploy=True)
+def check_stripe_webhook_secret(app_configs, **kwargs):
+    # E004 covers keys missing entirely; this catches the sneakier case of
+    # working API keys with no webhook secret: checkouts succeed at Stripe,
+    # but every webhook fails signature verification (400) and orders are
+    # never marked paid — with nothing in the UI to say why.
+    if not getattr(settings, "FEATURE_COMMERCE", True):
+        return []
+    if settings.STRIPE_SECRET_KEY and not settings.STRIPE_WEBHOOK_SECRET:
+        return [Error(
+            "Stripe API keys are set but STRIPE_WEBHOOK_SECRET is not.",
+            hint="Create a webhook endpoint in the Stripe dashboard "
+                 "(pointing at /shop/webhooks/stripe/) and copy its signing "
+                 "secret into STRIPE_WEBHOOK_SECRET in .env.",
+            id="oilregion.E009",
+        )]
+    return []
+
+
+@register(Tags.security, deploy=True)
+def check_database_not_sqlite(app_configs, **kwargs):
+    # SQLite is a deliberate dev fallback, but in a container it lives on
+    # the ephemeral filesystem: a misspelled DATABASE_URL yields an app
+    # that appears to work while every redeploy wipes all data.
+    if "sqlite" in settings.DATABASES["default"]["ENGINE"]:
+        return [Error(
+            "The database is SQLite — DATABASE_URL is unset or misspelled.",
+            hint="Set DATABASE_URL=postgres://user:password@db:5432/dbname "
+                 "in the environment. In Docker, the SQLite file is wiped "
+                 "on every redeploy.",
+            id="oilregion.E010",
+        )]
+    return []
+
+
+@register(Tags.security, deploy=True)
 def check_turnstile_configured(app_configs, **kwargs):
     if not (settings.TURNSTILE_SITE_KEY and settings.TURNSTILE_SECRET_KEY):
         return [Warning(

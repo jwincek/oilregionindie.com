@@ -184,6 +184,10 @@ AXES_LOCKOUT_TEMPLATE = None  # 403 with default body; can be customized later
 # Allauth posts the identifier as "login" (it accepts either email or
 # username). Tell axes to pull the tracking key from that field.
 AXES_USERNAME_FORM_FIELD = "login"
+# Behind the production proxy chain REMOTE_ADDR is always nginx's container
+# IP. Without this, every visitor shares one lockout bucket and 5 bad
+# passwords lock a username out for everyone (trivial account-lockout DoS).
+AXES_CLIENT_IP_CALLABLE = "apps.core.request_ip.client_ip"
 # New allauth settings format (v65+)
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
@@ -340,6 +344,10 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
+    # Safe to trust: gunicorn is only reachable through nginx, which always
+    # sets this header (see docker/nginx.prod.conf). Without it, SSL_REDIRECT
+    # loops forever behind a TLS-terminating proxy.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -356,18 +364,33 @@ LOGGING = {
             "style": "{",
         },
     },
+    "filters": {
+        "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        # Defining LOGGING replaces Django's default config, which is what
+        # emailed unhandled errors to ADMINS — restore that here or the
+        # DJANGO_ADMINS setting silently does nothing for errors.
+        "mail_admins": {
+            "class": "django.utils.log.AdminEmailHandler",
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+        },
     },
     "root": {
-        "handlers": ["console"],
+        "handlers": ["console", "mail_admins"],
         "level": "INFO",
     },
     "loggers": {
-        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django": {
+            "handlers": ["console", "mail_admins"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "apps": {"handlers": ["console"], "level": "DEBUG" if DEBUG else "INFO"},
     },
 }

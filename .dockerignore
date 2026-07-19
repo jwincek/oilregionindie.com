@@ -1,0 +1,23 @@
+# Secrets — never bake into the image
+.env
+.env.*
+
+# Local state and artifacts
+db.sqlite3
+media/
+staticfiles/
+venv/
+venv3-13/
+__pycache__/
+*.pyc
+.coverage
+htmlcov/
+
+# Not needed in the image
+.git/
+.gitignore
+.claude/
+.dockerignore
+docker-compose*.yml
+Dockerfile
+*.md

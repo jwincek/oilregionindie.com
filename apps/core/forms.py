@@ -31,14 +31,20 @@ class TurnstileSignupForm(SignupForm):
                 "Please complete the security check."
             )
 
-        # Verify the token with Cloudflare
-        response = httpx.post(
-            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-            data={"secret": secret, "response": token},
-            timeout=5,
-        )
-
-        result = response.json()
+        # Verify the token with Cloudflare. Fail closed on network errors:
+        # a Cloudflare outage temporarily blocks signups with a friendly
+        # retry message rather than either a 500 or an unprotected form.
+        try:
+            response = httpx.post(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                data={"secret": secret, "response": token},
+                timeout=5,
+            )
+            result = response.json()
+        except (httpx.HTTPError, ValueError):
+            raise forms.ValidationError(
+                "The security check could not be verified. Please try again."
+            )
         if not result.get("success"):
             raise forms.ValidationError(
                 "Security check failed. Please try again."
