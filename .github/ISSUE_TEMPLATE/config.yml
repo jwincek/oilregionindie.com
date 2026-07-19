@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & self-hosting help
+    url: https://github.com/jwincek/oilregionindie.com/discussions
+    about: Ask about running your own hub, deployment, theming, or anything that isn't clearly a bug.

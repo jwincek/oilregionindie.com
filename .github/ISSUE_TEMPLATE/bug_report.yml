@@ -1,0 +1,42 @@
+name: Bug report
+description: Something broke — on oilregionindie.com or on a hub you run
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! If this is a question about running your own hub rather than a bug, [Discussions](https://github.com/jwincek/oilregionindie.com/discussions) is the faster channel.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where did it happen?
+      description: oilregionindie.com, your own hub's URL, or local development
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment type (self-hosters)
+      options:
+        - Not self-hosting / not applicable
+        - Coolify (docker-compose.prod.yml)
+        - Docker Compose on a server
+        - Local development (runserver)
+  - type: input
+    id: version
+    attributes:
+      label: Version (self-hosters)
+      description: Git tag or commit — `git rev-parse --short HEAD`
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: e.g. `docker compose -f docker-compose.prod.yml logs web` — please redact secrets and personal data
+      render: shell

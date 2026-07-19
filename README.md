@@ -1,5 +1,7 @@
 # Oil Region Creative Hub
 
+[![CI](https://github.com/jwincek/oilregionindie.com/actions/workflows/ci.yml/badge.svg)](https://github.com/jwincek/oilregionindie.com/actions/workflows/ci.yml)
+
 An open-source platform for independent musicians, visual artists, makers, venues, and fans. Born from twelve years of the [Oil Region Indie Music Festival](https://www.facebook.com/oilregionindie1/) in Oil City, Pennsylvania.
 
 ## What It Does
