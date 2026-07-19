@@ -21,7 +21,7 @@ stripe>=10.0
 
 # Storage
 django-storages>=1.14
-boto3>=1.35
+boto3>=1.43.51
 
 # Database
 psycopg[binary]>=3.2
