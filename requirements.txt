@@ -27,7 +27,7 @@ boto3>=1.35
 psycopg[binary]>=3.2
 
 # Task queue
-django-q2>=1.7
+django-q2>=1.10.0
 
 # Cache & sessions
 django-redis>=5.4
