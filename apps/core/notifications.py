@@ -176,6 +176,16 @@ def notify_booking_status_changed(booking):
     )
 
 
+def _event_follower_profiles(event):
+    """UserProfiles following either organizing profile of an event."""
+    profiles = set()
+    if event.organizing_creator:
+        profiles.update(event.organizing_creator.followers.all())
+    if event.organizing_venue:
+        profiles.update(event.organizing_venue.followers.all())
+    return profiles
+
+
 def notify_event_status_changed(event):
     """
     In-app notification to followers of the organizing profiles when an
@@ -183,17 +193,57 @@ def notify_event_status_changed(event):
     """
     from .models import Notification
 
-    profiles = set()
-    if event.organizing_creator:
-        profiles.update(event.organizing_creator.followers.all())
-    if event.organizing_venue:
-        profiles.update(event.organizing_venue.followers.all())
-
     label = event.get_status_display().lower()
-    for profile in profiles:
+    for profile in _event_follower_profiles(event):
         Notification.objects.create(
             recipient=profile.user,
             notification_type=Notification.NotificationType.EVENT,
             message=f'"{event.title}" has been {label}',
             url=event.get_absolute_url(),
         )
+
+
+def notify_event_relocated(event, old_location):
+    """
+    In-app notification to followers when an event moves (issue #44) —
+    the rain-out that relocates rather than cancels.
+    """
+    from .models import Notification
+
+    for profile in _event_follower_profiles(event):
+        Notification.objects.create(
+            recipient=profile.user,
+            notification_type=Notification.NotificationType.EVENT,
+            message=(
+                f'"{event.title}" has moved to {event.location_display} '
+                f"(was {old_location})"
+            ),
+            url=event.get_absolute_url(),
+        )
+
+
+def notify_lineup_change(slot, verb, actor=None):
+    """
+    Tell the affected creator their place on a public bill changed
+    (issue #44): added, removed, or cancelled. Guest performers and
+    unclaimed profiles have no account to notify, and people aren't
+    notified about their own actions.
+    """
+    from .models import Notification
+
+    if not slot.creator or not slot.creator.user:
+        return
+    if actor is not None and slot.creator.user == actor:
+        return
+
+    messages = {
+        "added": f'You’ve been added to the lineup for "{slot.event.title}"',
+        "removed": f'You’ve been removed from the lineup for "{slot.event.title}"',
+        "cancelled": f'Your slot at "{slot.event.title}" was cancelled',
+    }
+    Notification.objects.create(
+        recipient=slot.creator.user,
+        notification_type=Notification.NotificationType.EVENT,
+        message=messages[verb],
+        url=slot.event.get_absolute_url(),
+    )
