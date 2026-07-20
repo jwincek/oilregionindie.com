@@ -42,7 +42,12 @@ class VenueAvailabilityInline(admin.TabularInline):
 
 @admin.register(VenueProfile)
 class VenueProfileAdmin(SimpleHistoryAdmin):
-    list_display = ["name", "venue_type", "city", "state", "publish_status", "created_at"]
+    list_display = ["name", "venue_type", "city", "state", "publish_status", "claimed", "created_at"]
+
+    @admin.display(boolean=True, description="Claimed")
+    def claimed(self, obj):
+        return obj.user_id is not None
+
     list_filter = ["publish_status", "venue_type", "state", "amenities"]
     search_fields = ["name", "description", "city"]
     prepopulated_fields = {"slug": ("name",)}

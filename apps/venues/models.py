@@ -57,10 +57,13 @@ class VenueProfile(PublishableProfile, index.Indexed):
         COMMUNITY_SPACE = "community_space", "Community Space"
         OTHER = "other", "Other"
 
+    # Null = an unclaimed venue listing: seeded by admins so the local
+    # spots exist in the directory before their owners register (issue #19).
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="venue_profiles",
+        null=True, blank=True,
         help_text="The owner/primary manager of this venue",
     )
     managers = models.ManyToManyField(

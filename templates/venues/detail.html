@@ -15,6 +15,10 @@
     </div>
     {% endif %}
 
+    {% if not venue.user %}
+    {% include "includes/_claim_banner.html" with profile_type="venue" profile_slug=venue.slug profile_name=venue.name %}
+    {% endif %}
+
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
         {% if venue.header_image %}

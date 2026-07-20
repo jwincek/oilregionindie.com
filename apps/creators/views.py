@@ -208,7 +208,8 @@ def detail(request, slug):
         creators=creator,
     ).select_related("venue").order_by("start_datetime")[:5]
 
-    is_accepting_bookings = creator.availabilities.filter(
+    # Unclaimed profiles have no one behind them to answer a booking.
+    is_accepting_bookings = creator.is_claimed and creator.availabilities.filter(
         availability_type__slug="available-for-booking",
         is_active=True,
     ).exists()

@@ -159,7 +159,8 @@ def detail(request, slug):
         "slots__creator"
     ).order_by("start_datetime")[:10]
 
-    is_accepting_bookings = venue.availabilities.filter(
+    # Unclaimed listings have no one behind them to answer a booking.
+    is_accepting_bookings = venue.is_claimed and venue.availabilities.filter(
         availability_type__slug="accepting-booking-requests",
         is_active=True,
     ).exists()

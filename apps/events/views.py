@@ -473,7 +473,12 @@ def booking_create(request, direction, profile_slug):
 
     if direction == "to-venue":
         # Creator is requesting to book at a venue
-        venue = get_object_or_404(VenueProfile, slug=profile_slug, publish_status="published")
+        # user__isnull=False: unclaimed (admin-seeded) listings have no one
+        # behind them to answer, and the notification path needs a recipient
+        venue = get_object_or_404(
+            VenueProfile, slug=profile_slug, publish_status="published",
+            user__isnull=False,
+        )
         creator = getattr(request.user, "creator_profile", None)
         if not creator:
             messages.error(request, "You need a creator profile to send booking requests.")
@@ -482,7 +487,10 @@ def booking_create(request, direction, profile_slug):
         booking_direction = BookingRequest.Direction.CREATOR_TO_VENUE
     elif direction == "to-creator":
         # Venue is inviting a creator
-        creator = get_object_or_404(CreatorProfile, slug=profile_slug, publish_status="published")
+        creator = get_object_or_404(
+            CreatorProfile, slug=profile_slug, publish_status="published",
+            user__isnull=False,
+        )
         # Find which venues the user manages
         user_venues = list({v.pk: v for v in (
             list(request.user.venue_profiles.all()) +

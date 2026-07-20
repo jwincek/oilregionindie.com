@@ -112,6 +112,13 @@ class PublishableProfile(models.Model):
     stripe_account_id = models.CharField(max_length=255, blank=True)
     stripe_onboarded = models.BooleanField(default=False)
 
+    # For unclaimed (admin-seeded) profiles: a known contact address that
+    # helps verify the eventual claimant. Never displayed publicly.
+    claim_contact_email = models.EmailField(
+        blank=True,
+        help_text="Contact for verifying a claim on this profile (not shown publicly)",
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -154,6 +161,10 @@ class PublishableProfile(models.Model):
     @property
     def can_accept_payments(self):
         return bool(self.stripe_account_id and self.stripe_onboarded)
+
+    @property
+    def is_claimed(self):
+        return self.user_id is not None
 
     def can_be_edited_by(self, user):
         """

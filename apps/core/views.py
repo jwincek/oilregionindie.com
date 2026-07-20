@@ -534,3 +534,54 @@ def admin_dashboard(request):
         "recent_users": recent_users,
         "metrics": metrics,
     })
+
+
+@login_required
+@require_POST
+def request_claim(request, profile_type, slug):
+    """
+    A logged-in user asserts an unclaimed (admin-seeded) profile is
+    theirs. Phase A of the claim flow: notify the admins, who verify
+    the person and assign ownership in the Django admin. Self-serve
+    verification is deliberately deferred (issue #19).
+    """
+    from django.conf import settings as conf
+    from django.contrib import messages
+    from django.core.mail import send_mail
+
+    from apps.creators.models import CreatorProfile
+    from apps.venues.models import VenueProfile
+
+    if profile_type == "creator":
+        profile = get_object_or_404(CreatorProfile, slug=slug, user__isnull=True)
+        name = profile.display_name
+    elif profile_type == "venue":
+        profile = get_object_or_404(VenueProfile, slug=slug, user__isnull=True)
+        name = profile.name
+    else:
+        from django.http import Http404
+        raise Http404
+
+    admin_emails = [email for _, email in getattr(conf, "ADMINS", [])]
+    site_name = getattr(conf, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
+    if admin_emails:
+        send_mail(
+            subject=f"[{site_name}] Claim request: {name}",
+            message=(
+                f"{request.user.username} ({request.user.email}) says the "
+                f"{profile_type} profile \"{name}\" is theirs.\n\n"
+                f"Profile: {profile.get_absolute_url()}\n"
+                f"Claim contact on file: {profile.claim_contact_email or '(none)'}\n\n"
+                f"To approve: verify it's really them, then set the profile's "
+                f"user to their account in the Django admin."
+            ),
+            from_email=None,
+            recipient_list=admin_emails,
+            fail_silently=True,
+        )
+    messages.success(
+        request,
+        "Thanks — we'll verify and connect this profile to your account. "
+        "You'll get an email when it's done.",
+    )
+    return redirect(profile.get_absolute_url())

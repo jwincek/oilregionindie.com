@@ -1,0 +1,21 @@
+{# Shown on unclaimed (admin-seeded) profiles. Params: profile_type ("creator"/"venue"), profile_slug, profile_name #}
+<div class="mb-4 p-4 rounded-md bg-brand-50 border border-brand-200 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-ink-700">
+        <span class="font-medium">Is this you?</span>
+        This listing for {{ profile_name }} was added by the hub team and isn't managed by its subject yet.
+    </p>
+    {% if request.user.is_authenticated %}
+    <form method="post" action="{% url 'request_claim' profile_type=profile_type slug=profile_slug %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="text-sm text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-md transition">
+            Claim this profile
+        </button>
+    </form>
+    {% else %}
+    <a href="{% url 'account_login' %}?next={{ request.path }}"
+       class="text-sm text-brand-700 border border-brand-300 px-3 py-1.5 rounded-md hover:bg-brand-100 transition">
+        Sign in to claim it
+    </a>
+    {% endif %}
+</div>

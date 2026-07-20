@@ -100,14 +100,46 @@ class CreatorAvailabilityInline(admin.TabularInline):
 
 @admin.register(CreatorProfile)
 class CreatorProfileAdmin(SimpleHistoryAdmin):
-    list_display = ["display_name", "profile_type", "discipline_list", "location", "publish_status", "created_at"]
+    list_display = ["display_name", "profile_type", "discipline_list", "location", "publish_status", "claimed", "created_at"]
     list_filter = ["publish_status", "profile_type", "disciplines", "created_at"]
     search_fields = ["display_name", "bio", "location", "home_region"]
     prepopulated_fields = {"slug": ("display_name",)}
     filter_horizontal = ["disciplines", "genres", "skills", "managers"]
     inlines = [CreatorAvailabilityInline, SocialLinkInline, MediaItemInline, MemberInline, MembershipInline]
     readonly_fields = ["stripe_account_id", "stripe_onboarded", "submitted_at"]
-    actions = ["approve_profiles"]
+    actions = ["approve_profiles", "adopt_guest_memberships"]
+
+    @admin.display(boolean=True, description="Claimed")
+    def claimed(self, obj):
+        return obj.user_id is not None
+
+    @admin.action(description="Adopt guest membership rows matching the owner's email")
+    def adopt_guest_memberships(self, request, queryset):
+        """
+        After a claim: convert guest CreatorMembership rows whose
+        guest_email matches the profile owner's email into real
+        memberships pointing at the profile (issue #16 claim path).
+        """
+        converted = skipped = 0
+        for profile in queryset.filter(user__isnull=False):
+            rows = CreatorMembership.objects.filter(
+                member__isnull=True, guest_email__iexact=profile.user.email,
+            )
+            for row in rows:
+                if CreatorMembership.objects.filter(
+                    group=row.group, member=profile,
+                ).exists():
+                    skipped += 1  # already a real member of that group
+                    continue
+                row.member = profile
+                row.guest_name = ""
+                row.guest_email = ""
+                row.save(update_fields=["member", "guest_name", "guest_email"])
+                converted += 1
+        self.message_user(
+            request,
+            f"Adopted {converted} guest membership(s); skipped {skipped} duplicate(s).",
+        )
 
     @admin.action(description="Approve selected profiles (publish)")
     def approve_profiles(self, request, queryset):
