@@ -67,6 +67,11 @@
                         <span class="inline-block bg-ink-100 text-ink-600 text-xs font-medium px-2 py-0.5 rounded mt-1">
                             {{ event.get_event_type_display }}
                         </span>
+                        {% if event.series %}
+                        <span class="inline-block bg-brand-100 text-brand-700 text-xs font-medium px-2 py-0.5 rounded mt-1">
+                            {{ event.series.title }}
+                        </span>
+                        {% endif %}
                     </div>
                     <span class="text-brand-600 font-semibold text-sm whitespace-nowrap ml-4">
                         {{ event.ticket_price_display }}
