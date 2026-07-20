@@ -6,7 +6,7 @@
             <div class="flex items-center gap-3 min-w-0">
                 <span class="text-xs text-ink-400 font-mono w-6 text-center">{{ slot.sort_order }}</span>
                 <div class="min-w-0">
-                    <p class="text-sm font-medium text-ink-800 truncate">{{ slot.creator.display_name }}</p>
+                    <p class="text-sm font-medium text-ink-800 truncate">{{ slot.performer_name }}{% if not slot.creator %} <span class="text-xs text-ink-400 font-normal">(guest)</span>{% endif %}</p>
                     <div class="flex flex-wrap items-center gap-2 mt-0.5">
                         {% if slot.start_time %}
                         <span class="text-xs text-ink-500">{{ slot.start_time|time:"g:i A" }}{% if slot.end_time %} – {{ slot.end_time|time:"g:i A" }}{% endif %}</span>

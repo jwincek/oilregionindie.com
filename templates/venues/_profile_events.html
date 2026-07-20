@@ -20,11 +20,11 @@
             <div class="flex items-center gap-1 mt-2">
                 {% for slot in event.lineup|slice:":4" %}
                 {% if slot.creator.profile_image %}
-                <img src="{{ slot.creator.profile_image.url }}" alt="{{ slot.creator.display_name }}"
-                     class="w-6 h-6 rounded-full object-cover border border-white" title="{{ slot.creator.display_name }}">
+                <img src="{{ slot.creator.profile_image.url }}" alt="{{ slot.performer_name }}"
+                     class="w-6 h-6 rounded-full object-cover border border-white" title="{{ slot.performer_name }}">
                 {% else %}
-                <div class="w-6 h-6 rounded-full overflow-hidden border border-white" title="{{ slot.creator.display_name }}">
-                    {% initials_avatar slot.creator.display_name 24 %}
+                <div class="w-6 h-6 rounded-full overflow-hidden border border-white" title="{{ slot.performer_name }}">
+                    {% initials_avatar slot.performer_name 24 %}
                 </div>
                 {% endif %}
                 {% endfor %}

@@ -288,9 +288,22 @@ class CreatorMembership(models.Model):
         CreatorProfile, on_delete=models.CASCADE, related_name="members",
         help_text="The band or collective",
     )
+    # Exactly one of member/guest_name is set (DB constraint below).
+    # Guests are members without hub accounts — shown by name with no
+    # profile link. guest_email enables converting the row to a real
+    # membership when that person eventually signs up (issue #16).
     member = models.ForeignKey(
         CreatorProfile, on_delete=models.CASCADE, related_name="memberships",
+        null=True, blank=True,
         help_text="The individual member",
+    )
+    guest_name = models.CharField(
+        max_length=255, blank=True,
+        help_text="Member without a hub account",
+    )
+    guest_email = models.EmailField(
+        blank=True,
+        help_text="Optional — lets the row be claimed when they sign up",
     )
     role = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
@@ -305,13 +318,24 @@ class CreatorMembership(models.Model):
                 fields=["group", "member"],
                 name="unique_membership",
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(member__isnull=False, guest_name="")
+                    | (models.Q(member__isnull=True) & ~models.Q(guest_name=""))
+                ),
+                name="membership_member_xor_guest",
+            ),
         ]
         verbose_name = "Membership"
         verbose_name_plural = "Memberships"
 
+    @property
+    def member_name(self):
+        return self.member.display_name if self.member else self.guest_name
+
     def __str__(self):
         role_str = f" ({self.role})" if self.role else ""
-        return f"{self.member.display_name} in {self.group.display_name}{role_str}"
+        return f"{self.member_name} in {self.group.display_name}{role_str}"
 
 
 class MediaItem(models.Model):

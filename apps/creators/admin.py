@@ -71,7 +71,7 @@ class MemberInline(admin.TabularInline):
     model = CreatorMembership
     fk_name = "group"
     extra = 1
-    fields = ["member", "role", "is_active", "sort_order", "joined_date", "left_date"]
+    fields = ["member", "guest_name", "guest_email", "role", "is_active", "sort_order", "joined_date", "left_date"]
     autocomplete_fields = ["member"]
     verbose_name = "Member"
     verbose_name_plural = "Members"

@@ -175,8 +175,16 @@ class EventSlot(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="slots")
+    # Exactly one of creator/guest_name is set (DB constraint below).
+    # Guests are performers without hub profiles — touring headliners,
+    # one-off acts — shown by name with no profile link (issue #18).
     creator = models.ForeignKey(
-        CreatorProfile, on_delete=models.CASCADE, related_name="event_slots"
+        CreatorProfile, on_delete=models.CASCADE, related_name="event_slots",
+        null=True, blank=True,
+    )
+    guest_name = models.CharField(
+        max_length=255, blank=True,
+        help_text="Performer not on the hub (e.g., a touring act)",
     )
 
     start_time = models.TimeField(null=True, blank=True)
@@ -200,10 +208,23 @@ class EventSlot(models.Model):
 
     class Meta:
         ordering = ["sort_order", "start_time"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(creator__isnull=False, guest_name="")
+                    | (models.Q(creator__isnull=True) & ~models.Q(guest_name=""))
+                ),
+                name="slot_creator_xor_guest",
+            ),
+        ]
+
+    @property
+    def performer_name(self):
+        return self.creator.display_name if self.creator else self.guest_name
 
     def __str__(self):
         desc = f" — {self.set_description}" if self.set_description else ""
-        return f"{self.creator.display_name} at {self.event.title}{desc}"
+        return f"{self.performer_name} at {self.event.title}{desc}"
 
 
 # ---------------------------------------------------------------------------

@@ -141,6 +141,7 @@ class EventSlotForm(forms.ModelForm):
         model = EventSlot
         fields = [
             "creator",
+            "guest_name",
             "start_time",
             "end_time",
             "venue_area",
@@ -150,6 +151,10 @@ class EventSlotForm(forms.ModelForm):
         ]
         widgets = {
             "creator": forms.Select(attrs={"class": "form-select"}),
+            "guest_name": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "e.g., a touring act not on the hub",
+            }),
             "start_time": forms.TimeInput(attrs={"class": "form-input", "type": "time"}),
             "end_time": forms.TimeInput(attrs={"class": "form-input", "type": "time"}),
             "venue_area": forms.Select(attrs={"class": "form-select"}),
@@ -174,6 +179,22 @@ class EventSlotForm(forms.ModelForm):
         self.fields["creator"].queryset = CreatorProfile.objects.filter(
             publish_status="published"
         ).order_by("display_name")
+        self.fields["creator"].empty_label = "— not on the hub? add a guest below —"
+
+    def clean(self):
+        cleaned = super().clean()
+        creator = cleaned.get("creator")
+        guest = (cleaned.get("guest_name") or "").strip()
+        if creator and guest:
+            raise forms.ValidationError(
+                "Pick a creator from the hub or enter a guest name — not both."
+            )
+        if not creator and not guest:
+            raise forms.ValidationError(
+                "Select a creator, or enter the performer's name as a guest."
+            )
+        cleaned["guest_name"] = guest
+        return cleaned
 
 
 class BookingFeedbackForm(forms.ModelForm):

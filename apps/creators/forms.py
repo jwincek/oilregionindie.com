@@ -169,12 +169,29 @@ class MediaItemForm(forms.ModelForm):
 class CreatorMembershipForm(forms.ModelForm):
     class Meta:
         model = CreatorMembership
-        fields = ["member", "role", "is_active", "sort_order"]
+        fields = ["member", "guest_name", "guest_email", "role", "is_active", "sort_order"]
         widgets = {
             "member": forms.Select(attrs={"class": "form-select"}),
+            "guest_name": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g., a member without a hub account"}),
+            "guest_email": forms.EmailInput(attrs={"class": "form-input", "placeholder": "optional — for claiming later"}),
             "role": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g., Guitar, Vocals, Visual Director"}),
             "sort_order": forms.NumberInput(attrs={"class": "form-input w-20"}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        member = cleaned.get("member")
+        guest = (cleaned.get("guest_name") or "").strip()
+        if member and guest:
+            raise forms.ValidationError(
+                "Pick a member from the hub or enter a guest name — not both."
+            )
+        if not member and not guest:
+            raise forms.ValidationError(
+                "Select a member, or enter their name as a guest."
+            )
+        cleaned["guest_name"] = guest
+        return cleaned
 
 
 class CreatorSocialLinkForm(forms.ModelForm):
