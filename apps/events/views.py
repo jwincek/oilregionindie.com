@@ -220,6 +220,7 @@ def edit(request, slug):
         return HttpResponseForbidden()
 
     old_status = event.status
+    old_location = event.location_display
     if request.method == "POST":
         form = EventForm(request.POST, request.FILES, instance=event)
         if form.is_valid():
@@ -231,6 +232,14 @@ def edit(request, slug):
             ):
                 from apps.core.notifications import notify_event_status_changed
                 notify_event_status_changed(event)
+            # ... or moves somewhere else (issue #44). Snapshot where it
+            # was so the listing can say "moved from X".
+            new_location = event.location_display
+            if old_location and new_location and new_location != old_location:
+                event.previous_location = old_location
+                event.save(update_fields=["previous_location"])
+                from apps.core.notifications import notify_event_relocated
+                notify_event_relocated(event, old_location)
             return redirect("events:detail", slug=event.slug)
     else:
         form = EventForm(instance=event)
@@ -280,6 +289,8 @@ def add_slot(request, slug):
             slot = form.save(commit=False)
             slot.event = event
             slot.save()
+            from apps.core.notifications import notify_lineup_change
+            notify_lineup_change(slot, "added", actor=request.user)
             return render(request, "events/_lineup.html", _lineup_context(event))
     else:
         # Default sort_order to next in sequence
@@ -299,11 +310,18 @@ def edit_slot(request, slug, pk):
     if err:
         return err
     slot = get_object_or_404(EventSlot, pk=pk, event=event)
+    old_slot_status = slot.status
 
     if request.method == "POST":
         form = EventSlotForm(request.POST, instance=slot, event=event)
         if form.is_valid():
             form.save()
+            if (
+                slot.status == EventSlot.Status.CANCELLED
+                and old_slot_status != EventSlot.Status.CANCELLED
+            ):
+                from apps.core.notifications import notify_lineup_change
+                notify_lineup_change(slot, "cancelled", actor=request.user)
             return render(request, "events/_lineup.html", _lineup_context(event))
     else:
         form = EventSlotForm(instance=slot, event=event)
@@ -323,6 +341,8 @@ def delete_slot(request, slug, pk):
     if err:
         return err
     slot = get_object_or_404(EventSlot, pk=pk, event=event)
+    from apps.core.notifications import notify_lineup_change
+    notify_lineup_change(slot, "removed", actor=request.user)
     slot.delete()
     return render(request, "events/_lineup.html", _lineup_context(event))
 

@@ -118,6 +118,11 @@ class Event(index.Indexed, models.Model):
         max_length=20, choices=Status.choices, default=Status.SCHEDULED,
     )
 
+    # Set automatically when an edit changes the place (issue #44): a
+    # human-readable snapshot of where the event used to be, driving the
+    # "New location / moved from X" notice so nobody drives to the old spot.
+    previous_location = models.CharField(max_length=255, blank=True)
+
     # Status
     is_published = models.BooleanField(default=False)
 
