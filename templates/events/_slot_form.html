@@ -16,6 +16,14 @@
             {% if form.creator.errors %}<p class="text-xs text-red-600 mt-0.5">{{ form.creator.errors.0 }}</p>{% endif %}
         </div>
 
+        <!-- Guest performer (not on the hub) -->
+        <div>
+            <label for="{{ form.guest_name.id_for_label }}" class="block text-xs font-medium text-ink-600 mb-1">Or guest performer</label>
+            {{ form.guest_name }}
+            {% if form.guest_name.errors %}<p class="text-xs text-red-600 mt-0.5">{{ form.guest_name.errors.0 }}</p>{% endif %}
+        </div>
+        {% if form.non_field_errors %}<p class="text-xs text-red-600">{{ form.non_field_errors.0 }}</p>{% endif %}
+
         <!-- Times and area -->
         <div class="flex flex-wrap gap-3">
             <div class="w-28">

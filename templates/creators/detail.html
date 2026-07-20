@@ -201,15 +201,19 @@
                          class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                     {% else %}
                     <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                        {% initials_avatar membership.member.display_name 32 %}
+                        {% initials_avatar membership.member_name 32 %}
                     </div>
                     {% endif %}
                     <div>
+                        {% if membership.member %}
                         <a href="{{ membership.member.get_absolute_url }}"
                            class="text-sm font-medium text-ink-700 hover:text-brand-600 transition">
                             {{ membership.member.display_name }}
                             {% if membership.member|is_demo %}{% demo_badge %}{% endif %}
                         </a>
+                        {% else %}
+                        <span class="text-sm font-medium text-ink-700">{{ membership.guest_name }}</span>
+                        {% endif %}
                         {% if membership.role %}
                         <p class="text-xs text-ink-400">{{ membership.role }}</p>
                         {% endif %}
