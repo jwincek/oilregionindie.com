@@ -91,6 +91,30 @@ class ClaimRequestViewTest(TestCase):
         self.assertEqual(self.client.post(url).status_code, 302)  # to login
 
 
+class UnclaimedBookingGuardTest(TestCase):
+    """Direct-URL booking attempts against unclaimed profiles must 404 —
+    the CTA is hidden, but the URL is guessable, and the notification
+    path downstream requires a recipient."""
+
+    def test_booking_create_404s_for_unclaimed_creator(self):
+        creator = make_unclaimed_creator()
+        self.client.force_login(make_user())
+        url = reverse("events:booking_create", kwargs={
+            "direction": "to-creator", "profile_slug": creator.slug,
+        })
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_booking_create_404s_for_unclaimed_venue(self):
+        venue = make_unclaimed_venue()
+        user = make_user()
+        make_creator(user=user)
+        self.client.force_login(user)
+        url = reverse("events:booking_create", kwargs={
+            "direction": "to-venue", "profile_slug": venue.slug,
+        })
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class UnclaimedNotificationSafetyTest(TestCase):
     def test_approving_unclaimed_profile_notifies_no_one_and_survives(self):
