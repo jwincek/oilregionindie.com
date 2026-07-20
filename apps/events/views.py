@@ -219,10 +219,18 @@ def edit(request, slug):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
 
+    old_status = event.status
     if request.method == "POST":
         form = EventForm(request.POST, request.FILES, instance=event)
         if form.is_valid():
             form.save()
+            # Tell followers of the organizing profiles when a show they
+            # might attend gets cancelled or postponed (issue #20).
+            if event.status != old_status and event.status in (
+                Event.Status.CANCELLED, Event.Status.POSTPONED,
+            ):
+                from apps.core.notifications import notify_event_status_changed
+                notify_event_status_changed(event)
             return redirect("events:detail", slug=event.slug)
     else:
         form = EventForm(instance=event)

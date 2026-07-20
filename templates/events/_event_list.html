@@ -77,8 +77,15 @@
                     <span>{{ event.start_datetime|date:"g:i A" }}</span>
                     {% if event.venue %}
                     <span>{{ event.venue.name }}, {{ event.venue.city }}</span>
+                    {% elif event.location_name %}
+                    <span>{{ event.location_name }}</span>
                     {% elif event.is_virtual %}
                     <span>Virtual Event</span>
+                    {% endif %}
+                    {% if event.status == "cancelled" %}
+                    <span class="bg-red-100 text-red-700 text-xs font-medium px-1.5 py-0.5 rounded">Cancelled</span>
+                    {% elif event.status == "postponed" %}
+                    <span class="bg-amber-100 text-amber-700 text-xs font-medium px-1.5 py-0.5 rounded">Postponed</span>
                     {% endif %}
                 </div>
             </div>

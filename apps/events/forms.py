@@ -10,6 +10,25 @@ ALLOWED_ATTRS = {"a": ["href", "title", "target", "rel"]}
 
 
 class EventForm(forms.ModelForm):
+    # Optional address for off-platform locations, presented inline like
+    # the venue form does (creates/updates an Address on save). Leaving
+    # these empty keeps the address private — e.g. house shows.
+    location_street = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-input", "placeholder": "Street address (optional, shown for directions)"}),
+        label="Location street",
+    )
+    location_city = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-input", "placeholder": "City"}),
+        label="Location city",
+    )
+    location_state = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-input", "placeholder": "State"}),
+        label="Location state",
+    )
+
     price_dollars = forms.DecimalField(
         required=False,
         max_digits=7,
@@ -30,6 +49,8 @@ class EventForm(forms.ModelForm):
             "title",
             "event_type",
             "venue",
+            "location_name",
+            "status",
             "description",
             "start_datetime",
             "end_datetime",
@@ -46,6 +67,11 @@ class EventForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"class": "form-textarea", "rows": 4, "placeholder": "Describe the event..."}),
             "event_type": forms.Select(attrs={"class": "form-select"}),
             "venue": forms.Select(attrs={"class": "form-select"}),
+            "location_name": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": 'e.g., "Seneca Street, Oil City" — for events not at a listed venue',
+            }),
+            "status": forms.Select(attrs={"class": "form-select"}),
             "start_datetime": forms.DateTimeInput(attrs={"class": "form-input", "type": "datetime-local"}),
             "end_datetime": forms.DateTimeInput(attrs={"class": "form-input", "type": "datetime-local"}),
             "doors_time": forms.TimeInput(attrs={"class": "form-input", "type": "time"}),
@@ -64,7 +90,17 @@ class EventForm(forms.ModelForm):
             publish_status="published"
         ).order_by("name")
         self.fields["venue"].required = False
+        self.fields["venue"].empty_label = "— not at a listed venue? name the location below —"
         self.fields["is_published"].initial = True
+        # The create wizard doesn't render status; absent input keeps the
+        # model default instead of failing validation (see clean()).
+        self.fields["status"].required = False
+        # Pre-populate inline address fields when editing
+        if self.instance and self.instance.pk and self.instance.location_address:
+            addr = self.instance.location_address
+            self.fields["location_street"].initial = addr.street
+            self.fields["location_city"].initial = addr.city
+            self.fields["location_state"].initial = addr.state
 
     def clean(self):
         cleaned = super().clean()
@@ -74,11 +110,47 @@ class EventForm(forms.ModelForm):
             cleaned["ticket_price_cents"] = int(price * 100)
         else:
             cleaned["ticket_price_cents"] = 0
+
+        venue = cleaned.get("venue")
+        location_name = (cleaned.get("location_name") or "").strip()
+        if venue and location_name:
+            raise forms.ValidationError(
+                "Pick a listed venue or name a location — not both."
+            )
+        has_address = any(
+            (cleaned.get(f) or "").strip()
+            for f in ("location_street", "location_city", "location_state")
+        )
+        if has_address and not location_name:
+            raise forms.ValidationError(
+                "Give the location a name to go with its address."
+            )
+        cleaned["location_name"] = location_name
+        if not cleaned.get("status"):
+            cleaned["status"] = Event.Status.SCHEDULED
         return cleaned
 
     def save(self, commit=True):
+        from apps.core.models import Address
+
         event = super().save(commit=False)
         event.ticket_price_cents = self.cleaned_data.get("ticket_price_cents", 0)
+
+        street = (self.cleaned_data.get("location_street") or "").strip()
+        city = (self.cleaned_data.get("location_city") or "").strip()
+        state = (self.cleaned_data.get("location_state") or "").strip()
+        if event.location_name and (street or city or state):
+            if event.location_address:
+                addr = event.location_address
+                addr.street, addr.city, addr.state = street, city, state
+                addr.save(update_fields=["street", "city", "state"])
+            else:
+                event.location_address = Address.objects.create(
+                    street=street, city=city, state=state,
+                )
+        else:
+            event.location_address = None
+
         if commit:
             event.save()
             self.save_m2m()
