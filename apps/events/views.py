@@ -748,3 +748,16 @@ def delete_endorsement(request, pk):
     endorsement.delete()
     messages.info(request, "Endorsement removed.")
     return redirect(creator_url)
+
+
+@require_GET
+def series_detail(request, slug):
+    """A festival / pop-up crawl page: all published events in a series."""
+    from .models import EventSeries
+
+    series = get_object_or_404(EventSeries, slug=slug)
+    series_events = series.events.filter(is_published=True).select_related("venue")
+    return render(request, "events/series_detail.html", {
+        "series": series,
+        "events": series_events,
+    })

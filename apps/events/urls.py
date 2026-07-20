@@ -9,6 +9,8 @@ urlpatterns = [
     path("calendar/", views.calendar_view, name="calendar"),
     path("past/", views.past, name="past"),
     path("create/", views.create, name="create"),
+    # Series (festivals, pop-up crawls) — before the slug catch-all
+    path("series/<slug:slug>/", views.series_detail, name="series_detail"),
     # Booking requests
     path("bookings/", views.booking_inbox, name="booking_inbox"),
     path("bookings/<uuid:pk>/", views.booking_detail, name="booking_detail"),

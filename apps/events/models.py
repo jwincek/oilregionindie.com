@@ -13,6 +13,51 @@ from apps.creators.models import CreatorProfile
 from apps.venues.models import VenueProfile
 
 
+class EventSeries(models.Model):
+    """
+    A grouping of events under one banner (issue #45): multi-venue
+    festivals, pop-up crawls, gallery walks. Purely a grouping — member
+    events keep their own venue/location, lineup, and times, and
+    overlapping times are deliberately allowed (Porchfest-style
+    simultaneous sets are the point, not a conflict). Admin-managed for
+    beta; organizer-facing creation comes later without schema changes.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True)
+    description = RichTextField(blank=True)
+    poster_image = models.ImageField(upload_to="events/series/", blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="created_event_series",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["title"]
+        verbose_name_plural = "Event series"
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("events:series_detail", kwargs={"slug": self.slug})
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+            while EventSeries.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+
 class Event(index.Indexed, models.Model):
     """A concert, art show, maker market, festival, or other gathering."""
 
@@ -84,6 +129,16 @@ class Event(index.Indexed, models.Model):
         blank=True,
         related_name="organized_events",
         help_text="Venue organizing this event (can differ from host venue)",
+    )
+
+    # Series membership (issue #45): festivals and pop-up crawls group
+    # many events under one banner. Grouping only — nothing else changes.
+    series = models.ForeignKey(
+        "EventSeries",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="events",
     )
 
     # Timing

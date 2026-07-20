@@ -1,7 +1,38 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
+from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSeries, EventSlot
+
+
+class SeriesEventInline(admin.TabularInline):
+    """Member events of a series — links out, never deletes."""
+    model = Event
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ["title", "start_datetime", "status", "is_published"]
+    readonly_fields = ["title", "start_datetime", "status", "is_published"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(EventSeries)
+class EventSeriesAdmin(admin.ModelAdmin):
+    list_display = ["title", "slug", "event_count", "created_at"]
+    search_fields = ["title"]
+    prepopulated_fields = {"slug": ("title",)}
+    inlines = [SeriesEventInline]
+    exclude = ["created_by"]
+
+    @admin.display(description="Events")
+    def event_count(self, obj):
+        return obj.events.count()
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 class EventSlotInline(admin.TabularInline):
@@ -14,7 +45,7 @@ class EventSlotInline(admin.TabularInline):
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = ["title", "event_type", "venue", "start_datetime", "is_free", "is_published"]
-    list_filter = ["is_published", "event_type", "is_free", "is_virtual", "start_datetime"]
+    list_filter = ["is_published", "event_type", "series", "is_free", "is_virtual", "start_datetime"]
     search_fields = ["title", "description"]
     prepopulated_fields = {"slug": ("title",)}
     autocomplete_fields = ["venue", "organizing_creator", "organizing_venue"]

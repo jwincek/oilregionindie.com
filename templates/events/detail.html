@@ -16,6 +16,12 @@
             <span class="inline-block bg-ink-100 text-ink-600 text-xs font-medium px-2.5 py-1 rounded">
                 {{ event.get_event_type_display }}
             </span>
+            {% if event.series %}
+            <a href="{{ event.series.get_absolute_url }}"
+               class="inline-block bg-brand-100 text-brand-700 text-xs font-medium px-2.5 py-1 rounded ml-1 hover:bg-brand-200 transition">
+                Part of {{ event.series.title }}
+            </a>
+            {% endif %}
             <h1 class="text-3xl font-display font-bold text-ink-800 mt-3">
                 {{ event.title }}
                 {% if event|is_demo %}{% demo_badge %}{% endif %}
