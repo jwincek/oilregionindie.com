@@ -53,7 +53,27 @@
                 <div>
                     <label for="{{ form.venue.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">Venue</label>
                     {{ form.venue }}
-                    <p class="mt-1 text-xs text-ink-400">Leave blank for virtual or multi-venue events.</p>
+                    <p class="mt-1 text-xs text-ink-400">Leave blank for virtual events or off-venue locations.</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.location_name.id_for_label }}" class="block text-sm font-medium text-ink-700 mb-1">
+                        Location <span class="text-ink-400 font-normal">(if not at a listed venue)</span>
+                    </label>
+                    {{ form.location_name }}
+                    <p class="mt-1 text-xs text-ink-400">Street fairs, one-off spots, house shows. Places that host regularly belong in the venue directory — ask us to add them.</p>
+                    {% if form.location_name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.location_name.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-ink-700 mb-1">
+                        Location address <span class="text-ink-400 font-normal">(optional — shown publicly for directions)</span>
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>{{ form.location_street }}</div>
+                        <div>{{ form.location_city }}</div>
+                        <div>{{ form.location_state }}</div>
+                    </div>
                 </div>
 
                 <div>

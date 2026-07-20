@@ -33,9 +33,28 @@ class Event(index.Indexed, models.Model):
         max_length=20, choices=EventType.choices, default=EventType.CONCERT
     )
 
-    # Venue (nullable for virtual events)
+    # Venue (nullable for virtual events and off-platform locations)
     venue = models.ForeignKey(
         VenueProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="events",
+    )
+
+    # Off-platform location (issue #17): freeform place for events not at
+    # a listed venue — street fairs, one-off spots, house shows. Recurring
+    # real places (parks, halls) belong in the venue directory as unclaimed
+    # listings instead. Never combined with a venue (DB constraint below).
+    location_name = models.CharField(
+        max_length=255, blank=True,
+        help_text='Where it happens when not at a listed venue (e.g., "Seneca Street, Oil City")',
+    )
+    # Optional, for directions. Its presence is what gates public display —
+    # leave it empty for locations that shouldn't publish an address
+    # (e.g., house shows).
+    location_address = models.ForeignKey(
+        "core.Address",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -88,6 +107,17 @@ class Event(index.Indexed, models.Model):
         CreatorProfile, through="EventSlot", blank=True, related_name="events"
     )
 
+    # Lifecycle (issue #20): cancelled/postponed events stay listed with a
+    # badge instead of vanishing — unpublishing reads as a data error.
+    class Status(models.TextChoices):
+        SCHEDULED = "scheduled", "Scheduled"
+        CANCELLED = "cancelled", "Cancelled"
+        POSTPONED = "postponed", "Postponed"
+
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.SCHEDULED,
+    )
+
     # Status
     is_published = models.BooleanField(default=False)
 
@@ -110,9 +140,36 @@ class Event(index.Indexed, models.Model):
 
     class Meta:
         ordering = ["start_datetime"]
+        constraints = [
+            models.CheckConstraint(
+                condition=~(models.Q(venue__isnull=False) & ~models.Q(location_name="")),
+                name="event_venue_or_location_not_both",
+            ),
+        ]
 
     def __str__(self):
         return self.title
+
+    @property
+    def location_display(self):
+        """Human-readable place: venue name, freeform location, or virtual."""
+        if self.venue:
+            return self.venue.name
+        if self.location_name:
+            return self.location_name
+        if self.is_virtual:
+            return "Virtual"
+        return ""
+
+    @property
+    def location_directions_url(self):
+        if not self.location_address:
+            return ""
+        from urllib.parse import quote_plus
+        return (
+            "https://www.google.com/maps/search/?api=1&query="
+            + quote_plus(str(self.location_address))
+        )
 
     def get_absolute_url(self):
         return reverse("events:detail", kwargs={"slug": self.slug})

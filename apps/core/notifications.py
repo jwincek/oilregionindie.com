@@ -174,3 +174,26 @@ def notify_booking_status_changed(booking):
         message=notif_message,
         url=f"/events/bookings/{booking.pk}/",
     )
+
+
+def notify_event_status_changed(event):
+    """
+    In-app notification to followers of the organizing profiles when an
+    event is cancelled or postponed (issue #20).
+    """
+    from .models import Notification
+
+    profiles = set()
+    if event.organizing_creator:
+        profiles.update(event.organizing_creator.followers.all())
+    if event.organizing_venue:
+        profiles.update(event.organizing_venue.followers.all())
+
+    label = event.get_status_display().lower()
+    for profile in profiles:
+        Notification.objects.create(
+            recipient=profile.user,
+            notification_type=Notification.NotificationType.EVENT,
+            message=f'"{event.title}" has been {label}',
+            url=event.get_absolute_url(),
+        )

@@ -60,9 +60,10 @@
                 {% for event in cell.events %}
                 <a href="{{ event.get_absolute_url }}"
                    class="block text-xs rounded px-1.5 py-0.5 mb-0.5 truncate transition
-                          {% if event.is_free %}bg-green-100 text-green-700 hover:bg-green-200
+                          {% if event.status == "cancelled" %}bg-red-50 text-red-400 line-through hover:bg-red-100
+                          {% elif event.is_free %}bg-green-100 text-green-700 hover:bg-green-200
                           {% else %}bg-brand-100 text-brand-700 hover:bg-brand-200{% endif %}"
-                   title="{{ event.title }}{% if event.venue %} at {{ event.venue.name }}{% endif %}">
+                   title="{{ event.title }}{% if event.location_display %} at {{ event.location_display }}{% endif %}{% if event.status != "scheduled" %} ({{ event.get_status_display }}){% endif %}">
                     {{ event.title }}
                 </a>
                 {% endfor %}
