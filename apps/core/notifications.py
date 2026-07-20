@@ -23,7 +23,7 @@ def notify_admin_profile_submitted(profile):
         f"A new {profile_type.lower()} profile has been submitted for review.\n\n"
         f"Name: {name}\n"
         f"Slug: {profile.slug}\n"
-        f"Submitted by: {profile.user.email}\n\n"
+        f"Submitted by: {profile.user.email if profile.user else '(unclaimed profile)'}\n\n"
         f"Review it in the Django admin:\n"
         f"  /admin/{profile_type.lower()}s/{profile_type.lower()}profile/{profile.pk}/change/"
     )
@@ -58,6 +58,10 @@ def notify_profile_approved(profile):
         profile_type = "venue"
         name = profile.name
         url = profile.get_absolute_url()
+
+    # Unclaimed (admin-seeded) profiles have no owner to notify.
+    if profile.user is None:
+        return
 
     # In-app notification
     Notification.objects.create(

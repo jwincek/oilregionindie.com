@@ -14,6 +14,10 @@
 </div>
 {% endif %}
 
+{% if not creator.user %}
+{% include "includes/_claim_banner.html" with profile_type="creator" profile_slug=creator.slug profile_name=creator.display_name %}
+{% endif %}
+
 <!-- Header -->
 <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
     {% if creator.header_image %}

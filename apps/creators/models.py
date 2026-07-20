@@ -103,10 +103,14 @@ class CreatorProfile(PublishableProfile, index.Indexed):
         BAND = "band", "Band"
         COLLECTIVE = "collective", "Collective"
 
+    # Null = an unclaimed profile: seeded by admins so the directory is
+    # complete before its subject ever signs up; connected to an account
+    # later via the claim flow (issue #19).
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="creator_profile",
+        null=True, blank=True,
         help_text="The owner/primary manager of this profile",
     )
     managers = models.ManyToManyField(
