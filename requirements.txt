@@ -4,7 +4,7 @@ wagtail>=7.3,<7.4
 Pillow>=12.3.0
 
 # Authentication
-django-allauth>=65.0
+django-allauth>=65.18.0
 django-axes>=7.0
 
 # Audit history (UserProfile, Report, CreatorProfile, VenueProfile, BookingRequest)
