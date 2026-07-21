@@ -154,3 +154,18 @@ class MapViewTest(TestCase):
         r = self.client.get(self.url())
         self.assertContains(r, "leaflet.markercluster")
         self.assertContains(r, "markerClusterGroup")
+
+    def test_extra_js_block_is_not_nested_inside_content(self):
+        """Regression test for a template bug: extra_js was nested inside
+        content, so base.html's own separate extra_js block ALSO rendered
+        it — the whole Leaflet + markercluster + init script executed
+        twice per page load. The second L.map('map') call threw "Map
+        container is already initialized" and broke cluster-click
+        interactivity (spiderfying silently failed) even though the
+        initial cluster bubble still rendered from the first, working
+        execution. Assert the init script appears exactly once."""
+        _published_venue_with_coords(41.0, -79.0, name="V")
+        r = self.client.get(self.url())
+        self.assertEqual(
+            r.content.decode().count("var clusters = L.markerClusterGroup"), 1,
+        )
