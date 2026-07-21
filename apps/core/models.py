@@ -1,3 +1,4 @@
+import decimal
 import uuid
 
 from django.conf import settings
@@ -73,6 +74,50 @@ class Address(models.Model):
     @property
     def has_coordinates(self):
         return self.latitude is not None and self.longitude is not None
+
+    _LOCATION_FIELDS = ["street", "street_2", "city", "state", "zip_code", "country"]
+
+    @staticmethod
+    def _as_decimal(value):
+        """Normalize for comparison: a bare Python float compared against
+        a Decimal fetched from the DB is almost never == due to binary
+        floating-point imprecision (Decimal('41.4352') != 41.4352), even
+        when both describe the same coordinate. Route through str() first.
+        """
+        if value is None or isinstance(value, decimal.Decimal):
+            return value
+        return decimal.Decimal(str(value))
+
+    def save(self, *args, **kwargs):
+        # If the place text changed but the coordinates weren't updated in
+        # this same save, the old coordinates describe somewhere else now
+        # and must not survive — geocode_all_pending() only ever re-geocodes
+        # rows where latitude IS NULL, so a stale value here would silently
+        # point at the wrong location forever. Clearing puts it back in the
+        # geocoding queue instead.
+        if self.pk:
+            previous = Address.objects.filter(pk=self.pk).values(
+                *self._LOCATION_FIELDS, "latitude", "longitude"
+            ).first()
+            if previous:
+                location_changed = any(
+                    getattr(self, f) != previous[f] for f in self._LOCATION_FIELDS
+                )
+                coords_untouched = (
+                    self._as_decimal(self.latitude) == self._as_decimal(previous["latitude"])
+                    and self._as_decimal(self.longitude) == self._as_decimal(previous["longitude"])
+                )
+                if location_changed and coords_untouched:
+                    self.latitude = None
+                    self.longitude = None
+                    # A caller that restricted update_fields to the text
+                    # columns would otherwise never persist the clear.
+                    update_fields = kwargs.get("update_fields")
+                    if update_fields is not None:
+                        kwargs["update_fields"] = set(update_fields) | {
+                            "latitude", "longitude",
+                        }
+        super().save(*args, **kwargs)
 
 
 # ---------------------------------------------------------------------------

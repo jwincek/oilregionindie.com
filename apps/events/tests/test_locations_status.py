@@ -140,3 +140,29 @@ class EventStatusTest(TestCase):
             title=event.title, status=Event.Status.CANCELLED,
         ))
         self.assertEqual(notes.count(), 1)
+
+
+class EventLocationAddressStaleCoordinateTest(TestCase):
+    """Editing an event's off-venue address text must clear coordinates
+    that describe the old place — the same rule that applies to venue
+    addresses (apps/venues/tests/test_forms.py)."""
+
+    def test_editing_location_street_clears_stale_coordinates(self):
+        owner = make_user()
+        addr = Address.objects.create(street="210 Seneca St", city="Oil City", state="PA")
+        addr.latitude, addr.longitude = 41.4352, -79.7089
+        addr.save()
+        event = make_event(
+            created_by=owner, location_name="Old Spot", location_address=addr,
+        )
+
+        form = EventForm(data=form_data(
+            title=event.title, location_name="Old Spot",
+            location_street="500 Washington Ave", location_city="Oil City",
+            location_state="PA",
+        ), instance=event)
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+
+        addr.refresh_from_db()
+        self.assertFalse(addr.has_coordinates)

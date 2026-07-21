@@ -8,11 +8,13 @@ Usage:
 """
 
 from datetime import time, timedelta
+from time import sleep as sleep_seconds
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from apps.core.geocoding import geocode_address
 from apps.core.models import Address, AvailabilityType, ProfileAvailability, SocialPlatform
 from apps.creators.models import (
     CreatorMembership,
@@ -448,7 +450,6 @@ class Command(BaseCommand):
 
         belize_addr = Address.objects.create(
             street="210 Seneca St", city="Oil City", state="PA", zip_code="16301",
-            latitude=41.4340, longitude=-79.7025,
         )
         belize = VenueProfile.objects.create(
             user=users["venue_belize"],
@@ -474,7 +475,6 @@ class Command(BaseCommand):
 
         midtown_addr = Address.objects.create(
             street="218 Seneca St", city="Oil City", state="PA", zip_code="16301",
-            latitude=41.4342, longitude=-79.7022,
         )
         midtown = VenueProfile.objects.create(
             user=users["venue_midtown"],
@@ -498,9 +498,11 @@ class Command(BaseCommand):
             method=VenueContact.Method.EMAIL, value="hello@midtowncafe.example",
         )
 
+        # Plain street text, not "Seneca St (outdoor)" — the parenthetical
+        # isn't a real address and geocodes to nothing; the outdoor nature
+        # is already conveyed by venue_type and the description below.
         petrol_addr = Address.objects.create(
-            street="Seneca St (outdoor)", city="Oil City", state="PA", zip_code="16301",
-            latitude=41.4338, longitude=-79.7028,
+            street="Seneca St", city="Oil City", state="PA", zip_code="16301",
         )
         petrol = VenueProfile.objects.create(
             user=users["venue_petrol"],
@@ -521,6 +523,21 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(f"  Created {VenueProfile.objects.count()} venues")
+
+        # Real geocoding, not fixture coordinates — hand-typed lat/long
+        # here previously described a made-up "downtown Oil City" point
+        # that didn't actually correspond to these streets. Requires
+        # network access to Nominatim; addresses are left un-geocoded
+        # (and picked up later by geocode_addresses / the daily task)
+        # if it's unreachable.
+        self.stdout.write("  Geocoding sample venue addresses...")
+        for addr in (belize_addr, midtown_addr, petrol_addr):
+            if not geocode_address(addr):
+                self.stdout.write(self.style.WARNING(
+                    f"    Could not geocode {addr.full_display} — "
+                    "run `manage.py geocode_addresses` later."
+                ))
+            sleep_seconds(1.1)  # Nominatim rate limit
 
         # =================================================================
         # EVENTS

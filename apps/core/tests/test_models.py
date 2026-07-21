@@ -65,6 +65,79 @@ class AddressModelTest(TestCase):
         addr = Address.objects.create(city="Oil City", state="PA")
         self.assertEqual(addr.country, "US")
 
+    # -----------------------------------------------------------------
+    # Stale-coordinate prevention: editing the place text must clear
+    # coordinates that describe the old place, or the address silently
+    # points at the wrong location forever (geocode_all_pending only
+    # re-geocodes rows where latitude IS NULL).
+    # -----------------------------------------------------------------
+
+    def test_creating_with_coordinates_keeps_them(self):
+        addr = Address.objects.create(
+            street="210 Seneca St", city="Oil City", state="PA",
+            latitude=41.4352, longitude=-79.7089,
+        )
+        self.assertTrue(addr.has_coordinates)
+
+    def test_editing_street_clears_coordinates(self):
+        addr = Address.objects.create(
+            street="210 Seneca St", city="Oil City", state="PA",
+            latitude=41.4352, longitude=-79.7089,
+        )
+        addr.street = "500 Washington Ave"
+        addr.save()
+        addr.refresh_from_db()
+        self.assertFalse(addr.has_coordinates)
+
+    def test_editing_city_clears_coordinates(self):
+        addr = Address.objects.create(
+            city="Oil City", state="PA", latitude=41.4352, longitude=-79.7089,
+        )
+        addr.city = "Franklin"
+        addr.save()
+        addr.refresh_from_db()
+        self.assertFalse(addr.has_coordinates)
+
+    def test_resave_without_text_change_keeps_coordinates(self):
+        """geocode_address() itself calls save(update_fields=[...]) right
+        after setting coordinates — that must not immediately wipe out
+        what it just set."""
+        addr = Address.objects.create(street="210 Seneca St", city="Oil City", state="PA")
+        addr.latitude = 41.4352
+        addr.longitude = -79.7089
+        addr.save(update_fields=["latitude", "longitude"])
+        addr.refresh_from_db()
+        self.assertTrue(addr.has_coordinates)
+
+    def test_restricted_update_fields_still_persists_the_clear(self):
+        """A caller that saves with update_fields limited to the text
+        columns must not accidentally keep stale coordinates in the DB
+        just because "latitude" wasn't in its update_fields list."""
+        addr = Address.objects.create(
+            street="210 Seneca St", city="Oil City", state="PA",
+            latitude=41.4352, longitude=-79.7089,
+        )
+        addr.street = "500 Washington Ave"
+        addr.save(update_fields=["street"])
+        addr.refresh_from_db()
+        self.assertFalse(addr.has_coordinates)
+
+    def test_text_change_with_new_coordinates_in_same_save_is_preserved(self):
+        """If a caller corrects the text and supplies freshly-verified
+        coordinates in the same save, that deliberate correction must
+        not be undone."""
+        addr = Address.objects.create(
+            street="210 Seneca St", city="Oil City", state="PA",
+            latitude=41.4340, longitude=-79.7025,
+        )
+        addr.street = "500 Washington Ave"
+        addr.latitude = 41.4360
+        addr.longitude = -79.7090
+        addr.save()
+        addr.refresh_from_db()
+        self.assertEqual(float(addr.latitude), 41.4360)
+        self.assertEqual(float(addr.longitude), -79.7090)
+
 
 # ---------------------------------------------------------------------------
 # UserProfile auto-creation signal
