@@ -145,3 +145,12 @@ class MapViewTest(TestCase):
         markers = json.loads(r.context["markers_json"])
         types = {m["type"] for m in markers}
         self.assertEqual(types, {"venue", "creator"})
+
+    # ---- marker clustering (dense downtowns like Seneca St would
+    # otherwise overlap into indistinguishable pins once zoomed out) ----
+
+    def test_page_includes_clustering_plugin(self):
+        _published_venue_with_coords(41.0, -79.0, name="V")
+        r = self.client.get(self.url())
+        self.assertContains(r, "leaflet.markercluster")
+        self.assertContains(r, "markerClusterGroup")
