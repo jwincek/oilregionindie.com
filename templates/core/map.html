@@ -16,6 +16,7 @@
     #map { height: 500px; border-radius: 0.5rem; }
     .venue-marker { background-color: #8a6c1f; border: 2px solid white; border-radius: 50%; width: 14px; height: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
     .creator-marker { background-color: #1a3a5c; border: 2px solid white; border-radius: 50%; width: 14px; height: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .event-marker { background-color: #6b46c1; border: 2px solid white; border-radius: 50%; width: 14px; height: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 
     /* Cluster bubbles in the site's brand color instead of the plugin's
        default blue, so grouped pins read as part of the same map. */
@@ -35,7 +36,7 @@
         <div>
             <h1 class="text-3xl font-display font-bold text-ink-800">Map</h1>
             <p class="text-sm text-ink-500 mt-1">
-                {{ venue_count }} venue{{ venue_count|pluralize }}, {{ creator_count }} creator{{ creator_count|pluralize }}
+                {{ venue_count }} venue{{ venue_count|pluralize }}, {{ creator_count }} creator{{ creator_count|pluralize }}, {{ event_count }} upcoming event{{ event_count|pluralize }}
             </p>
         </div>
         <div class="flex gap-3">
@@ -58,14 +59,17 @@
         <span class="flex items-center gap-1.5">
             <span class="w-3 h-3 rounded-full bg-ink-800 border border-white shadow-sm"></span> Creator
         </span>
+        <span class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full" style="background-color:#6b46c1"></span> Event (not at a listed venue)
+        </span>
     </div>
 
     <!-- Map container -->
     <div id="map" class="shadow-sm"></div>
 
-    {% if not venue_count and not creator_count %}
+    {% if not venue_count and not creator_count and not event_count %}
     <div class="text-center py-8 text-ink-400">
-        <p>No locations to display yet. Venues and creators with addresses will appear here.</p>
+        <p>No locations to display yet. Venues, creators, and upcoming events with addresses will appear here.</p>
     </div>
     {% endif %}
 </div>
@@ -83,6 +87,26 @@
     var markers = {{ markers_json|safe }};
     var map = L.map('map').setView([{{ center_lat }}, {{ center_lng }}], 13);
 
+    // Marker/popup content is built via string concatenation below, not
+    // Leaflet's text-only API — anything user-controlled (names, titles,
+    // freeform location text) must be escaped before it lands in HTML
+    // that bindPopup() renders as markup.
+    var escapeHtml = function(str) {
+        return String(str == null ? '' : str).replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    };
+
+    var statusBadge = function(status) {
+        if (status === 'cancelled') {
+            return ' <span style="background:#fee2e2;color:#b91c1c;font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;">Cancelled</span>';
+        }
+        if (status === 'postponed') {
+            return ' <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;">Postponed</span>';
+        }
+        return '';
+    };
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 18,
@@ -95,7 +119,7 @@
     var clusters = L.markerClusterGroup({ maxClusterRadius: 50 });
 
     markers.forEach(function(m) {
-        var iconClass = m.type === 'venue' ? 'venue-marker' : 'creator-marker';
+        var iconClass = { venue: 'venue-marker', creator: 'creator-marker', event: 'event-marker' }[m.type];
         var icon = L.divIcon({
             className: iconClass,
             iconSize: [14, 14],
@@ -105,13 +129,30 @@
 
         var popup;
         if (m.type === 'venue') {
-            popup = '<strong><a href="' + m.url + '">' + m.name + '</a></strong><br>'
-                  + '<span style="font-size:12px;color:#627d98">' + m.venue_type + ' &middot; ' + m.city + '</span>';
-        } else {
-            popup = '<strong><a href="' + m.url + '">' + m.name + '</a></strong><br>'
-                  + '<span style="font-size:12px;color:#627d98">' + m.disciplines + '</span>';
+            popup = '<strong><a href="' + m.url + '">' + escapeHtml(m.name) + '</a></strong><br>'
+                  + '<span style="font-size:12px;color:#627d98">' + escapeHtml(m.venue_type) + ' &middot; ' + escapeHtml(m.city) + '</span>';
+            if (m.upcoming_events && m.upcoming_events.length) {
+                popup += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;font-size:11px;">';
+                m.upcoming_events.forEach(function(e) {
+                    popup += '<div style="margin-bottom:3px;">'
+                           + '<a href="' + e.url + '">' + escapeHtml(e.title) + '</a>'
+                           + statusBadge(e.status)
+                           + '<br><span style="color:#829ab1">' + escapeHtml(e.date) + '</span>'
+                           + '</div>';
+                });
+                popup += '</div>';
+            }
+        } else if (m.type === 'creator') {
+            popup = '<strong><a href="' + m.url + '">' + escapeHtml(m.name) + '</a></strong><br>'
+                  + '<span style="font-size:12px;color:#627d98">' + escapeHtml(m.disciplines) + '</span>';
             if (m.location) {
-                popup += '<br><span style="font-size:11px;color:#829ab1">' + m.location + '</span>';
+                popup += '<br><span style="font-size:11px;color:#829ab1">' + escapeHtml(m.location) + '</span>';
+            }
+        } else {
+            popup = '<strong><a href="' + m.url + '">' + escapeHtml(m.name) + '</a></strong>' + statusBadge(m.status) + '<br>'
+                  + '<span style="font-size:12px;color:#627d98">' + escapeHtml(m.event_type) + ' &middot; ' + escapeHtml(m.date) + '</span>';
+            if (m.location_name) {
+                popup += '<br><span style="font-size:11px;color:#829ab1">' + escapeHtml(m.location_name) + '</span>';
             }
         }
 
