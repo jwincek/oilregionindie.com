@@ -138,3 +138,40 @@ class VenueProfileFormTest(TestCase):
         self.assertEqual(form.fields["street"].initial, "Original St")
         self.assertEqual(form.fields["address_city"].initial, "Oil City")
         self.assertEqual(form.fields["address_state"].initial, "PA")
+
+    def test_changing_street_clears_stale_coordinates(self):
+        """A previously-geocoded address whose street is edited must not
+        keep pointing at the old location — it should fall back into the
+        geocoding queue instead of silently showing the wrong pin."""
+        venue = make_venue(name="Moved Venue", street="210 Seneca St")
+        venue.address.latitude = 41.4352
+        venue.address.longitude = -79.7089
+        venue.address.save()
+
+        form = VenueProfileForm(
+            data=form_data(name="Moved Venue", street="500 Washington Ave"),
+            instance=venue,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+
+        venue.address.refresh_from_db()
+        self.assertFalse(venue.address.has_coordinates)
+
+    def test_resaving_same_street_keeps_coordinates(self):
+        """Saving the form without changing the address text must not
+        wipe out coordinates that are still accurate."""
+        venue = make_venue(name="Stable Venue", street="210 Seneca St")
+        venue.address.latitude = 41.4352
+        venue.address.longitude = -79.7089
+        venue.address.save()
+
+        form = VenueProfileForm(
+            data=form_data(name="Stable Venue", street="210 Seneca St"),
+            instance=venue,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+
+        venue.address.refresh_from_db()
+        self.assertTrue(venue.address.has_coordinates)
