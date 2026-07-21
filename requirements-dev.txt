@@ -8,4 +8,4 @@ django-extensions>=3.2
 coverage>=7.15.2
 # Without tblib, a test failure under --parallel crashes the runner with
 # "cannot pickle 'traceback' object" instead of reporting the failure
-tblib>=3.0
+tblib>=3.2.2
