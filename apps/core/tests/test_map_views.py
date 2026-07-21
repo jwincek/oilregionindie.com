@@ -13,12 +13,16 @@ Branches exercised:
 
 import json
 from decimal import Decimal
+from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.core.models import Address
 from apps.creators.tests.helpers import make_creator, make_user
+from apps.events.models import Event
+from apps.events.tests.helpers import make_event
 from apps.venues.tests.helpers import make_address, make_venue
 
 
@@ -169,3 +173,118 @@ class MapViewTest(TestCase):
         self.assertEqual(
             r.content.decode().count("var clusters = L.markerClusterGroup"), 1,
         )
+
+    # ---- off-venue events (street fairs, house shows, pop-up crawls) ----
+
+    def _freeform_event(self, lat, lng, **kwargs):
+        addr = Address.objects.create(
+            city="Oil City", state="PA",
+            latitude=Decimal(str(lat)), longitude=Decimal(str(lng)),
+        )
+        return make_event(location_name=kwargs.pop("location_name", "Seneca Street"),
+                          location_address=addr, **kwargs)
+
+    def test_freeform_event_appears_as_event_marker(self):
+        self._freeform_event(41.44, -79.71, title="Street Fair")
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        self.assertEqual(len(markers), 1)
+        m = markers[0]
+        self.assertEqual(m["type"], "event")
+        self.assertEqual(m["name"], "Street Fair")
+        self.assertEqual(r.context["event_count"], 1)
+
+    def test_venue_hosted_event_does_not_create_duplicate_event_marker(self):
+        """Events at a listed venue enrich that venue's own popup instead
+        of stacking a second pin exactly on top of it."""
+        venue = _published_venue_with_coords(41.4, -79.7, name="Belize's")
+        make_event(title="Friday Show", venue=venue)
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        self.assertEqual(len(markers), 1)  # the venue only, no event pin
+        self.assertEqual(markers[0]["type"], "venue")
+        self.assertEqual(r.context["event_count"], 0)
+
+    def test_freeform_event_without_address_excluded(self):
+        make_event(title="No Address Fair", location_name="Somewhere")
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["event_count"], 0)
+
+    def test_freeform_event_beyond_window_excluded(self):
+        addr = Address.objects.create(
+            city="Oil City", state="PA", latitude=Decimal("41.44"), longitude=Decimal("-79.71"),
+        )
+        make_event(
+            title="Far Future Fair", location_name="Seneca St", location_address=addr,
+            start_datetime=timezone.now() + timedelta(days=45),
+        )
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["event_count"], 0)
+
+    def test_past_freeform_event_excluded(self):
+        addr = Address.objects.create(
+            city="Oil City", state="PA", latitude=Decimal("41.44"), longitude=Decimal("-79.71"),
+        )
+        make_event(
+            title="Already Happened", location_name="Seneca St", location_address=addr,
+            start_datetime=timezone.now() - timedelta(days=1),
+        )
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["event_count"], 0)
+
+    def test_unpublished_freeform_event_excluded(self):
+        self._freeform_event(41.44, -79.71, title="Draft Fair", is_published=False)
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["event_count"], 0)
+
+    def test_cancelled_freeform_event_still_appears_with_status(self):
+        self._freeform_event(41.44, -79.71, title="Rained Out Fair", status=Event.Status.CANCELLED)
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        self.assertEqual(markers[0]["status"], "cancelled")
+
+    # ---- venue popups gain an upcoming-shows list ----
+
+    def test_venue_marker_includes_upcoming_events(self):
+        venue = _published_venue_with_coords(41.4, -79.7, name="Belize's")
+        make_event(title="Friday Show", venue=venue,
+                  start_datetime=timezone.now() + timedelta(days=3))
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        upcoming = markers[0]["upcoming_events"]
+        self.assertEqual(len(upcoming), 1)
+        self.assertEqual(upcoming[0]["title"], "Friday Show")
+        self.assertIn("date", upcoming[0])
+
+    def test_venue_marker_upcoming_events_capped_and_ordered(self):
+        venue = _published_venue_with_coords(41.4, -79.7, name="Belize's")
+        for i in range(7):
+            make_event(title=f"Show {i}", venue=venue,
+                      start_datetime=timezone.now() + timedelta(days=i + 1))
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        upcoming = markers[0]["upcoming_events"]
+        self.assertEqual(len(upcoming), 5)
+        self.assertEqual(upcoming[0]["title"], "Show 0")  # soonest first
+
+    def test_venue_marker_upcoming_events_excludes_past_and_unpublished(self):
+        venue = _published_venue_with_coords(41.4, -79.7, name="Belize's")
+        make_event(title="Old Show", venue=venue,
+                  start_datetime=timezone.now() - timedelta(days=1))
+        make_event(title="Draft Show", venue=venue, is_published=False,
+                  start_datetime=timezone.now() + timedelta(days=2))
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        self.assertEqual(markers[0]["upcoming_events"], [])
+
+    def test_venue_with_no_upcoming_events_has_empty_list(self):
+        _published_venue_with_coords(41.4, -79.7, name="Quiet Venue")
+        r = self.client.get(self.url())
+        markers = json.loads(r.context["markers_json"])
+        self.assertEqual(markers[0]["upcoming_events"], [])
+
+    # ---- popup HTML escaping (names/titles are user-controlled) ----
+
+    def test_page_includes_html_escaping_helper(self):
+        r = self.client.get(self.url())
+        self.assertContains(r, "escapeHtml")
