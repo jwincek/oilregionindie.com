@@ -57,12 +57,16 @@
                         </a>
                     </p>
                     <p class="text-sm text-ink-500">{{ event.venue.full_address }}</p>
+                    {% if event.directions_url %}
+                    <a href="{{ event.directions_url }}" target="_blank" rel="noopener"
+                       class="text-sm text-brand-600 hover:underline">Get directions</a>
+                    {% endif %}
                     {% elif event.location_name %}
                     <p class="text-sm font-medium text-ink-600">Location</p>
                     <p class="text-ink-800">{{ event.location_name }}</p>
                     {% if event.location_address %}
                     <p class="text-sm text-ink-500">{{ event.location_address }}</p>
-                    <a href="{{ event.location_directions_url }}" target="_blank" rel="noopener"
+                    <a href="{{ event.directions_url }}" target="_blank" rel="noopener"
                        class="text-sm text-brand-600 hover:underline">Get directions</a>
                     {% endif %}
                     {% elif event.is_virtual %}

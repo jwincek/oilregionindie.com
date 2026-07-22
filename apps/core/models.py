@@ -80,6 +80,23 @@ class Address(models.Model):
     def has_coordinates(self):
         return self.latitude is not None and self.longitude is not None
 
+    @property
+    def directions_url(self):
+        """Google Maps directions link. Prefers the stored coordinates so
+        it honors a manually-placed pin and lands on the real building,
+        rather than handing Google the address text to re-geocode (which
+        can reintroduce the small-town interpolation error we correct for).
+        Falls back to the address text only when there are no coordinates.
+        """
+        if self.has_coordinates:
+            dest = f"{self.latitude},{self.longitude}"
+        elif self.full_display:
+            from urllib.parse import quote_plus
+            dest = quote_plus(self.full_display)
+        else:
+            return ""
+        return f"https://www.google.com/maps/dir/?api=1&destination={dest}"
+
     _LOCATION_FIELDS = ["street", "street_2", "city", "state", "zip_code", "country"]
 
     @staticmethod

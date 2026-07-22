@@ -138,6 +138,28 @@ class AddressModelTest(TestCase):
         self.assertEqual(float(addr.latitude), 41.4360)
         self.assertEqual(float(addr.longitude), -79.7090)
 
+    def test_directions_url_prefers_coordinates(self):
+        """The directions link must point at the stored pin, not the
+        address text — otherwise Google re-geocodes and can miss."""
+        addr = Address.objects.create(
+            street="210 Seneca St", city="Oil City", state="PA",
+            latitude=41.4347, longitude=-79.7088,
+        )
+        addr.refresh_from_db()  # reflect the stored 6-place Decimal, as in production
+        url = addr.directions_url
+        self.assertIn("41.434700,-79.708800", url)
+        self.assertNotIn("Seneca", url)  # text not used when coords exist
+
+    def test_directions_url_falls_back_to_text_without_coordinates(self):
+        addr = Address.objects.create(street="210 Seneca St", city="Oil City", state="PA")
+        url = addr.directions_url
+        self.assertIn("Seneca", url)
+        self.assertIn("google.com/maps", url)
+
+    def test_directions_url_empty_when_no_coords_and_no_text(self):
+        addr = Address.objects.create()  # all blank
+        self.assertEqual(addr.directions_url, "")
+
     def test_manual_coordinates_survive_a_text_edit(self):
         """A hand-placed pin (coordinates_manual) must NOT be cleared when
         the address text is later edited — the human's correction is
