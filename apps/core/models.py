@@ -51,6 +51,11 @@ class Address(models.Model):
     country = models.CharField(max_length=100, default="US")
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    coordinates_manual = models.BooleanField(
+        default=False,
+        help_text="Coordinates placed by hand — auto-geocoding and the "
+                  "clear-on-edit rule both leave them alone.",
+    )
 
     class Meta:
         ordering = ["state", "city"]
@@ -94,8 +99,10 @@ class Address(models.Model):
         # and must not survive — geocode_all_pending() only ever re-geocodes
         # rows where latitude IS NULL, so a stale value here would silently
         # point at the wrong location forever. Clearing puts it back in the
-        # geocoding queue instead.
-        if self.pk:
+        # geocoding queue instead. Manually-placed pins are exempt: a human
+        # corrected the geocoder deliberately, so a later text tweak must not
+        # wipe their work.
+        if self.pk and not self.coordinates_manual:
             previous = Address.objects.filter(pk=self.pk).values(
                 *self._LOCATION_FIELDS, "latitude", "longitude"
             ).first()

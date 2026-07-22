@@ -6,9 +6,37 @@ from .models import Address, AvailabilityType, BlockedWord, Notification, Profil
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-    list_display = ["short_display", "street", "zip_code"]
+    list_display = ["short_display", "street", "zip_code", "has_coordinates", "coordinates_manual"]
     search_fields = ["city", "state", "street", "zip_code"]
-    list_filter = ["state"]
+    list_filter = ["state", "coordinates_manual"]
+    fields = [
+        "street", "street_2", "city", "state", "zip_code", "country",
+        "latitude", "longitude", "coordinates_manual",
+    ]
+    actions = ["regeocode"]
+
+    @admin.display(boolean=True, description="Geocoded")
+    def has_coordinates(self, obj):
+        return obj.has_coordinates
+
+    @admin.action(description="Re-geocode selected (skips manual pins)")
+    def regeocode(self, request, queryset):
+        """Force a fresh lookup — useful after a geocoder change to move
+        existing pins onto better coordinates. Runs inline (synchronous,
+        rate-limited), so intended for small selections."""
+        from apps.core.geocoding import geocode_address
+        done = skipped = failed = 0
+        for addr in queryset:
+            if addr.coordinates_manual:
+                skipped += 1
+            elif geocode_address(addr):
+                done += 1
+            else:
+                failed += 1
+        self.message_user(
+            request,
+            f"Re-geocoded {done}; skipped {skipped} manual; {failed} unmatched.",
+        )
 
 
 @admin.register(UserProfile)

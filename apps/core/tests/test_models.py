@@ -138,6 +138,20 @@ class AddressModelTest(TestCase):
         self.assertEqual(float(addr.latitude), 41.4360)
         self.assertEqual(float(addr.longitude), -79.7090)
 
+    def test_manual_coordinates_survive_a_text_edit(self):
+        """A hand-placed pin (coordinates_manual) must NOT be cleared when
+        the address text is later edited — the human's correction is
+        deliberate and sticky, unlike auto-geocoded coordinates."""
+        addr = Address.objects.create(
+            street="210 Seneca St", city="Oil City", state="PA",
+            latitude=41.4340, longitude=-79.7090, coordinates_manual=True,
+        )
+        addr.street = "212 Seneca St"
+        addr.save()
+        addr.refresh_from_db()
+        self.assertTrue(addr.has_coordinates)
+        self.assertEqual(float(addr.latitude), 41.4340)
+
 
 # ---------------------------------------------------------------------------
 # UserProfile auto-creation signal
