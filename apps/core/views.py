@@ -588,10 +588,12 @@ def request_claim(request, profile_type, slug):
     return redirect(profile.get_absolute_url())
 
 
-@staff_member_required
+@login_required
 @require_GET
 def geocode_search(request):
-    """Staff-only JSON endpoint powering the admin coordinate picker's
-    search box. POI-aware (see geocoding.search_candidates)."""
+    """JSON endpoint powering the coordinate pickers' search box (admin and
+    owner-facing). POI-aware (see geocoding.search_candidates). Login-only —
+    it proxies public geocoding data, and both the admin form and a profile
+    owner's edit form need it."""
     from apps.core.geocoding import search_candidates
     return JsonResponse({"results": search_candidates(request.GET.get("q", ""))})

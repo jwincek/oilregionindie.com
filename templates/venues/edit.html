@@ -2,6 +2,18 @@
 
 {% block title %}Edit {{ venue.name }} — {{ SITE_NAME }}{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="">
+<style>
+  #venue-pin-map { height: 300px; border-radius: 0.5rem; }
+  #venue-pin-results { list-style: none; margin: 4px 0; padding: 0; max-height: 130px; overflow-y: auto; }
+  #venue-pin-results li { padding: 4px 8px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 12px; }
+  #venue-pin-results li:hover { background: rgb(var(--color-brand-50)); }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto" x-data="{ tab: 'basics' }">
     <div class="flex items-center justify-between mb-2">
@@ -92,6 +104,19 @@
                     {{ form.zip_code }}
                 </div>
             </div>
+
+            <div>
+                <label class="block text-sm font-medium text-ink-700 mb-1">Map location</label>
+                <p class="text-xs text-ink-400 mb-2">Search your venue name (most accurate) or address, then click or drag the pin to place it exactly. This is where you appear on the map.</p>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="venue-pin-q" class="form-input flex-1" placeholder="e.g. {{ venue.name }}, {{ venue.city }}">
+                    <button type="button" id="venue-pin-go" class="text-sm bg-ink-800 text-white px-3 py-1.5 rounded-md hover:bg-ink-700 transition">Search</button>
+                </div>
+                <ul id="venue-pin-results"></ul>
+                <div id="venue-pin-map" class="shadow-sm"></div>
+                {{ form.pin_lat }}{{ form.pin_lng }}{{ form.pin_manual }}
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-ink-700 mb-2">Amenities</label>
                 <div class="flex flex-wrap gap-2">{{ form.amenities }}</div>
@@ -188,4 +213,74 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var latEl = document.getElementById("id_pin_lat");
+  var lngEl = document.getElementById("id_pin_lng");
+  var manualEl = document.getElementById("id_pin_manual");
+  var mapDiv = document.getElementById("venue-pin-map");
+  if (!latEl || !lngEl || !mapDiv) return;
+
+  var OIL_CITY = [41.434, -79.7025];
+  var has = latEl.value && lngEl.value;
+  var map = L.map(mapDiv).setView(has ? [parseFloat(latEl.value), parseFloat(lngEl.value)] : OIL_CITY, has ? 17 : 14);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
+  }).addTo(map);
+
+  // The picker sits in the (default-visible) Basics tab; if the user tabs
+  // away and back, Leaflet needs a nudge to re-measure the container.
+  new IntersectionObserver(function (entries) {
+    if (entries.some(function (e) { return e.isIntersecting; })) map.invalidateSize();
+  }).observe(mapDiv);
+
+  var marker = null;
+  function renderMarker(lat, lng, recenter) {
+    if (!marker) {
+      marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marker.on("dragend", function () { var p = marker.getLatLng(); userPlace(p.lat, p.lng, false); });
+    } else { marker.setLatLng([lat, lng]); }
+    if (recenter) map.setView([lat, lng], 17);
+  }
+  function userPlace(lat, lng, recenter) {
+    lat = Math.round(lat * 1e6) / 1e6; lng = Math.round(lng * 1e6) / 1e6;
+    renderMarker(lat, lng, recenter);
+    latEl.value = lat.toFixed(6);
+    lngEl.value = lng.toFixed(6);
+    if (manualEl) manualEl.value = "true";  // hidden field; BooleanField.to_python("true") -> True
+  }
+  if (has) renderMarker(parseFloat(latEl.value), parseFloat(lngEl.value), false);
+  map.on("click", function (e) { userPlace(e.latlng.lat, e.latlng.lng, false); });
+
+  var results = document.getElementById("venue-pin-results");
+  function search() {
+    var q = document.getElementById("venue-pin-q").value.trim();
+    if (!q) return;
+    results.innerHTML = "<li>Searching…</li>";
+    fetch("{% url 'geocode_search' %}?q=" + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        results.innerHTML = "";
+        if (!d.results || !d.results.length) { results.innerHTML = "<li>No matches.</li>"; return; }
+        d.results.forEach(function (c) {
+          var li = document.createElement("li");
+          li.textContent = (c.kind ? c.kind + " — " : "") + (c.label || "");
+          li.addEventListener("click", function () { userPlace(c.lat, c.lon, true); results.innerHTML = ""; });
+          results.appendChild(li);
+        });
+      })
+      .catch(function () { results.innerHTML = "<li>Search failed.</li>"; });
+  }
+  document.getElementById("venue-pin-go").addEventListener("click", search);
+  document.getElementById("venue-pin-q").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); search(); }
+  });
+});
+</script>
 {% endblock %}
