@@ -261,45 +261,86 @@ def _addr(**kwargs):
     return Address.objects.create(**defaults)
 
 
+def _census_resp(lat, lon):
+    return mock.Mock(json=mock.Mock(return_value={
+        "result": {"addressMatches": [{"coordinates": {"x": lon, "y": lat}}]},
+    }))
+
+
+def _census_empty():
+    return mock.Mock(json=mock.Mock(return_value={"result": {"addressMatches": []}}))
+
+
+def _nominatim_resp(lat, lon):
+    return mock.Mock(json=mock.Mock(return_value=[{"lat": str(lat), "lon": str(lon)}]))
+
+
+def _nominatim_empty():
+    return mock.Mock(json=mock.Mock(return_value=[]))
+
+
+def _route(census, nominatim):
+    """httpx.get side_effect that answers Census vs Nominatim by URL."""
+    def side_effect(url, *a, **k):
+        return census if "census.gov" in url else nominatim
+    return side_effect
+
+
 class GeocodeAddressTest(TestCase):
     @mock.patch("apps.core.geocoding.httpx.get")
-    def test_successful_lookup_sets_lat_lng(self, mock_get):
-        mock_get.return_value = mock.Mock(
-            json=mock.Mock(return_value=[
-                {"lat": "41.434", "lon": "-79.7025"},
-            ]),
-        )
+    def test_census_is_primary_and_nominatim_is_not_called(self, mock_get):
+        mock_get.side_effect = _route(_census_resp("41.4338", "-79.7085"), None)
         addr = _addr()
-        ok = geocode_address(addr)
-        self.assertTrue(ok)
+        self.assertTrue(geocode_address(addr))
         addr.refresh_from_db()
-        self.assertEqual(str(addr.latitude), "41.434000")
-        self.assertEqual(str(addr.longitude), "-79.702500")
-        # The Nominatim query was constructed from the address parts.
-        call = mock_get.call_args
-        self.assertEqual(call.args[0],
-                         "https://nominatim.openstreetmap.org/search")
-        self.assertIn("Oil City", call.kwargs["params"]["q"])
+        self.assertEqual(str(addr.latitude), "41.433800")
+        self.assertEqual(str(addr.longitude), "-79.708500")
+        # Exactly one HTTP call — Census — the fallback is not reached.
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertIn("census.gov", mock_get.call_args.args[0])
 
     @mock.patch("apps.core.geocoding.httpx.get")
-    def test_no_results_returns_false_and_leaves_address_unchanged(self, mock_get):
-        mock_get.return_value = mock.Mock(json=mock.Mock(return_value=[]))
+    def test_falls_back_to_nominatim_only_on_census_miss(self, mock_get):
+        mock_get.side_effect = _route(_census_empty(), _nominatim_resp("41.99", "-79.5"))
         addr = _addr()
-        ok = geocode_address(addr)
-        self.assertFalse(ok)
+        self.assertTrue(geocode_address(addr))
+        addr.refresh_from_db()
+        self.assertEqual(str(addr.latitude), "41.990000")
+        # Both providers were queried (Census first, then the fallback).
+        self.assertEqual(mock_get.call_count, 2)
+
+    @mock.patch("apps.core.geocoding.httpx.get")
+    def test_census_exception_still_falls_through_to_nominatim(self, mock_get):
+        def side_effect(url, *a, **k):
+            if "census.gov" in url:
+                raise Exception("census down")
+            return _nominatim_resp("42.0", "-79.0")
+        mock_get.side_effect = side_effect
+        addr = _addr()
+        self.assertTrue(geocode_address(addr))
+        addr.refresh_from_db()
+        self.assertEqual(str(addr.latitude), "42.000000")
+
+    @mock.patch("apps.core.geocoding.httpx.get")
+    def test_no_match_from_either_returns_false(self, mock_get):
+        mock_get.side_effect = _route(_census_empty(), _nominatim_empty())
+        addr = _addr()
+        self.assertFalse(geocode_address(addr))
         addr.refresh_from_db()
         self.assertIsNone(addr.latitude)
 
-    @mock.patch("apps.core.geocoding.httpx.get")
-    def test_http_exception_returns_false_silently(self, mock_get):
-        mock_get.side_effect = Exception("network blip")
-        addr = _addr()
-        self.assertFalse(geocode_address(addr))
+    def test_manual_pin_is_never_geocoded(self):
+        """coordinates_manual means a human placed the pin — geocoding must
+        not touch it or even hit the network."""
+        addr = _addr(latitude=1.0, longitude=2.0, coordinates_manual=True)
+        with mock.patch("apps.core.geocoding.httpx.get") as mock_get:
+            self.assertFalse(geocode_address(addr))
+            mock_get.assert_not_called()
+        addr.refresh_from_db()
+        self.assertEqual(str(addr.latitude), "1.000000")  # unchanged
 
     def test_empty_address_returns_false_without_calling_api(self):
-        """An Address with no street/city/state/zip can't be geocoded.
-        We short-circuit before making an HTTP call."""
-        addr = Address.objects.create()  # all fields blank
+        addr = Address.objects.create()
         with mock.patch("apps.core.geocoding.httpx.get") as mock_get:
             self.assertFalse(geocode_address(addr))
             mock_get.assert_not_called()
@@ -311,27 +352,41 @@ class GeocodeAllPendingTest(TestCase):
     def test_iterates_pending_addresses_and_returns_tally(
         self, mock_geocode, _mock_sleep,
     ):
-        # Two pending (no lat), one already geocoded.
-        a, b = _addr(city="A"), _addr(city="B")
-        c = _addr(city="C")
-        c.latitude = 1.0
-        c.longitude = 2.0
-        c.save()
-        # First succeeds, second fails.
+        _addr(city="A"), _addr(city="B")
+        c = _addr(city="C", latitude=1.0, longitude=2.0)  # already geocoded
         mock_geocode.side_effect = [True, False]
         success, total = geocode_all_pending()
         self.assertEqual((success, total), (1, 2))
-        # Only the two pending addresses were touched.
         self.assertEqual(mock_geocode.call_count, 2)
 
     @mock.patch("apps.core.geocoding.geocode_address")
-    def test_no_pending_addresses_returns_zero(
-        self, mock_geocode, _mock_sleep,
-    ):
-        # The only address already has coordinates.
-        a = _addr()
-        a.latitude, a.longitude = 1.0, 2.0
-        a.save()
+    def test_manual_pins_are_excluded_from_pending(self, mock_geocode, _mock_sleep):
+        # No coordinates yet, but flagged manual — must not be queued.
+        _addr(city="Manual", coordinates_manual=True)
+        success, total = geocode_all_pending()
+        self.assertEqual(total, 0)
+        mock_geocode.assert_not_called()
+
+    def test_resolved_address_is_not_geocoded_again(self, _mock_sleep):
+        """Validates the once-per-address property: after an address is
+        geocoded, a second sweep does not look it up again — the
+        latitude__isnull filter excludes it."""
+        addr = _addr(city="OnceOnly")
+        with mock.patch("apps.core.geocoding.httpx.get",
+                        side_effect=_route(_census_resp("41.5", "-79.5"), None)) as g1:
+            geocode_all_pending()
+            self.assertEqual(g1.call_count, 1)  # geocoded once
+        addr.refresh_from_db()
+        self.assertTrue(addr.has_coordinates)
+        # Second sweep: the resolved address must not be touched again.
+        with mock.patch("apps.core.geocoding.httpx.get") as g2:
+            success, total = geocode_all_pending()
+            self.assertEqual(total, 0)
+            g2.assert_not_called()
+
+    @mock.patch("apps.core.geocoding.geocode_address")
+    def test_no_pending_addresses_returns_zero(self, mock_geocode, _mock_sleep):
+        _addr(latitude=1.0, longitude=2.0)
         success, total = geocode_all_pending()
         self.assertEqual((success, total), (0, 0))
         mock_geocode.assert_not_called()

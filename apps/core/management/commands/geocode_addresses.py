@@ -22,7 +22,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        pending = Address.objects.filter(latitude__isnull=True)
+        # Match geocode_all_pending: manually-placed pins are never
+        # auto-geocoded, so they aren't "pending".
+        pending = Address.objects.filter(
+            latitude__isnull=True, coordinates_manual=False,
+        )
         count = pending.count()
 
         if count == 0:
