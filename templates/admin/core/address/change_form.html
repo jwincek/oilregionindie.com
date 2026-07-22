@@ -1,0 +1,108 @@
+{% extends "admin/change_form.html" %}
+{# Coordinate picker for Address: search a venue name or address (POI-aware,
+   so "Lyric Theatre" drops the pin on the real building), then click or drag
+   to fine-tune. Placing a pin marks it manual so the daily geocoder won't
+   overwrite it. Binds to the existing id_latitude / id_longitude /
+   id_coordinates_manual fields. #}
+{% block extrahead %}{{ block.super }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<style>
+  #coord-picker { margin: 8px 0 8px 160px; max-width: 640px; }
+  #coord-picker-map { height: 340px; border: 1px solid #ccc; border-radius: 4px; }
+  #coord-picker .cp-search { display: flex; gap: 6px; margin-bottom: 6px; }
+  #coord-picker .cp-search input { flex: 1; }
+  #coord-picker .cp-results { list-style: none; margin: 4px 0; padding: 0; max-height: 130px; overflow-y: auto; }
+  #coord-picker .cp-results li { padding: 4px 6px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 12px; }
+  #coord-picker .cp-results li:hover { background: #e8f0fe; }
+  #coord-picker .cp-kind { color: #555; font-weight: 600; margin-right: 4px; }
+  #coord-picker .cp-hint { color: #666; font-size: 12px; margin: 4px 0; }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var latEl = document.getElementById("id_latitude");
+  var lngEl = document.getElementById("id_longitude");
+  var manualEl = document.getElementById("id_coordinates_manual");
+  var anchor = document.querySelector(".field-coordinates_manual") ||
+               document.querySelector(".field-longitude");
+  if (!latEl || !lngEl || !anchor) return;
+
+  var panel = document.createElement("div");
+  panel.id = "coord-picker";
+  panel.innerHTML =
+    '<p class="cp-hint">Search a venue name or address (named places are the most accurate), then click or drag the pin to fine-tune. Placing a pin marks it as manually set.</p>' +
+    '<div class="cp-search"><input type="text" id="cp-q" placeholder="e.g. Lyric Theatre, Oil City, PA"><button type="button" id="cp-go" class="button">Search</button></div>' +
+    '<ul class="cp-results" id="cp-results"></ul>' +
+    '<div id="coord-picker-map"></div>';
+  anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+
+  var OIL_CITY = [41.434, -79.7025];
+  var start = (latEl.value && lngEl.value) ? [parseFloat(latEl.value), parseFloat(lngEl.value)] : OIL_CITY;
+  var map = L.map("coord-picker-map").setView(start, (latEl.value && lngEl.value) ? 17 : 14);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
+  }).addTo(map);
+
+  var marker = null;
+  // Draw/move the pin only. Does NOT touch the form fields — used to show
+  // the existing coordinate on load, which must not mark anything manual.
+  function renderMarker(lat, lng, recenter) {
+    if (!marker) {
+      marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marker.on("dragend", function () {
+        var p = marker.getLatLng();
+        userPlace(p.lat, p.lng, false);
+      });
+    } else {
+      marker.setLatLng([lat, lng]);
+    }
+    if (recenter) map.setView([lat, lng], 17);
+  }
+  // A deliberate human placement: move the pin AND write the fields AND
+  // flag the pin manual so the daily geocoder won't overwrite it.
+  function userPlace(lat, lng, recenter) {
+    lat = Math.round(lat * 1e6) / 1e6;
+    lng = Math.round(lng * 1e6) / 1e6;
+    renderMarker(lat, lng, recenter);
+    latEl.value = lat.toFixed(6);
+    lngEl.value = lng.toFixed(6);
+    if (manualEl) manualEl.checked = true;
+  }
+
+  if (latEl.value && lngEl.value) renderMarker(parseFloat(latEl.value), parseFloat(lngEl.value), false);
+  map.on("click", function (e) { userPlace(e.latlng.lat, e.latlng.lng, false); });
+
+  var results = document.getElementById("cp-results");
+  function search() {
+    var q = document.getElementById("cp-q").value.trim();
+    if (!q) return;
+    results.innerHTML = "<li>Searching…</li>";
+    fetch("{% url 'geocode_search' %}?q=" + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        results.innerHTML = "";
+        if (!d.results || !d.results.length) { results.innerHTML = "<li>No matches.</li>"; return; }
+        d.results.forEach(function (c) {
+          var li = document.createElement("li");
+          li.innerHTML = '<span class="cp-kind">' + (c.kind || "") + "</span>" +
+                         (c.label || "").replace(/</g, "&lt;");
+          li.addEventListener("click", function () {
+            userPlace(c.lat, c.lon, true);
+            results.innerHTML = "";
+          });
+          results.appendChild(li);
+        });
+      })
+      .catch(function () { results.innerHTML = "<li>Search failed.</li>"; });
+  }
+  document.getElementById("cp-go").addEventListener("click", search);
+  document.getElementById("cp-q").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); search(); }
+  });
+});
+</script>
+{% endblock %}

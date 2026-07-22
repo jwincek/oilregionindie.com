@@ -6,6 +6,7 @@ from .models import Address, AvailabilityType, BlockedWord, Notification, Profil
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
+    change_form_template = "admin/core/address/change_form.html"
     list_display = ["short_display", "street", "zip_code", "has_coordinates", "coordinates_manual"]
     search_fields = ["city", "state", "street", "zip_code"]
     list_filter = ["state", "coordinates_manual"]

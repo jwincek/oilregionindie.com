@@ -97,6 +97,42 @@ def geocode_address(address_obj):
     return True
 
 
+def search_candidates(query, limit=6):
+    """
+    Ranked geocode candidates for the interactive picker. Uses Nominatim's
+    general search, which surfaces named POIs (amenity/building/shop nodes
+    a human placed on the actual building — markedly more accurate for an
+    established venue than address-range interpolation) alongside plain
+    address matches. Returns [{lat, lon, label, kind}], best first.
+
+    This is deliberately picker-only: a name search can be ambiguous
+    ("The Shamrock" may match a tavern in the wrong neighborhood), so a
+    human confirms the pick — it is never wired into the silent pipeline.
+    """
+    query = (query or "").strip()
+    if not query:
+        return []
+    try:
+        resp = httpx.get(
+            NOMINATIM_URL,
+            params={"q": query, "format": "json", "limit": limit, "addressdetails": 1},
+            headers={"User-Agent": USER_AGENT},
+            timeout=10,
+        )
+        return [
+            {
+                "lat": float(r["lat"]),
+                "lon": float(r["lon"]),
+                "label": r.get("display_name", ""),
+                "kind": "/".join(p for p in (r.get("class"), r.get("type")) if p),
+            }
+            for r in resp.json()
+        ]
+    except Exception:
+        logger.exception("Geocode search failed for: %s", query)
+        return []
+
+
 def geocode_all_pending():
     """
     Geocode every address that still needs it — those with no coordinates
