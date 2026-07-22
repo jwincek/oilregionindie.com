@@ -871,6 +871,9 @@ class Command(BaseCommand):
                     "<li><b>GitHub Issues</b> — "
                     '<a href="https://github.com/jwincek/oilregionindie.com/issues">open an issue</a> '
                     "on our repository. Best for bug reports and detailed feature requests.</li>"
+                    "<li><b>GitHub Discussions</b> — "
+                    '<a href="https://github.com/jwincek/oilregionindie.com/discussions">start a discussion</a> '
+                    "for questions, ideas, and help running your own hub.</li>"
                     "<li><b>Email</b> — send feedback to "
                     '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a></li>'
                     "</ul>"
@@ -942,7 +945,8 @@ class Command(BaseCommand):
                     "<p>Product purchases are processed through Stripe. The platform facilitates the transaction but "
                     "does not hold funds — payments go directly to the creator's connected Stripe account. "
                     "Refund and dispute policies are handled between the buyer and creator, with Stripe's standard "
-                    "dispute resolution process available.</p>"
+                    "dispute resolution process available. If a purchase is refunded, access to any digital "
+                    "downloads from that purchase is revoked.</p>"
                 )),
                 ("heading", "Platform Availability"),
                 ("paragraph", (
@@ -1053,6 +1057,15 @@ class Command(BaseCommand):
                 )),
                 ("heading", "Profiles"),
                 ("paragraph", (
+                    "<p><b>What does \"added by the hub team\" mean on a profile?</b><br>"
+                    "To keep the directory complete from day one, we've added listings for "
+                    "local venues and creators who haven't joined yet. If one of them is you, "
+                    "click \"Claim this profile\" (sign in first if you haven't) — we'll verify "
+                    "and connect it to your account, and you'll get an email when it's done.</p>"
+                    "<p><b>Can my band or collective list members who aren't on the hub?</b><br>"
+                    "Yes — members can appear on your profile by name even without an account. "
+                    "Contact us to update your lineup, and if a member joins later we can "
+                    "connect their listing to their new profile.</p>"
                     "<p><b>How does the review process work?</b><br>"
                     "New profiles start as drafts. When you're ready, click \"Submit for Review\" — "
                     "you'll find this on the Basics tab of your edit page, or in the notification banner "
@@ -1079,8 +1092,12 @@ class Command(BaseCommand):
                     "its own filters — you can filter by discipline, skill, genre, location, "
                     "availability, and more. Active filters appear as removable pills above the results.</p>"
                     "<p><b>Is there a map?</b><br>"
-                    "Yes. Click \"Map\" in the navigation to see an interactive map of all creators "
-                    "and venues with addresses. Venues appear as gold dots, creators as blue dots.</p>"
+                    "Yes. Click \"Map\" in the navigation to see an interactive map of creators, "
+                    "venues, and upcoming events. Venues appear as gold dots, creators as blue dots, "
+                    "and events happening somewhere other than a listed venue — street fairs, pop-up "
+                    "shows — as purple dots. Click a venue's dot to see its upcoming shows. "
+                    "When dots sit close together they group into a numbered bubble — click it "
+                    "to zoom in and separate them.</p>"
                 )),
                 ("heading", "Events"),
                 ("paragraph", (
@@ -1088,6 +1105,25 @@ class Command(BaseCommand):
                     "Click \"Create Event\" in the menu. A wizard walks you through the basics, "
                     "date and time, and details (free/paid, virtual, poster image). "
                     "After creating, you can manage the lineup from the event edit page.</p>"
+                    "<p><b>What if the event isn't at a listed venue?</b><br>"
+                    "Leave the venue blank and name the location instead — a street, a park, "
+                    "a one-off spot. You can optionally add an address, which shows publicly "
+                    "with a directions link; leave it off for locations that shouldn't share "
+                    "an address, like house shows. If a spot hosts events regularly, ask us "
+                    "to add it to the venue directory instead.</p>"
+                    "<p><b>Can the lineup include acts that aren't on the hub?</b><br>"
+                    "Yes. When adding to a lineup, either pick a creator from the hub or type "
+                    "a guest performer's name — touring acts and one-off guests appear on the "
+                    "bill by name.</p>"
+                    "<p><b>What if an event is cancelled, postponed, or moved?</b><br>"
+                    "Edit the event and change its status, or change the venue/location. "
+                    "The event stays listed with a badge (Cancelled, Postponed, or New location, "
+                    "showing where it moved from), and followers of the organizers are "
+                    "notified automatically.</p>"
+                    "<p><b>What about festivals and multi-venue events?</b><br>"
+                    "Events can be grouped into a series — a festival across several venues, or "
+                    "a pop-up crawl across a neighborhood — with its own page listing every show. "
+                    "Contact us to set up a series for your event.</p>"
                     "<p><b>Is there a calendar view?</b><br>"
                     "Yes. From the events listing, click \"Calendar View\" to see a monthly grid "
                     "with events on their dates. Navigate between months with the arrows.</p>"
@@ -1107,6 +1143,10 @@ class Command(BaseCommand):
                     "Both parties see each other's contact information. A \"Create Event\" button "
                     "appears to quickly set up the event from the booking details. Both parties "
                     "can leave private feedback and write public endorsements.</p>"
+                    "<p><b>Why can't I send a booking request to a particular listing?</b><br>"
+                    "Listings added by the hub team (marked \"Is this you?\") can't receive "
+                    "booking requests until their owner claims them — there's no one behind "
+                    "them yet to answer. Use the listing's public contact info in the meantime.</p>"
                 )),
                 ("heading", "Community"),
                 ("paragraph", (
@@ -1128,8 +1168,9 @@ class Command(BaseCommand):
                     "connect with Stripe from the setup page (click \"Set Up Payments\" on your edit page). "
                     "Payments go directly to your Stripe account — the platform never holds your funds.</p>"
                     "<p><b>Can I sell digital products?</b><br>"
-                    "Yes. Mark a product as digital and upload the file. Buyers get an immediate download "
-                    "link after purchase.</p>"
+                    "Yes. Mark a product as digital and upload the file. After purchase, buyers "
+                    "receive an email with their download links — no account needed. If a "
+                    "purchase is refunded, download access is revoked automatically.</p>"
                     "<p><b>Can I group products together?</b><br>"
                     "Yes. Create a product group from \"My Products.\" Groups can be either a "
                     "\"Collection\" (items sold individually with a bundle discount, like an album) "
