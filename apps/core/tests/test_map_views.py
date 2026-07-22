@@ -196,14 +196,16 @@ class MapViewTest(TestCase):
 
     def test_venue_hosted_event_does_not_create_duplicate_event_marker(self):
         """Events at a listed venue enrich that venue's own popup instead
-        of stacking a second pin exactly on top of it."""
+        of stacking a second pin exactly on top of it — but they still
+        count as upcoming events in the header."""
         venue = _published_venue_with_coords(41.4, -79.7, name="Belize's")
         make_event(title="Friday Show", venue=venue)
         r = self.client.get(self.url())
         markers = json.loads(r.context["markers_json"])
         self.assertEqual(len(markers), 1)  # the venue only, no event pin
         self.assertEqual(markers[0]["type"], "venue")
-        self.assertEqual(r.context["event_count"], 0)
+        self.assertEqual(r.context["event_pin_count"], 0)  # no off-venue pin
+        self.assertEqual(r.context["event_count"], 1)  # but the show is counted
 
     def test_freeform_event_without_address_excluded(self):
         make_event(title="No Address Fair", location_name="Somewhere")
@@ -288,3 +290,33 @@ class MapViewTest(TestCase):
     def test_page_includes_html_escaping_helper(self):
         r = self.client.get(self.url())
         self.assertContains(r, "escapeHtml")
+
+    # ---- conditional legend / count (empty types are hidden) ----
+
+    def test_creator_count_and_legend_hidden_when_no_creators_mapped(self):
+        _published_venue_with_coords(41.4, -79.7, name="V")
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["creator_count"], 0)
+        header = r.content.decode().split("</h1>")[1].split("</p>")[0]
+        self.assertNotIn("creator", header)  # count segment omitted
+        # Creator legend entry omitted too (the "Creator Directory" button
+        # is elsewhere and unaffected).
+        self.assertNotIn("shadow-sm\"></span> Creator", r.content.decode())
+
+    def test_creator_count_and_legend_shown_when_a_creator_is_mapped(self):
+        _published_venue_with_coords(41.4, -79.7, name="V")
+        _published_creator_with_coords(41.45, -79.71, display_name="Mapped Creator")
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["creator_count"], 1)
+        header = r.content.decode().split("</h1>")[1].split("</p>")[0]
+        self.assertIn("creator", header)
+
+    def test_offvenue_event_legend_keys_off_pins_not_count(self):
+        """A venue-hosted event makes event_count > 0 but adds no off-venue
+        pin, so the "not at a listed venue" legend must stay hidden."""
+        venue = _published_venue_with_coords(41.4, -79.7, name="Belize's")
+        make_event(title="Friday Show", venue=venue)
+        r = self.client.get(self.url())
+        self.assertEqual(r.context["event_count"], 1)
+        self.assertEqual(r.context["event_pin_count"], 0)
+        self.assertNotContains(r, "not at a listed venue")
