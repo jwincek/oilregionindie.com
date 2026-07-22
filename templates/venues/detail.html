@@ -110,6 +110,18 @@
 
         <!-- Sidebar -->
         <div class="space-y-6">
+            <!-- Location map -->
+            {% if venue.address.has_coordinates %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-ink-800 text-sm mb-3">Location</h3>
+                {% include "includes/_location_map.html" with map_lat=venue.address.latitude map_lng=venue.address.longitude map_label=venue.name %}
+                {% if venue.address.directions_url %}
+                <a href="{{ venue.address.directions_url }}" target="_blank" rel="noopener"
+                   class="text-sm text-brand-600 hover:underline mt-3 inline-block">Get directions</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <!-- Availability -->
             {% with availabilities=venue.active_availabilities %}
             {% if availabilities %}
