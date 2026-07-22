@@ -27,7 +27,7 @@ from django_q.models import Schedule
 
 from apps.community.models import CommunityPost
 from apps.core import tasks as core_tasks
-from apps.core.geocoding import geocode_address, geocode_all_pending
+from apps.core.geocoding import geocode_address, geocode_all_pending, search_candidates
 from apps.core.models import Address
 from apps.creators.tests.helpers import make_creator, make_user
 
@@ -390,6 +390,36 @@ class GeocodeAllPendingTest(TestCase):
         success, total = geocode_all_pending()
         self.assertEqual((success, total), (0, 0))
         mock_geocode.assert_not_called()
+
+
+class SearchCandidatesTest(TestCase):
+    """POI-aware search backing the picker: named places resolve to real
+    building/amenity nodes, returned best-first with a kind label."""
+
+    @mock.patch("apps.core.geocoding.httpx.get")
+    def test_returns_labelled_candidates(self, mock_get):
+        mock_get.return_value = mock.Mock(json=mock.Mock(return_value=[
+            {"lat": "41.4347", "lon": "-79.7088",
+             "display_name": "Lyric Theatre, 216, Seneca Street, Oil City",
+             "class": "amenity", "type": "theatre"},
+            {"lat": "41.4342", "lon": "-79.7087",
+             "display_name": "National Transit Building, Seneca Street",
+             "class": "building", "type": "yes"},
+        ]))
+        out = search_candidates("Lyric Theatre, Oil City, PA")
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[0]["kind"], "amenity/theatre")
+        self.assertEqual(out[0]["lat"], 41.4347)
+        self.assertIn("Lyric Theatre", out[0]["label"])
+
+    def test_blank_query_makes_no_call(self):
+        with mock.patch("apps.core.geocoding.httpx.get") as mock_get:
+            self.assertEqual(search_candidates("   "), [])
+            mock_get.assert_not_called()
+
+    @mock.patch("apps.core.geocoding.httpx.get", side_effect=Exception("down"))
+    def test_error_returns_empty_not_raise(self, _mock_get):
+        self.assertEqual(search_candidates("anything"), [])
 
 
 # ---------------------------------------------------------------------------

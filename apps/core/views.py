@@ -1,6 +1,7 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -585,3 +586,12 @@ def request_claim(request, profile_type, slug):
         "You'll get an email when it's done.",
     )
     return redirect(profile.get_absolute_url())
+
+
+@staff_member_required
+@require_GET
+def geocode_search(request):
+    """Staff-only JSON endpoint powering the admin coordinate picker's
+    search box. POI-aware (see geocoding.search_candidates)."""
+    from apps.core.geocoding import search_candidates
+    return JsonResponse({"results": search_candidates(request.GET.get("q", ""))})
