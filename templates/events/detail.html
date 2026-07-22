@@ -93,6 +93,13 @@
                 </div>
             </div>
 
+            <!-- Location map -->
+            {% if event.map_address.has_coordinates %}
+            <div class="mt-6">
+                {% include "includes/_location_map.html" with map_lat=event.map_address.latitude map_lng=event.map_address.longitude map_label=event.location_display %}
+            </div>
+            {% endif %}
+
             <!-- Description -->
             {% if event.description %}
             <div class="prose prose-ink max-w-none mt-8">

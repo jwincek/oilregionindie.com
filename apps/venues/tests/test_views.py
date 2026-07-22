@@ -201,6 +201,19 @@ class VenueDetailViewTest(TestCase):
         self.assertContains(response, "789 Center St")
         self.assertContains(response, "Titusville")
 
+    def test_detail_shows_location_map_and_directions_when_geocoded(self):
+        venue = make_venue(name="Mapped Venue", street="210 Seneca St")
+        venue.address.latitude, venue.address.longitude = 41.4347, -79.7088
+        venue.address.save()
+        r = self.client.get(reverse("venues:detail", kwargs={"slug": venue.slug}))
+        self.assertContains(r, "location-map-embed")
+        self.assertContains(r, "Get directions")
+
+    def test_detail_hides_map_when_venue_not_geocoded(self):
+        venue = make_venue(name="Unmapped Venue")  # helper address has no coords
+        r = self.client.get(reverse("venues:detail", kwargs={"slug": venue.slug}))
+        self.assertNotContains(r, "location-map-embed")
+
 
 # ---------------------------------------------------------------------------
 # Setup view (requires login, allows multiple venues)

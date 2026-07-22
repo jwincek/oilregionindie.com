@@ -91,6 +91,35 @@ class EventLocationModelTest(TestCase):
         self.assertEqual(event.directions_url, venue.address.directions_url)
         self.assertIn("41.4347", event.directions_url)
 
+    def test_map_address_is_venue_or_location_or_none(self):
+        venue = make_venue(user=make_user())
+        self.assertEqual(make_event(venue=venue).map_address, venue.address)
+        addr = Address.objects.create(street="200 Elm St", city="Oil City", state="PA")
+        self.assertEqual(
+            make_event(location_name="Justus Park", location_address=addr).map_address, addr,
+        )
+        self.assertIsNone(make_event(is_virtual=True).map_address)
+
+
+class EventLocationMapRenderTest(TestCase):
+    def test_detail_shows_map_when_location_has_coordinates(self):
+        addr = Address.objects.create(
+            street="200 Elm St", city="Oil City", state="PA",
+            latitude=41.4347, longitude=-79.7088,
+        )
+        event = make_event(location_name="Justus Park", location_address=addr)
+        r = self.client.get(event.get_absolute_url())
+        self.assertContains(r, "location-map-embed")
+        # The partial's template comment must not leak as visible text
+        # (Django {# #} is single-line only; multi-line needs {% comment %}).
+        self.assertNotContains(r, "Reusable single-pin")
+
+    def test_detail_hides_map_without_coordinates(self):
+        addr = Address.objects.create(street="200 Elm St", city="Oil City", state="PA")
+        event = make_event(location_name="Justus Park", location_address=addr)
+        r = self.client.get(event.get_absolute_url())
+        self.assertNotContains(r, "location-map-embed")
+
 
 class EventLocationRenderTest(TestCase):
     def test_detail_shows_location_and_directions_when_address(self):

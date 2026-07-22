@@ -222,12 +222,16 @@ class Event(index.Indexed, models.Model):
         return ""
 
     @property
+    def map_address(self):
+        """The Address to plot / route to — the host venue's, or the
+        off-venue location. None for virtual or location-less events."""
+        return self.venue.address if self.venue else self.location_address
+
+    @property
     def directions_url(self):
-        """Directions to wherever the event is — the host venue's address
-        or the off-venue location — reusing Address.directions_url (which
-        prefers the accurate stored coordinates)."""
-        addr = self.venue.address if self.venue else self.location_address
-        return addr.directions_url if addr else ""
+        """Directions to wherever the event is, honoring the accurate
+        stored coordinates (see Address.directions_url)."""
+        return self.map_address.directions_url if self.map_address else ""
 
     def get_absolute_url(self):
         return reverse("events:detail", kwargs={"slug": self.slug})
