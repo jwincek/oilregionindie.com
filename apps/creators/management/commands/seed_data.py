@@ -846,6 +846,21 @@ class Command(BaseCommand):
                     "found a bug, have an idea for a feature, or just want to share your "
                     "experience — we'd love to hear from you.</p>"
                 )),
+                ("heading", "Where to Reach Us"),
+                ("paragraph", (
+                    "<p>This platform is built in the open on GitHub — that's the best "
+                    "place to talk to us:</p>"
+                    "<ul>"
+                    "<li><b><a href=\"https://github.com/jwincek/oilregionindie.com/issues\">GitHub Issues</a></b> — "
+                    "bug reports and feature requests. Our templates walk you through "
+                    "what to include.</li>"
+                    "<li><b><a href=\"https://github.com/jwincek/oilregionindie.com/discussions\">GitHub Discussions</a></b> — "
+                    "questions, ideas, and help running your own hub.</li>"
+                    "<li><b>Email</b> — prefer not to use GitHub? Write to "
+                    '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a> '
+                    "and we'll take it from there.</li>"
+                    "</ul>"
+                )),
                 ("heading", "Report a Bug"),
                 ("paragraph", (
                     "<p>Something not working right? Let us know:</p>"
@@ -862,34 +877,6 @@ class Command(BaseCommand):
                     "<ul>"
                     "<li><b>What you'd like</b> — describe the feature</li>"
                     "<li><b>Why it matters</b> — how would it help you or the community?</li>"
-                    "</ul>"
-                )),
-                ("heading", "How to Submit"),
-                ("paragraph", (
-                    "<p>You can reach us in two ways:</p>"
-                    "<ul>"
-                    "<li><b>GitHub Issues</b> — "
-                    '<a href="https://github.com/jwincek/oilregionindie.com/issues">open an issue</a> '
-                    "on our repository. Best for bug reports and detailed feature requests.</li>"
-                    "<li><b>GitHub Discussions</b> — "
-                    '<a href="https://github.com/jwincek/oilregionindie.com/discussions">start a discussion</a> '
-                    "for questions, ideas, and help running your own hub.</li>"
-                    "<li><b>Email</b> — send feedback to "
-                    '<a href="mailto:feedback@oilregionindie.com">feedback@oilregionindie.com</a></li>'
-                    "</ul>"
-                )),
-                ("heading", "Support the Project"),
-                ("paragraph", (
-                    "<p>The Oil Region Creative Hub is a volunteer-run, open-source project. "
-                    "Financial contributions help cover hosting, domain registration, and development time. "
-                    "Every contribution — no matter the size — makes a difference.</p>"
-                    "<ul>"
-                    "<li><b>Open Collective</b> — "
-                    '<a href="https://opencollective.com/oilregionindie">support us on Open Collective</a>. '
-                    "All contributions and spending are transparent.</li>"
-                    "<li><b>GitHub Sponsors</b> — "
-                    '<a href="https://github.com/sponsors/jwincek">sponsor on GitHub</a> '
-                    "if you prefer to support through the platform where the code lives.</li>"
                     "</ul>"
                 )),
                 ("paragraph", (
