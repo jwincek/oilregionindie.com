@@ -115,6 +115,19 @@ def map_view(request):
 
     markers = venue_markers + creator_markers + event_markers
 
+    # "Upcoming events" the visitor can actually find here: the off-venue
+    # pins above, plus events at a mapped venue (discoverable in that
+    # venue's popup — not double-counted, since those are venue__isnull=False
+    # and the pins are venue__isnull=True). Without the venue-hosted half,
+    # the count reads 0 while a venue clearly has an upcoming show.
+    venue_hosted_upcoming = Event.objects.filter(
+        is_published=True,
+        venue__isnull=False,
+        venue__address__latitude__isnull=False,
+        start_datetime__gte=now,
+    ).count()
+    event_count = len(event_markers) + venue_hosted_upcoming
+
     # Default center: Oil City, PA (or first marker)
     if markers:
         center_lat = sum(m["lat"] for m in markers) / len(markers)
@@ -128,5 +141,9 @@ def map_view(request):
         "center_lng": center_lng,
         "venue_count": len(venue_markers),
         "creator_count": len(creator_markers),
-        "event_count": len(event_markers),
+        "event_count": event_count,
+        # Off-venue event PINS specifically — the "Event (not at a listed
+        # venue)" legend keys off this, not the broader event_count (which
+        # also includes venue-hosted events shown inside venue popups).
+        "event_pin_count": len(event_markers),
     })
