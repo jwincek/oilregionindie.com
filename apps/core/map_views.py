@@ -67,6 +67,7 @@ def map_view(request):
             "venue_type": venue.get_venue_type_display(),
             "city": venue.city,
             "url": venue.get_absolute_url(),
+            "directions": venue.address.directions_url,
             "upcoming_events": upcoming_by_venue.get(venue.pk, [])[:UPCOMING_EVENTS_PER_VENUE],
         })
 
@@ -111,6 +112,7 @@ def map_view(request):
             "location_name": event.location_name,
             "status": event.status,
             "url": event.get_absolute_url(),
+            "directions": event.location_address.directions_url,
         })
 
     markers = venue_markers + creator_markers + event_markers

@@ -37,7 +37,13 @@
                 {{ venue.name }}
                 {% if venue|is_demo %}{% demo_badge %}{% endif %}
             </h1>
-            <p class="text-ink-500 mt-1">{{ venue.full_address }}</p>
+            <p class="text-ink-500 mt-1">
+                {{ venue.full_address }}
+                {% if venue.address.directions_url %}
+                <a href="{{ venue.address.directions_url }}" target="_blank" rel="noopener"
+                   class="text-sm text-brand-600 hover:underline ml-1 whitespace-nowrap">Get directions</a>
+                {% endif %}
+            </p>
             {% if venue.capacity %}
             <p class="text-sm text-ink-400 mt-1">Capacity: {{ venue.capacity }}</p>
             {% endif %}

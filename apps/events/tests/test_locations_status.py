@@ -65,7 +65,7 @@ class EventLocationFormTest(TestCase):
         self.assertIsNotNone(event.location_address)
         self.assertEqual(event.location_address.city, "Oil City")
         self.assertIn("Justus", event.location_display)
-        self.assertIn("google.com/maps", event.location_directions_url)
+        self.assertIn("google.com/maps", event.directions_url)
 
 
 class EventLocationModelTest(TestCase):
@@ -81,7 +81,15 @@ class EventLocationModelTest(TestCase):
 
     def test_directions_url_empty_without_address(self):
         event = make_event(location_name="Secret House Show")
-        self.assertEqual(event.location_directions_url, "")
+        self.assertEqual(event.directions_url, "")
+
+    def test_directions_url_uses_venue_address_for_venue_events(self):
+        venue = make_venue(user=make_user())
+        venue.address.latitude, venue.address.longitude = 41.4347, -79.7088
+        venue.address.save()
+        event = make_event(venue=venue)
+        self.assertEqual(event.directions_url, venue.address.directions_url)
+        self.assertIn("41.4347", event.directions_url)
 
 
 class EventLocationRenderTest(TestCase):

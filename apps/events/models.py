@@ -222,14 +222,12 @@ class Event(index.Indexed, models.Model):
         return ""
 
     @property
-    def location_directions_url(self):
-        if not self.location_address:
-            return ""
-        from urllib.parse import quote_plus
-        return (
-            "https://www.google.com/maps/search/?api=1&query="
-            + quote_plus(str(self.location_address))
-        )
+    def directions_url(self):
+        """Directions to wherever the event is — the host venue's address
+        or the off-venue location — reusing Address.directions_url (which
+        prefers the accurate stored coordinates)."""
+        addr = self.venue.address if self.venue else self.location_address
+        return addr.directions_url if addr else ""
 
     def get_absolute_url(self):
         return reverse("events:detail", kwargs={"slug": self.slug})
