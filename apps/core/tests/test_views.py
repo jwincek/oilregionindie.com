@@ -677,21 +677,13 @@ class GeocodeSearchEndpointTest(TestCase):
         r = self.client.get(self.url(), {"q": "Lyric Theatre"})
         self.assertEqual(r.status_code, 302)
 
-    def test_non_staff_is_redirected(self):
-        self.client.force_login(make_user())
-        r = self.client.get(self.url(), {"q": "Lyric Theatre"})
-        self.assertEqual(r.status_code, 302)  # staff_member_required bounces to admin login
-
     @mock.patch("apps.core.geocoding.httpx.get")
-    def test_staff_gets_poi_candidates_as_json(self, mock_get):
+    def test_logged_in_user_gets_poi_candidates_as_json(self, mock_get):
         mock_get.return_value = mock.Mock(json=mock.Mock(return_value=[
             {"lat": "41.4347", "lon": "-79.7088", "display_name": "Lyric Theatre, 216, Seneca Street",
              "class": "amenity", "type": "theatre"},
         ]))
-        staff = make_user()
-        staff.is_staff = True
-        staff.save()
-        self.client.force_login(staff)
+        self.client.force_login(make_user())
         r = self.client.get(self.url(), {"q": "Lyric Theatre, Oil City, PA"})
         self.assertEqual(r.status_code, 200)
         data = r.json()

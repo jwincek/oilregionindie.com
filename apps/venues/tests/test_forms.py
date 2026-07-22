@@ -175,3 +175,33 @@ class VenueProfileFormTest(TestCase):
 
         venue.address.refresh_from_db()
         self.assertTrue(venue.address.has_coordinates)
+
+    def test_map_pin_writes_manual_coordinates_to_address(self):
+        """The owner picker's hidden pin fields persist to the Address and
+        flag it manual so the daily geocoder won't overwrite the placement."""
+        venue = make_venue(name="Pinned Venue", street="210 Seneca St")
+        form = VenueProfileForm(
+            data=form_data(name="Pinned Venue", street="210 Seneca St",
+                           pin_lat="41.434679", pin_lng="-79.708827", pin_manual="true"),
+            instance=venue,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        venue.address.refresh_from_db()
+        self.assertEqual(float(venue.address.latitude), 41.434679)
+        self.assertTrue(venue.address.coordinates_manual)
+
+    def test_map_pin_survives_a_simultaneous_street_edit(self):
+        """Placing a pin AND editing the street in the same save keeps the
+        pin — the manual flag beats the clear-on-edit rule."""
+        venue = make_venue(name="Moved Venue", street="210 Seneca St")
+        form = VenueProfileForm(
+            data=form_data(name="Moved Venue", street="212 Seneca St",
+                           pin_lat="41.434679", pin_lng="-79.708827", pin_manual="true"),
+            instance=venue,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        venue.address.refresh_from_db()
+        self.assertTrue(venue.address.has_coordinates)
+        self.assertEqual(float(venue.address.latitude), 41.434679)

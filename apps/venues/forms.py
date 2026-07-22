@@ -32,6 +32,12 @@ class VenueProfileForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={"class": "form-input"}),
     )
+    # Map picker output — the owner drops/drags a pin (POI-aware search in
+    # the template). Hidden; written by the picker JS. When pin_manual is
+    # set, these coordinates override geocoding and stick.
+    pin_lat = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
+    pin_lng = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
+    pin_manual = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = VenueProfile
@@ -63,6 +69,10 @@ class VenueProfileForm(forms.ModelForm):
             self.fields["address_city"].initial = addr.city
             self.fields["address_state"].initial = addr.state
             self.fields["zip_code"].initial = addr.zip_code
+            # Show the existing pin in the picker.
+            self.fields["pin_lat"].initial = addr.latitude
+            self.fields["pin_lng"].initial = addr.longitude
+            self.fields["pin_manual"].initial = addr.coordinates_manual
         elif self.instance and self.instance.pk:
             # Fallback to legacy city/state fields
             self.fields["address_city"].initial = self.instance.city
@@ -77,18 +87,28 @@ class VenueProfileForm(forms.ModelForm):
         street = self.cleaned_data.get("street", "")
         zip_code = self.cleaned_data.get("zip_code", "")
 
+        pin_lat = self.cleaned_data.get("pin_lat")
+        pin_lng = self.cleaned_data.get("pin_lng")
+        pin_manual = self.cleaned_data.get("pin_manual")
+
         if venue.address:
             addr = venue.address
             addr.street = street
             addr.city = city
             addr.state = state
             addr.zip_code = zip_code
-            addr.save()
         else:
-            addr = Address.objects.create(
-                street=street, city=city, state=state, zip_code=zip_code
-            )
-            venue.address = addr
+            addr = Address(street=street, city=city, state=state, zip_code=zip_code)
+
+        # A hand-placed pin wins: set the coordinates and the manual flag
+        # together so Address.save() keeps them (its clear-on-edit rule
+        # skips manual pins) and the daily geocoder never overwrites them.
+        if pin_manual and pin_lat is not None and pin_lng is not None:
+            addr.latitude = pin_lat
+            addr.longitude = pin_lng
+            addr.coordinates_manual = True
+        addr.save()
+        venue.address = addr
 
         # Keep legacy city/state in sync for queries
         venue.city = city
