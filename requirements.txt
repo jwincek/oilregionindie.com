@@ -1,6 +1,8 @@
-# Core — Django 5.2 LTS (security support through April 2028).
+# Core — both pinned to LTS lines so deployers can pin and forget:
+# Django 5.2 LTS (security support through April 2028),
+# Wagtail 7.4 LTS (security support through November 2027).
 Django>=5.2,<5.3
-wagtail>=7.3,<7.4
+wagtail>=7.4,<7.5
 Pillow>=12.3.0
 
 # Authentication

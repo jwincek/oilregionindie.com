@@ -61,7 +61,7 @@ oilregion-hub/
 | Component | Technology |
 |-----------|-----------|
 | Backend | Python 3.13, Django 5.2 LTS |
-| CMS | Wagtail 7.3.x |
+| CMS | Wagtail 7.4 LTS |
 | Frontend | HTMX + Alpine.js + Tailwind CSS (CDN) |
 | Database | PostgreSQL (SQLite for dev) |
 | Payments | Stripe Connect Express |
