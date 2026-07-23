@@ -1,0 +1,23 @@
+<div id="rsvp-widget" class="flex flex-wrap items-center gap-3">
+    {% if user.is_authenticated %}
+    <div class="flex gap-2">
+        <button hx-post="{% url 'events:rsvp' slug=event.slug %}" hx-vals='{"status": "going"}'
+                hx-target="#rsvp-widget" hx-swap="outerHTML"
+                class="text-sm px-4 py-2 rounded-md border transition
+                       {% if my_rsvp == 'going' %}bg-brand-600 text-white border-brand-600 hover:bg-brand-700{% else %}text-ink-600 border-ink-200 hover:border-brand-300 hover:text-brand-600{% endif %}">
+            {% if my_rsvp == 'going' %}✓ Going{% else %}Going{% endif %}
+        </button>
+        <button hx-post="{% url 'events:rsvp' slug=event.slug %}" hx-vals='{"status": "interested"}'
+                hx-target="#rsvp-widget" hx-swap="outerHTML"
+                class="text-sm px-4 py-2 rounded-md border transition
+                       {% if my_rsvp == 'interested' %}bg-brand-100 text-brand-700 border-brand-300{% else %}text-ink-600 border-ink-200 hover:border-brand-300 hover:text-brand-600{% endif %}">
+            {% if my_rsvp == 'interested' %}✓ Interested{% else %}Interested{% endif %}
+        </button>
+    </div>
+    {% endif %}
+    <p class="text-sm text-ink-500">
+        <span class="font-medium text-ink-700">{{ going_count }}</span> going
+        &middot;
+        <span class="font-medium text-ink-700">{{ interested_count }}</span> interested
+    </p>
+</div>

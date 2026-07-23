@@ -12,7 +12,9 @@ from .forms import (
     BookingFeedbackForm, BookingRequestForm, BookingResponseForm,
     EndorsementForm, EventForm, EventSlotForm,
 )
-from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSlot
+from .models import (
+    BookingFeedback, BookingRequest, Endorsement, Event, EventRSVP, EventSlot,
+)
 
 
 @require_GET
@@ -88,7 +90,51 @@ def detail(request, slug):
         slug=slug,
         is_published=True,
     )
-    return render(request, "events/detail.html", {"event": event})
+    return render(request, "events/detail.html", {
+        "event": event,
+        **_rsvp_context(event, request.user),
+    })
+
+
+def _rsvp_context(event, user):
+    """Public RSVP counts for an event, plus the viewer's own RSVP status."""
+    rsvps = list(event.rsvps.all())
+    my_rsvp = None
+    if user.is_authenticated:
+        my_rsvp = next((r.status for r in rsvps if r.user_id == user.pk), None)
+    return {
+        "going_count": sum(1 for r in rsvps if r.status == EventRSVP.Status.GOING),
+        "interested_count": sum(
+            1 for r in rsvps if r.status == EventRSVP.Status.INTERESTED
+        ),
+        "my_rsvp": my_rsvp,
+    }
+
+
+@login_required
+@require_POST
+def rsvp(request, slug):
+    """Toggle the current user's RSVP to an event. Clicking the status you
+    already hold clears it; a different status switches to it."""
+    event = get_object_or_404(Event, slug=slug, is_published=True)
+    status = request.POST.get("status")
+    if status not in (EventRSVP.Status.GOING, EventRSVP.Status.INTERESTED):
+        raise Http404
+
+    existing = EventRSVP.objects.filter(event=event, user=request.user).first()
+    if existing and existing.status == status:
+        existing.delete()
+    else:
+        EventRSVP.objects.update_or_create(
+            event=event, user=request.user, defaults={"status": status}
+        )
+
+    if request.htmx:
+        return render(
+            request, "events/_rsvp_button.html",
+            {"event": event, **_rsvp_context(event, request.user)},
+        )
+    return redirect(event.get_absolute_url())
 
 
 @require_GET

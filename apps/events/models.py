@@ -552,3 +552,42 @@ class Endorsement(models.Model):
     @property
     def is_from_venue(self):
         return self.author == self.venue.user
+
+
+class EventRSVP(models.Model):
+    """
+    A fan's RSVP to an event — the event-level demand signal the app
+    otherwise lacks (issue #85). Doubles as the attribution basis for
+    "the festival drove this crowd" and as the precise audience for
+    event-change notifications (people who said they'd go get told when
+    it moves or cancels).
+    """
+
+    class Status(models.TextChoices):
+        GOING = "going", "Going"
+        INTERESTED = "interested", "Interested"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event = models.ForeignKey(
+        Event, on_delete=models.CASCADE, related_name="rsvps"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="event_rsvps",
+    )
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.GOING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["event", "user"], name="unique_rsvp_per_user_event"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user} — {self.get_status_display()} — {self.event.title}"

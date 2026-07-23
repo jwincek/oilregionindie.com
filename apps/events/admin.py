@@ -1,7 +1,10 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import BookingFeedback, BookingRequest, Endorsement, Event, EventSeries, EventSlot
+from .models import (
+    BookingFeedback, BookingRequest, Endorsement, Event, EventRSVP,
+    EventSeries, EventSlot,
+)
 
 
 class SeriesEventInline(admin.TabularInline):
@@ -85,3 +88,11 @@ class EndorsementAdmin(admin.ModelAdmin):
     list_filter = ["created_at"]
     search_fields = ["body", "creator__display_name", "venue__name"]
     readonly_fields = ["creator", "venue", "author", "created_at"]
+
+
+@admin.register(EventRSVP)
+class EventRSVPAdmin(admin.ModelAdmin):
+    list_display = ["event", "user", "status", "created_at"]
+    list_filter = ["status", "created_at"]
+    search_fields = ["event__title", "user__email"]
+    readonly_fields = ["event", "user", "created_at", "updated_at"]

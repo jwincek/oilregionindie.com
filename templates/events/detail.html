@@ -98,6 +98,11 @@
                 </div>
             </div>
 
+            <!-- RSVP -->
+            <div class="mt-6">
+                {% include "events/_rsvp_button.html" %}
+            </div>
+
             <!-- Location map -->
             {% if event.map_address.has_coordinates %}
             <div class="mt-6">
