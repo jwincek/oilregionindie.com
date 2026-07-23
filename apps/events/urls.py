@@ -26,6 +26,7 @@ urlpatterns = [
     # Events (slug-based — must be last)
     path("<slug:slug>/", views.detail, name="detail"),
     path("<slug:slug>/edit/", views.edit, name="edit"),
+    path("<slug:slug>/rsvp/", views.rsvp, name="rsvp"),
     # Lineup management (HTMX)
     path("<slug:slug>/lineup/", views.lineup, name="lineup"),
     path("<slug:slug>/lineup/add/", views.add_slot, name="add_slot"),

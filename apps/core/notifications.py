@@ -186,17 +186,28 @@ def _event_follower_profiles(event):
     return profiles
 
 
+def _event_notify_users(event):
+    """
+    Users to notify when an event changes: followers of the organizing
+    profiles, plus anyone who RSVP'd to this specific event (issue #85).
+    Deduped — a follower who also RSVP'd is notified once.
+    """
+    users = {p.user for p in _event_follower_profiles(event)}
+    users.update(r.user for r in event.rsvps.select_related("user"))
+    return users
+
+
 def notify_event_status_changed(event):
     """
-    In-app notification to followers of the organizing profiles when an
-    event is cancelled or postponed (issue #20).
+    In-app notification to followers and RSVPs when an event is
+    cancelled or postponed (issues #20, #85).
     """
     from .models import Notification
 
     label = event.get_status_display().lower()
-    for profile in _event_follower_profiles(event):
+    for user in _event_notify_users(event):
         Notification.objects.create(
-            recipient=profile.user,
+            recipient=user,
             notification_type=Notification.NotificationType.EVENT,
             message=f'"{event.title}" has been {label}',
             url=event.get_absolute_url(),
@@ -205,14 +216,14 @@ def notify_event_status_changed(event):
 
 def notify_event_relocated(event, old_location):
     """
-    In-app notification to followers when an event moves (issue #44) —
-    the rain-out that relocates rather than cancels.
+    In-app notification to followers and RSVPs when an event moves
+    (issues #44, #85) — the rain-out that relocates rather than cancels.
     """
     from .models import Notification
 
-    for profile in _event_follower_profiles(event):
+    for user in _event_notify_users(event):
         Notification.objects.create(
-            recipient=profile.user,
+            recipient=user,
             notification_type=Notification.NotificationType.EVENT,
             message=(
                 f'"{event.title}" has moved to {event.location_display} '
