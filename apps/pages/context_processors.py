@@ -8,6 +8,9 @@ def site_settings(request):
     ctx = {
         "site_branding": branding,
         "SITE_NAME": branding.site_name or getattr(settings, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub"),
+        # Canonical absolute base (no trailing slash) for OpenGraph image
+        # URLs — matches apps.core.seo.site_url so OG and JSON-LD agree.
+        "CANONICAL_BASE_URL": getattr(settings, "WAGTAILADMIN_BASE_URL", "").rstrip("/"),
         "STRIPE_PUBLIC_KEY": getattr(settings, "STRIPE_PUBLIC_KEY", ""),
         "SOFT_LAUNCH": getattr(settings, "SOFT_LAUNCH", False),
         "FEATURE_COMMERCE": getattr(settings, "FEATURE_COMMERCE", True),

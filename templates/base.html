@@ -16,7 +16,7 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% block og_title %}{{ SITE_NAME }}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}A community platform for independent musicians, visual artists, makers, venues, and fans.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}/static/og-image.png{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ CANONICAL_BASE_URL }}/static/og-image.png{% endblock %}">
     <meta property="og:site_name" content="{{ SITE_NAME }}">
     <link rel="alternate" type="application/rss+xml" title="Upcoming Events" href="/feeds/events/">
     <link rel="alternate" type="application/rss+xml" title="Blog" href="/feeds/blog/">
@@ -110,6 +110,7 @@
     <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
 
     {% block extra_head %}{% endblock %}
+    {% block structured_data %}{% endblock %}
 
     <style>
         /* Responsive embed containers */

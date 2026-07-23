@@ -1,8 +1,12 @@
 {% extends "base.html" %}
-{% load embed_tags demo_tags initials banner %}
+{% load embed_tags demo_tags initials banner seo %}
 
 {% block title %}{{ creator.display_name }} — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{{ creator.display_name }} — {{ creator.discipline_list }}. {{ creator.location }}{% endblock %}
+{% block og_title %}{{ creator.display_name }}{% endblock %}
+{% block og_description %}{{ creator.discipline_list }}{% if creator.location %} · {{ creator.location }}{% endif %}{% endblock %}
+{% block og_image %}{% if creator.profile_image %}{{ CANONICAL_BASE_URL }}{{ creator.profile_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block structured_data %}{% structured_data_script creator %}{% endblock %}
 
 {% block content %}
 {% if is_preview %}

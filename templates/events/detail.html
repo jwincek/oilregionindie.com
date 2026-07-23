@@ -1,7 +1,12 @@
 {% extends "base.html" %}
-{% load demo_tags initials %}
+{% load demo_tags initials seo %}
 
 {% block title %}{{ event.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ event.title }} — {{ event.start_datetime|date:"F j, Y" }}{% if event.location_display %} at {{ event.location_display }}{% endif %}{% endblock %}
+{% block og_title %}{{ event.title }}{% endblock %}
+{% block og_description %}{{ event.start_datetime|date:"F j, Y" }}{% if event.location_display %} at {{ event.location_display }}{% endif %}{% endblock %}
+{% block og_image %}{% if event.poster_image %}{{ CANONICAL_BASE_URL }}{{ event.poster_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block structured_data %}{% structured_data_script event %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
