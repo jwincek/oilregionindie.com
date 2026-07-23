@@ -406,6 +406,14 @@ def report_content(request):
         msg.error(request, "Please provide a reason for your report.")
         return redirect(content_url or "/")
 
+    from datetime import timedelta
+    from apps.core.throttle import effective_limit, too_many_recent
+    if too_many_recent(Report, timedelta(hours=1),
+                       effective_limit(request.user, 10, 5),
+                       reporter=request.user):
+        msg.error(request, "You've submitted several reports recently. Please wait before submitting more.")
+        return redirect(content_url or "/")
+
     Report.objects.create(
         reporter=request.user,
         content_type=content_type,

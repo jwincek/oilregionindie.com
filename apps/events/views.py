@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -7,6 +9,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.notifications import notify_booking_status_changed
+from apps.core.throttle import effective_limit, too_many_recent
 
 from .forms import (
     BookingFeedbackForm, BookingRequestForm, BookingResponseForm,
@@ -587,6 +590,11 @@ def booking_create(request, direction, profile_slug):
     if request.method == "POST":
         form = BookingRequestForm(request.POST)
         if form.is_valid():
+            if too_many_recent(BookingRequest, timedelta(hours=1),
+                               effective_limit(request.user, 10, 3),
+                               initiated_by=request.user):
+                messages.error(request, "You've sent a lot of booking requests recently. Please wait a bit before sending more.")
+                return redirect("events:booking_inbox")
             booking = form.save(commit=False)
             booking.creator = creator
             booking.venue = venue

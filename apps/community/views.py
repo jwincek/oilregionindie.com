@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
@@ -5,9 +7,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.models import Notification
+from apps.core.throttle import effective_limit, is_duplicate, too_many_recent
 
 from .forms import CommunityPostForm, ReplyForm
 from .models import CommunityPost, Tag
+
+# Feed-spam guards (issue #86). New accounts get the stricter cap.
+POST_WINDOW = timedelta(minutes=5)
+POST_LIMIT, POST_LIMIT_NEW = 5, 2
+REPLY_LIMIT, REPLY_LIMIT_NEW = 10, 3
+DUP_WINDOW = timedelta(minutes=30)
 
 
 @require_GET
@@ -73,6 +82,16 @@ def create(request):
     if request.method == "POST":
         form = CommunityPostForm(request.POST)
         if form.is_valid():
+            body = form.cleaned_data["body"]
+            limit = effective_limit(request.user, POST_LIMIT, POST_LIMIT_NEW)
+            if too_many_recent(CommunityPost, POST_WINDOW, limit,
+                               author=request.user, parent__isnull=True):
+                messages.error(request, "You're posting too quickly — take a short break and try again.")
+                return render(request, "community/post_form.html", {"form": form})
+            if is_duplicate(CommunityPost, DUP_WINDOW, author=request.user,
+                            parent__isnull=True, body=body):
+                messages.error(request, "That's a duplicate of something you just posted.")
+                return render(request, "community/post_form.html", {"form": form})
             post = form.save(commit=False)
             post.author = request.user
             post.save()
@@ -131,6 +150,16 @@ def reply(request, pk):
 
     form = ReplyForm(request.POST)
     if form.is_valid():
+        body = form.cleaned_data["body"]
+        limit = effective_limit(request.user, REPLY_LIMIT, REPLY_LIMIT_NEW)
+        if too_many_recent(CommunityPost, POST_WINDOW, limit,
+                           author=request.user, parent__isnull=False):
+            messages.error(request, "You're replying too quickly — take a short break and try again.")
+            return redirect("community:detail", pk=parent.pk)
+        if is_duplicate(CommunityPost, DUP_WINDOW, author=request.user,
+                        parent=parent, body=body):
+            messages.error(request, "You already posted that reply.")
+            return redirect("community:detail", pk=parent.pk)
         reply_post = form.save(commit=False)
         reply_post.author = request.user
         reply_post.parent = parent
