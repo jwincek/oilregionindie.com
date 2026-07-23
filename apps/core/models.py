@@ -27,6 +27,7 @@ class SocialPlatform(models.TextChoices):
     THREADS = "threads", "Threads"
     TWITTER_X = "twitter_x", "X / Twitter"
     LINKEDIN = "linkedin", "LinkedIn"
+    GOOGLE_BUSINESS = "google_business", "Google Business"
     OTHER = "other", "Other"
 
 
