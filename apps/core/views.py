@@ -7,7 +7,9 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .blocks import is_blocked_between
 from .forms import ProfileAvailabilityForm
-from .models import Notification, ProfileAvailability, Report, UserProfile
+from .models import (
+    ModerationEvent, Notification, ProfileAvailability, Report, UserProfile,
+)
 
 
 def suspended(request):
@@ -108,9 +110,17 @@ def _toggle_block(request, owner):
     profile = request.user.profile
     if profile.blocked_users.filter(pk=owner.pk).exists():
         profile.blocked_users.remove(owner)
+        ModerationEvent.log(
+            ModerationEvent.EventType.USER_UNBLOCKED,
+            actor=request.user, target=owner.get_username(),
+        )
         return False
     profile.blocked_users.add(owner)
     _sever_follows(request.user, owner)
+    ModerationEvent.log(
+        ModerationEvent.EventType.USER_BLOCKED,
+        actor=request.user, target=owner.get_username(),
+    )
     return True
 
 
@@ -493,6 +503,11 @@ def report_content(request):
         content_url=content_url,
         reason=reason,
     )
+    ModerationEvent.log(
+        ModerationEvent.EventType.REPORT_FILED,
+        actor=request.user, target=f"{content_type}:{content_id}",
+        detail=reason[:500],
+    )
 
     # Notify admins
     from apps.core.notifications import notify_admin_profile_submitted
@@ -629,6 +644,10 @@ def request_removal(request, profile_type, slug):
         content_id=slug,
         content_url=url,
         reason=f"[REMOVAL REQUEST] {profile_type}: {name}\n\n{reason}\n\nFrom: {sender}",
+    )
+    ModerationEvent.log(
+        ModerationEvent.EventType.REMOVAL_REQUESTED,
+        actor=request.user, target=f"{profile_type}:{slug}", detail=reason[:500],
     )
 
     from django.conf import settings as conf
