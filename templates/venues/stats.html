@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Engagement — {{ venue.name }} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-ink-800">Engagement</h1>
+            <p class="text-sm text-ink-500 mt-1">{{ venue.name }}</p>
+        </div>
+        <a href="{% url 'venues:edit' venue.slug %}" class="text-sm text-brand-600 hover:underline">&larr; Edit Venue</a>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-ink-800">{{ profile_views_30d }}</p>
+            <p class="text-sm text-ink-500 mt-1">Venue views (30d)</p>
+            <p class="text-xs text-ink-400">{{ profile_views_all }} all-time</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-ink-800">{{ event_views_30d }}</p>
+            <p class="text-sm text-ink-500 mt-1">Event views (30d)</p>
+            <p class="text-xs text-ink-400">{{ event_views_all }} all-time</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-brand-600">{{ total_going }}</p>
+            <p class="text-sm text-ink-500 mt-1">Going</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-3xl font-bold text-brand-500">{{ total_interested }}</p>
+            <p class="text-sm text-ink-500 mt-1">Interested</p>
+        </div>
+    </div>
+
+    <!-- Per-event breakdown -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="font-semibold text-ink-800 mb-1">By event</h2>
+        <p class="text-sm text-ink-500 mb-4">How much attention the hub drove to each of your events — useful for showing what a festival day brought in.</p>
+        {% if rows %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-ink-400 border-b border-ink-100">
+                        <th class="py-2 pr-4 font-medium">Event</th>
+                        <th class="py-2 px-3 font-medium text-right">Views</th>
+                        <th class="py-2 px-3 font-medium text-right">Going</th>
+                        <th class="py-2 pl-3 font-medium text-right">Interested</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr class="border-b border-ink-50 last:border-0">
+                        <td class="py-2 pr-4">
+                            <a href="{{ row.event.get_absolute_url }}" class="text-brand-600 hover:underline">{{ row.event.title }}</a>
+                            <span class="block text-xs text-ink-400">{{ row.event.start_datetime|date:"M j, Y" }}</span>
+                        </td>
+                        <td class="py-2 px-3 text-right text-ink-700">{{ row.views }}</td>
+                        <td class="py-2 px-3 text-right text-ink-700">{{ row.going }}</td>
+                        <td class="py-2 pl-3 text-right text-ink-700">{{ row.interested }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-ink-400 text-center py-8">No events yet. Engagement will appear here once you have events with views and RSVPs.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

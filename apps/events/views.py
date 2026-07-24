@@ -18,6 +18,7 @@ from .forms import (
 )
 from .models import (
     BookingFeedback, BookingRequest, Endorsement, Event, EventRSVP, EventSlot,
+    EventView,
 )
 
 
@@ -94,6 +95,9 @@ def detail(request, slug):
         slug=slug,
         is_published=True,
     )
+    # Track the view — don't count the organizer viewing their own event.
+    if not request.user.is_authenticated or request.user != event.created_by:
+        EventView.record_view(event)
     return render(request, "events/detail.html", {
         "event": event,
         **_rsvp_context(event, request.user),
