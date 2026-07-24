@@ -107,7 +107,7 @@ class CreatorProfileAdmin(SimpleHistoryAdmin):
     filter_horizontal = ["disciplines", "genres", "skills", "managers"]
     inlines = [CreatorAvailabilityInline, SocialLinkInline, MediaItemInline, MemberInline, MembershipInline]
     readonly_fields = ["stripe_account_id", "stripe_onboarded", "submitted_at"]
-    actions = ["approve_profiles", "adopt_guest_memberships"]
+    actions = ["approve_profiles", "adopt_guest_memberships", "suppress_profiles"]
 
     @admin.display(boolean=True, description="Claimed")
     def claimed(self, obj):
@@ -152,6 +152,11 @@ class CreatorProfileAdmin(SimpleHistoryAdmin):
             notify_profile_approved(profile)
             count += 1
         self.message_user(request, f"Approved {count} profile(s).")
+
+    @admin.action(description="Suppress selected profiles (hide after removal request)")
+    def suppress_profiles(self, request, queryset):
+        count = queryset.update(publish_status="suppressed")
+        self.message_user(request, f"Suppressed {count} profile(s). Set back to Published to restore.")
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

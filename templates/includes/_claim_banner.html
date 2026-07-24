@@ -3,6 +3,8 @@
     <p class="text-sm text-ink-700">
         <span class="font-medium">Is this you?</span>
         This listing for {{ profile_name }} was added by the hub team and isn't managed by its subject yet.
+        <a href="{% url 'request_removal' profile_type=profile_type slug=profile_slug %}"
+           class="text-ink-500 underline hover:text-red-600 ml-1 whitespace-nowrap">Shouldn't be here?</a>
     </p>
     {% if request.user.is_authenticated %}
     <form method="post" action="{% url 'request_claim' profile_type=profile_type slug=profile_slug %}">
