@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.blocks import is_blocked_between
 from apps.core.notifications import notify_booking_status_changed
 from apps.core.throttle import effective_limit, too_many_recent
 
@@ -590,6 +591,14 @@ def booking_create(request, direction, profile_slug):
     if request.method == "POST":
         form = BookingRequestForm(request.POST)
         if form.is_valid():
+            target_owner = (
+                venue.user
+                if booking_direction == BookingRequest.Direction.CREATOR_TO_VENUE
+                else creator.user
+            )
+            if is_blocked_between(request.user, target_owner):
+                messages.error(request, "You can't send a booking request to this account.")
+                return redirect("events:booking_inbox")
             if too_many_recent(BookingRequest, timedelta(hours=1),
                                effective_limit(request.user, 10, 3),
                                initiated_by=request.user):

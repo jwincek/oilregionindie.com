@@ -195,6 +195,12 @@ def detail(request, slug):
         and hasattr(request.user, "profile")
         and request.user.profile.followed_creators.filter(pk=creator.pk).exists()
     )
+    is_blocked = (
+        request.user.is_authenticated
+        and creator.user is not None
+        and request.user != creator.user
+        and request.user.profile.has_blocked(creator.user)
+    )
 
     # Track profile view (don't count owner viewing own profile)
     if creator.is_published and (not request.user.is_authenticated or request.user != creator.user):
@@ -226,6 +232,7 @@ def detail(request, slug):
         "creator": creator,
         "is_preview": not creator.is_published,
         "is_following": is_following,
+        "is_blocked": is_blocked,
         "upcoming_events": upcoming_events,
         "is_accepting_bookings": is_accepting_bookings,
         "similar_creators": similar_creators,

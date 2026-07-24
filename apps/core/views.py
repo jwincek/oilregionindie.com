@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
+from .blocks import is_blocked_between
 from .forms import ProfileAvailabilityForm
 from .models import Notification, ProfileAvailability, Report, UserProfile
 
@@ -35,6 +36,8 @@ def follow_creator(request, slug):
     """Follow or unfollow a creator profile."""
     from apps.creators.models import CreatorProfile
     creator = get_object_or_404(CreatorProfile, slug=slug, publish_status="published")
+    if creator.user and is_blocked_between(request.user, creator.user):
+        return redirect(creator.get_absolute_url())
     profile = request.user.profile
 
     if profile.followed_creators.filter(pk=creator.pk).exists():
@@ -67,6 +70,8 @@ def follow_venue(request, slug):
     """Follow or unfollow a venue profile."""
     from apps.venues.models import VenueProfile
     venue = get_object_or_404(VenueProfile, slug=slug, publish_status="published")
+    if venue.user and is_blocked_between(request.user, venue.user):
+        return redirect(venue.get_absolute_url())
     profile = request.user.profile
 
     if profile.followed_venues.filter(pk=venue.pk).exists():
@@ -88,6 +93,73 @@ def follow_venue(request, slug):
             "target": venue,
             "following": following,
             "follow_url_name": "follow_venue",
+        })
+    return redirect(venue.get_absolute_url())
+
+
+# ---------------------------------------------------------------------------
+# Blocking (issue #89)
+# ---------------------------------------------------------------------------
+
+
+def _toggle_block(request, owner):
+    """Block or unblock a target user; returns True if now blocked. Blocking
+    also drops any follow edges between the two so the block takes hold."""
+    profile = request.user.profile
+    if profile.blocked_users.filter(pk=owner.pk).exists():
+        profile.blocked_users.remove(owner)
+        return False
+    profile.blocked_users.add(owner)
+    _sever_follows(request.user, owner)
+    return True
+
+
+def _sever_follows(user_a, user_b):
+    """Remove any follow relationships between two users, both directions."""
+    from apps.creators.models import CreatorProfile
+    from apps.venues.models import VenueProfile
+
+    a, b = user_a.profile, user_b.profile
+    a_creators = CreatorProfile.objects.filter(user=user_a)
+    a_venues = VenueProfile.objects.filter(user=user_a)
+    b_creators = CreatorProfile.objects.filter(user=user_b)
+    b_venues = VenueProfile.objects.filter(user=user_b)
+    a.followed_creators.remove(*b_creators)
+    a.followed_venues.remove(*b_venues)
+    b.followed_creators.remove(*a_creators)
+    b.followed_venues.remove(*a_venues)
+
+
+@login_required
+@require_POST
+def block_creator(request, slug):
+    """Block or unblock the owner of a creator profile."""
+    from apps.creators.models import CreatorProfile
+    creator = get_object_or_404(CreatorProfile, slug=slug, publish_status="published")
+    if not creator.user or creator.user == request.user:
+        from django.http import Http404
+        raise Http404
+    blocked = _toggle_block(request, creator.user)
+    if request.htmx:
+        return render(request, "includes/_block_button.html", {
+            "target": creator, "blocked": blocked, "block_url_name": "block_creator",
+        })
+    return redirect(creator.get_absolute_url())
+
+
+@login_required
+@require_POST
+def block_venue(request, slug):
+    """Block or unblock the owner of a venue profile."""
+    from apps.venues.models import VenueProfile
+    venue = get_object_or_404(VenueProfile, slug=slug, publish_status="published")
+    if not venue.user or venue.user == request.user:
+        from django.http import Http404
+        raise Http404
+    blocked = _toggle_block(request, venue.user)
+    if request.htmx:
+        return render(request, "includes/_block_button.html", {
+            "target": venue, "blocked": blocked, "block_url_name": "block_venue",
         })
     return redirect(venue.get_absolute_url())
 

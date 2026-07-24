@@ -289,6 +289,12 @@ class UserProfile(models.Model):
         "venues.VenueProfile", blank=True, related_name="followers"
     )
 
+    # Blocking (issue #89): self-service safety. A block severs contact in
+    # both directions — see apps.core.blocks.is_blocked_between.
+    blocked_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="blocked_by",
+    )
+
     # Moderation
     is_suspended = models.BooleanField(
         default=False,
@@ -322,6 +328,10 @@ class UserProfile(models.Model):
         if self.user.email:
             return self.user.email.split("@")[0]
         return f"User {self.user.pk}"
+
+    def has_blocked(self, user):
+        """True if this profile's owner has blocked the given user."""
+        return bool(user) and self.blocked_users.filter(pk=user.pk).exists()
 
 
 # ---------------------------------------------------------------------------
