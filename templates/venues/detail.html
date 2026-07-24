@@ -24,6 +24,13 @@
     {% include "includes/_claim_banner.html" with profile_type="venue" profile_slug=venue.slug profile_name=venue.name %}
     {% endif %}
 
+    {% if can_edit and not is_preview %}
+    <div class="mb-4 flex justify-end gap-4 text-sm">
+        <a href="{% url 'venues:stats' venue.slug %}" class="text-brand-600 hover:underline">Engagement</a>
+        <a href="{% url 'venues:edit' venue.slug %}" class="text-brand-600 hover:underline">Edit venue</a>
+    </div>
+    {% endif %}
+
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
         {% if venue.header_image %}

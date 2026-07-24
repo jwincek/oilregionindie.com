@@ -3,7 +3,7 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (
     BookingFeedback, BookingRequest, Endorsement, Event, EventRSVP,
-    EventSeries, EventSlot,
+    EventSeries, EventSlot, EventView,
 )
 
 
@@ -96,3 +96,11 @@ class EventRSVPAdmin(admin.ModelAdmin):
     list_filter = ["status", "created_at"]
     search_fields = ["event__title", "user__email"]
     readonly_fields = ["event", "user", "created_at", "updated_at"]
+
+
+@admin.register(EventView)
+class EventViewAdmin(admin.ModelAdmin):
+    list_display = ["event", "date", "count"]
+    list_filter = ["date"]
+    search_fields = ["event__title"]
+    readonly_fields = ["event", "date", "count"]

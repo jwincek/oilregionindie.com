@@ -176,8 +176,72 @@ def detail(request, slug):
         "is_preview": not venue.is_published,
         "is_following": is_following,
         "is_blocked": is_blocked,
+        "can_edit": venue.can_be_edited_by(request.user),
         "upcoming_events": upcoming_events,
         "is_accepting_bookings": is_accepting_bookings,
+    })
+
+
+@login_required
+def stats(request, slug):
+    """
+    Engagement dashboard for a venue owner (issue #85): venue profile
+    views, event views, and RSVPs across the venue's events — the
+    "the hub drove this crowd" attribution, per-event.
+    """
+    from datetime import timedelta
+    from django.db.models import Count, Sum
+    from apps.core.models import ProfileView
+    from apps.events.models import Event, EventRSVP, EventView
+
+    venue = get_object_or_404(VenueProfile, slug=slug)
+    if not venue.can_be_edited_by(request.user):
+        return HttpResponseForbidden()
+
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+
+    def _sum(qs):
+        return qs.aggregate(t=Sum("count"))["t"] or 0
+
+    profile_views_30d = _sum(ProfileView.objects.filter(venue=venue, date__gte=thirty_days_ago))
+    profile_views_all = _sum(ProfileView.objects.filter(venue=venue))
+    event_views_30d = _sum(EventView.objects.filter(event__venue=venue, date__gte=thirty_days_ago))
+    event_views_all = _sum(EventView.objects.filter(event__venue=venue))
+
+    rsvps = EventRSVP.objects.filter(event__venue=venue)
+    total_going = rsvps.filter(status="going").count()
+    total_interested = rsvps.filter(status="interested").count()
+
+    # Per-event breakdown. Views and RSVPs are gathered separately, then
+    # merged — annotating both aggregates in one query would multiply the
+    # joins and inflate the counts.
+    events = list(Event.objects.filter(venue=venue).order_by("-start_datetime")[:25])
+    ids = [e.pk for e in events]
+    views_by_event = {
+        r["event"]: r["t"]
+        for r in EventView.objects.filter(event__in=ids).values("event").annotate(t=Sum("count"))
+    }
+    rsvp_by_event = {}
+    for r in EventRSVP.objects.filter(event__in=ids).values("event", "status").annotate(c=Count("id")):
+        rsvp_by_event.setdefault(r["event"], {})[r["status"]] = r["c"]
+
+    rows = [{
+        "event": e,
+        "views": views_by_event.get(e.pk, 0),
+        "going": rsvp_by_event.get(e.pk, {}).get("going", 0),
+        "interested": rsvp_by_event.get(e.pk, {}).get("interested", 0),
+    } for e in events]
+
+    return render(request, "venues/stats.html", {
+        "venue": venue,
+        "profile_views_30d": profile_views_30d,
+        "profile_views_all": profile_views_all,
+        "event_views_30d": event_views_30d,
+        "event_views_all": event_views_all,
+        "total_going": total_going,
+        "total_interested": total_interested,
+        "rows": rows,
     })
 
 

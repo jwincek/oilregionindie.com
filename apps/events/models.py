@@ -591,3 +591,36 @@ class EventRSVP(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.get_status_display()} — {self.event.title}"
+
+
+class EventView(models.Model):
+    """
+    Daily view count for an event — the event-level analogue of core's
+    ProfileView (issue #85). One row per event per day. Feeds the venue
+    engagement dashboard's "the hub drove this crowd" attribution.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event = models.ForeignKey(
+        Event, on_delete=models.CASCADE, related_name="view_counts"
+    )
+    date = models.DateField()
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["event", "date"], name="unique_event_view_per_day"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.event.title} — {self.date}: {self.count} views"
+
+    @classmethod
+    def record_view(cls, event):
+        """Increment today's view count for an event."""
+        from django.utils import timezone
+        obj, _ = cls.objects.get_or_create(event=event, date=timezone.now().date())
+        cls.objects.filter(pk=obj.pk).update(count=models.F("count") + 1)
