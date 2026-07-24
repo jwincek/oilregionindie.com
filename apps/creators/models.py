@@ -155,7 +155,13 @@ class CreatorProfile(PublishableProfile, index.Indexed):
         help_text="Booking contact email (shown to venues on accepted bookings). Falls back to account email if blank.",
     )
 
-    # Structured address for geocoding and distance queries (optional)
+    # Structured address for distance queries only (optional). INVARIANT
+    # (issue #92): a creator's address is NEVER plotted on a public map or
+    # rendered publicly — for many creators it's a home address, and exposing
+    # it turns the app into a targeting tool. The creator coordinate picker
+    # was deliberately deferred for the same reason. Do not add address/map
+    # rendering to creator templates, serializers, or exports; the
+    # test_address_privacy regression test guards this.
     address = models.ForeignKey(
         Address,
         on_delete=models.SET_NULL,

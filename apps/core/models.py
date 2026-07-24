@@ -1,4 +1,5 @@
 import decimal
+import re
 import uuid
 
 from django.conf import settings
@@ -457,14 +458,37 @@ class BlockedWord(models.Model):
     def __str__(self):
         return self.word
 
+    # Fold common leetspeak / symbol substitutions to letters before matching,
+    # so "m0lly" and "m@lly" normalize to the real word.
+    _LEET = str.maketrans({
+        "0": "o", "1": "i", "3": "e", "4": "a", "5": "s",
+        "7": "t", "@": "a", "$": "s", "!": "i",
+    })
+
     @classmethod
     def check_content(cls, text):
-        """Return a list of blocked words found in the text."""
+        """
+        Return the blocked words present in ``text``. Matching folds
+        leetspeak, tolerates separator-gap evasions ("m o l l y",
+        "m.o.l.l.y"), and anchors on word boundaries so it does not fire on
+        innocent substrings — the Scunthorpe problem, where "class" must not
+        match a blocked "ass". Still a speed bump, not a guarantee: the real
+        backstop is report -> takedown.
+        """
         if not text:
             return []
-        text_lower = text.lower()
-        blocked = cls.objects.filter(is_active=True).values_list("word", flat=True)
-        return [w for w in blocked if w.lower() in text_lower]
+        normalized = text.lower().translate(cls._LEET)
+        found = []
+        for word in cls.objects.filter(is_active=True).values_list("word", flat=True):
+            chars = [c for c in word.lower().translate(cls._LEET) if c.isalnum()]
+            if not chars:
+                continue
+            # Allow optional separators between each character; require a word
+            # boundary on both ends.
+            pattern = r"\b" + r"[\W_]*".join(re.escape(c) for c in chars) + r"\b"
+            if re.search(pattern, normalized):
+                found.append(word)
+        return found
 
 
 # ---------------------------------------------------------------------------
