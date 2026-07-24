@@ -14,11 +14,11 @@ from apps.core.map_views import map_view
 from apps.core.sitemaps import sitemaps
 
 from apps.core.views import (
-    add_availability, admin_dashboard, availability_list, delete_account,
-    delete_availability, edit_availability, follow_creator, follow_venue,
-    geocode_search, mark_all_read, notification_inbox, preferences,
-    report_content, request_claim, search, submit_feedback, suspended,
-    toggle_like, welcome,
+    add_availability, admin_dashboard, availability_list, block_creator,
+    block_venue, delete_account, delete_availability, edit_availability,
+    follow_creator, follow_venue, geocode_search, mark_all_read,
+    notification_inbox, preferences, report_content, request_claim, search,
+    submit_feedback, suspended, toggle_like, welcome,
 )
 
 urlpatterns = [
@@ -56,6 +56,8 @@ urlpatterns = [
     # Follow / Like / Notifications
     path("follow/creator/<slug:slug>/", follow_creator, name="follow_creator"),
     path("follow/venue/<slug:slug>/", follow_venue, name="follow_venue"),
+    path("block/creator/<slug:slug>/", block_creator, name="block_creator"),
+    path("block/venue/<slug:slug>/", block_venue, name="block_venue"),
     path("like/<uuid:pk>/", toggle_like, name="toggle_like"),
     path("notifications/", notification_inbox, name="notifications"),
     path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),

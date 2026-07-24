@@ -149,6 +149,12 @@ def detail(request, slug):
         and hasattr(request.user, "profile")
         and request.user.profile.followed_venues.filter(pk=venue.pk).exists()
     )
+    is_blocked = (
+        request.user.is_authenticated
+        and venue.user is not None
+        and request.user != venue.user
+        and request.user.profile.has_blocked(venue.user)
+    )
 
     from apps.events.models import Event
     upcoming_events = Event.objects.filter(
@@ -169,6 +175,7 @@ def detail(request, slug):
         "venue": venue,
         "is_preview": not venue.is_published,
         "is_following": is_following,
+        "is_blocked": is_blocked,
         "upcoming_events": upcoming_events,
         "is_accepting_bookings": is_accepting_bookings,
     })

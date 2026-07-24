@@ -1,0 +1,17 @@
+<form hx-post="{% url block_url_name slug=target.slug %}"
+      hx-target="this" hx-swap="outerHTML"
+      class="inline">
+    {% csrf_token %}
+    {% if blocked %}
+    <button type="submit"
+            class="text-sm text-ink-500 border border-ink-200 px-3 py-1.5 rounded-md hover:text-brand-600 hover:border-brand-300 transition">
+        Blocked — unblock
+    </button>
+    {% else %}
+    <button type="submit"
+            onclick="return confirm('Block this account? They won’t be able to contact you or follow you, and you won’t be notified about them.')"
+            class="text-sm text-ink-400 border border-ink-200 px-3 py-1.5 rounded-md hover:text-red-600 hover:border-red-200 transition">
+        Block
+    </button>
+    {% endif %}
+</form>

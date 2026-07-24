@@ -67,6 +67,9 @@
             {% endif %}
             {% if request.user.is_authenticated and not is_preview %}
             {% include "includes/_follow_button.html" with target=creator following=is_following follow_url_name="follow_creator" %}
+            {% if creator.user and request.user != creator.user %}
+            {% include "includes/_block_button.html" with target=creator blocked=is_blocked block_url_name="block_creator" %}
+            {% endif %}
             {% if is_accepting_bookings %}
             <a href="{% url 'events:booking_create' direction='to-creator' profile_slug=creator.slug %}"
                class="text-sm text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-md transition">

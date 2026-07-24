@@ -6,6 +6,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.blocks import is_blocked_between
 from apps.core.models import Notification
 from apps.core.throttle import effective_limit, is_duplicate, too_many_recent
 
@@ -166,8 +167,8 @@ def reply(request, pk):
         reply_post.post_type = parent.post_type
         reply_post.save()
 
-        # Notify the original post author
-        if parent.author != request.user:
+        # Notify the original post author (unless a block is in effect)
+        if parent.author != request.user and not is_blocked_between(request.user, parent.author):
             display_name = request.user.profile.get_display_name()
             Notification.objects.create(
                 recipient=parent.author,
