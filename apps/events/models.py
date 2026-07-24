@@ -236,6 +236,42 @@ class Event(index.Indexed, models.Model):
     def get_absolute_url(self):
         return reverse("events:detail", kwargs={"slug": self.slug})
 
+    def to_ics(self, base_url=""):
+        """Render this event as a single-VEVENT iCalendar document (issue #22)."""
+        from datetime import timedelta, timezone as dt_tz
+        from django.utils import timezone
+        from django.utils.html import strip_tags
+
+        def esc(text):
+            return (str(text).replace("\\", "\\\\").replace(";", "\\;")
+                    .replace(",", "\\,").replace("\n", "\\n"))
+
+        def stamp(value):
+            return value.astimezone(dt_tz.utc).strftime("%Y%m%dT%H%M%SZ")
+
+        end = self.end_datetime or (self.start_datetime + timedelta(hours=2))
+        lines = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Oil Region Creative Hub//Events//EN",
+            "CALSCALE:GREGORIAN",
+            "BEGIN:VEVENT",
+            f"UID:{self.pk}@oilregion",
+            f"DTSTAMP:{stamp(timezone.now())}",
+            f"DTSTART:{stamp(self.start_datetime)}",
+            f"DTEND:{stamp(end)}",
+            f"SUMMARY:{esc(self.title)}",
+            f"URL:{esc(base_url + self.get_absolute_url())}",
+        ]
+        if self.location_display:
+            lines.append(f"LOCATION:{esc(self.location_display)}")
+        if self.description:
+            lines.append(f"DESCRIPTION:{esc(strip_tags(self.description)[:500])}")
+        if self.status == self.Status.CANCELLED:
+            lines.append("STATUS:CANCELLED")
+        lines += ["END:VEVENT", "END:VCALENDAR"]
+        return "\r\n".join(lines) + "\r\n"
+
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(self.title)

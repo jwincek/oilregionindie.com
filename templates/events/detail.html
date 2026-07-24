@@ -101,6 +101,8 @@
             <!-- RSVP -->
             <div class="mt-6">
                 {% include "events/_rsvp_button.html" %}
+                <a href="{% url 'events:ics' event.slug %}"
+                   class="inline-block mt-3 text-sm text-brand-600 hover:underline">Add to calendar (.ics)</a>
             </div>
 
             <!-- Location map -->
