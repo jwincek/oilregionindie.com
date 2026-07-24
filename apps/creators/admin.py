@@ -155,7 +155,16 @@ class CreatorProfileAdmin(SimpleHistoryAdmin):
 
     @admin.action(description="Suppress selected profiles (hide after removal request)")
     def suppress_profiles(self, request, queryset):
-        count = queryset.update(publish_status="suppressed")
+        from apps.core.models import ModerationEvent
+        count = 0
+        for profile in queryset:
+            profile.publish_status = "suppressed"
+            profile.save(update_fields=["publish_status", "updated_at"])
+            ModerationEvent.log(
+                ModerationEvent.EventType.PROFILE_SUPPRESSED,
+                actor=request.user, target=f"creator:{profile.slug}",
+            )
+            count += 1
         self.message_user(request, f"Suppressed {count} profile(s). Set back to Published to restore.")
 
     def save_related(self, request, form, formsets, change):

@@ -440,6 +440,61 @@ class Report(models.Model):
         return f"Report: {self.content_type} by {self.reporter}"
 
 
+class ModerationEvent(models.Model):
+    """
+    Append-only log of safety-relevant actions (issue #93): reports, blocks,
+    removal requests, suppressions, suspensions.
+
+    This is the DURABLE tier of the tiered-retention model — never pruned —
+    so routine change-history (simple_history) can age out on a short window
+    while the accountability record persists. Evidence is snapshotted here at
+    the moment of the action rather than reconstructed from mutable history.
+
+    ``actor`` is SET_NULL and ``target`` is free text (not a FK) on purpose:
+    the record must survive deletion of either party, so an account can't
+    erase the log of what it did (or of what was done about it).
+    """
+
+    class EventType(models.TextChoices):
+        REPORT_FILED = "report_filed", "Report filed"
+        REMOVAL_REQUESTED = "removal_requested", "Removal requested"
+        USER_BLOCKED = "user_blocked", "User blocked"
+        USER_UNBLOCKED = "user_unblocked", "User unblocked"
+        PROFILE_SUPPRESSED = "profile_suppressed", "Profile suppressed"
+        ACCOUNT_SUSPENDED = "account_suspended", "Account suspended"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="moderation_actions",
+        help_text="Who took the action; null for anonymous or system.",
+    )
+    target = models.CharField(
+        max_length=255, blank=True,
+        help_text="Human-readable subject (profile slug, username, content id).",
+    )
+    detail = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_event_type_display()} — {self.target} ({self.created_at:%Y-%m-%d})"
+
+    @classmethod
+    def log(cls, event_type, actor=None, target="", detail=""):
+        """Record a safety event. Safe to call with an AnonymousUser."""
+        actor_obj = actor if getattr(actor, "is_authenticated", False) else None
+        return cls.objects.create(
+            event_type=event_type, actor=actor_obj,
+            target=str(target)[:255], detail=detail,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Word filter
 # ---------------------------------------------------------------------------

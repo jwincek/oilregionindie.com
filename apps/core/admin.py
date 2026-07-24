@@ -1,7 +1,10 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import Address, AvailabilityType, BlockedWord, Notification, ProfileAvailability, Report, UserProfile
+from .models import (
+    Address, AvailabilityType, BlockedWord, ModerationEvent, Notification,
+    ProfileAvailability, Report, UserProfile,
+)
 
 
 @admin.register(Address)
@@ -52,6 +55,11 @@ class UserProfileAdmin(SimpleHistoryAdmin):
     @admin.action(description="Suspend selected users")
     def suspend_users(self, request, queryset):
         updated = queryset.update(is_suspended=True)
+        for profile in queryset:
+            ModerationEvent.log(
+                ModerationEvent.EventType.ACCOUNT_SUSPENDED,
+                actor=request.user, target=profile.user.get_username(),
+            )
         self.message_user(request, f"Suspended {updated} user(s).")
 
     @admin.action(description="Unsuspend selected users")
@@ -113,3 +121,21 @@ class NotificationAdmin(admin.ModelAdmin):
     list_filter = ["notification_type", "is_read", "created_at"]
     search_fields = ["message", "recipient__email"]
     readonly_fields = ["recipient", "actor", "notification_type", "message", "url", "created_at"]
+
+
+@admin.register(ModerationEvent)
+class ModerationEventAdmin(admin.ModelAdmin):
+    """Append-only safety log (issue #93) — read-only in the admin."""
+    list_display = ["created_at", "event_type", "actor", "target"]
+    list_filter = ["event_type", "created_at"]
+    search_fields = ["target", "detail", "actor__email"]
+    readonly_fields = ["event_type", "actor", "target", "detail", "created_at"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
