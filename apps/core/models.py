@@ -161,6 +161,11 @@ class PublishableProfile(models.Model):
         DRAFT = "draft", "Draft"
         PENDING = "pending", "Pending Review"
         PUBLISHED = "published", "Published"
+        # Hidden after a removal request from a non-consenting subject
+        # (issue #90). Excluded everywhere by the publish_status="published"
+        # filters, so it disappears from public views without query changes.
+        # Reversible — set back to Published to restore.
+        SUPPRESSED = "suppressed", "Suppressed"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slug = models.SlugField(max_length=255, unique=True)
@@ -208,6 +213,10 @@ class PublishableProfile(models.Model):
     @property
     def is_draft(self):
         return self.publish_status == self.PublishStatus.DRAFT
+
+    @property
+    def is_suppressed(self):
+        return self.publish_status == self.PublishStatus.SUPPRESSED
 
     def generate_unique_slug(self, source_text):
         """Generate a unique slug from source text, appending numbers if needed."""

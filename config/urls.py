@@ -17,8 +17,8 @@ from apps.core.views import (
     add_availability, admin_dashboard, availability_list, block_creator,
     block_venue, delete_account, delete_availability, edit_availability,
     follow_creator, follow_venue, geocode_search, mark_all_read,
-    notification_inbox, preferences, report_content, request_claim, search,
-    submit_feedback, suspended, toggle_like, welcome,
+    notification_inbox, preferences, report_content, request_claim,
+    request_removal, search, submit_feedback, suspended, toggle_like, welcome,
 )
 
 urlpatterns = [
@@ -45,6 +45,7 @@ urlpatterns = [
     path("availability/<str:profile_type>/<slug:slug>/", availability_list, name="availability_list"),
 
     path("claim/<str:profile_type>/<slug:slug>/", request_claim, name="request_claim"),
+    path("removal/<str:profile_type>/<slug:slug>/", request_removal, name="request_removal"),
 
     path("admin-tools/geocode-search/", geocode_search, name="geocode_search"),
     path("availability/<str:profile_type>/<slug:slug>/add/", add_availability, name="add_availability"),

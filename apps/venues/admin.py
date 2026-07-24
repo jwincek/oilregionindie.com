@@ -54,7 +54,7 @@ class VenueProfileAdmin(SimpleHistoryAdmin):
     filter_horizontal = ["amenities", "managers"]
     inlines = [VenueAvailabilityInline, VenueContactInline, VenueSocialLinkInline, VenueAreaInline]
     readonly_fields = ["stripe_account_id", "stripe_onboarded", "submitted_at"]
-    actions = ["approve_profiles"]
+    actions = ["approve_profiles", "suppress_profiles"]
 
     @admin.action(description="Approve selected venues (publish)")
     def approve_profiles(self, request, queryset):
@@ -67,6 +67,11 @@ class VenueProfileAdmin(SimpleHistoryAdmin):
             notify_profile_approved(profile)
             count += 1
         self.message_user(request, f"Approved {count} venue(s).")
+
+    @admin.action(description="Suppress selected venues (hide after removal request)")
+    def suppress_profiles(self, request, queryset):
+        count = queryset.update(publish_status="suppressed")
+        self.message_user(request, f"Suppressed {count} venue(s). Set back to Published to restore.")
 
 
 @admin.register(VenueArea)

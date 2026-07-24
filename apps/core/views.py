@@ -562,6 +562,96 @@ def submit_feedback(request):
 
 
 # ---------------------------------------------------------------------------
+# Non-consensual profile removal (issue #90)
+# ---------------------------------------------------------------------------
+
+
+def _resolve_profile(profile_type, slug):
+    """Return (object, display_name, url) for a creator/venue slug, or None."""
+    if profile_type == "creator":
+        from apps.creators.models import CreatorProfile
+        obj = CreatorProfile.objects.filter(slug=slug).first()
+        if obj:
+            return obj, obj.display_name, obj.get_absolute_url()
+    elif profile_type == "venue":
+        from apps.venues.models import VenueProfile
+        obj = VenueProfile.objects.filter(slug=slug).first()
+        if obj:
+            return obj, obj.name, obj.get_absolute_url()
+    return None
+
+
+def request_removal(request, profile_type, slug):
+    """
+    Anonymous-capable removal request for an unclaimed (admin-seeded)
+    profile — a real person who never consented to being listed. Mirrors
+    the anonymous feedback flow: stores a Report for the admin queue and
+    emails admins, who verify and suppress. No account required (issue #90).
+    """
+    from django.contrib import messages as msg
+    from django.http import Http404
+
+    resolved = _resolve_profile(profile_type, slug)
+    if resolved is None:
+        raise Http404
+    _obj, name, url = resolved
+
+    if request.method != "POST":
+        return render(request, "core/request_removal.html", {
+            "profile_type": profile_type, "profile_slug": slug, "profile_name": name,
+        })
+
+    # Honeypot: bots fill hidden fields. Pretend success, drop silently.
+    if request.POST.get("website"):
+        msg.success(request, "Thank you. Your request has been submitted and will be reviewed.")
+        return redirect(url)
+
+    # Light per-IP throttle — anonymous, so cache-keyed by client IP.
+    from django.core.cache import cache
+    from apps.core.request_ip import client_ip
+    key = f"removal_req:{client_ip(request)}"
+    count = cache.get(key, 0)
+    if count >= 5:
+        msg.error(request, "You've submitted several removal requests recently. Please wait before submitting more.")
+        return redirect(url)
+    cache.set(key, count + 1, 3600)
+
+    reason = request.POST.get("reason", "").strip()
+    email = request.POST.get("email", "").strip()
+    if not reason:
+        msg.error(request, "Please tell us briefly why this listing should be removed.")
+        return redirect(request.path)
+
+    sender = email or (request.user.email if request.user.is_authenticated else "anonymous")
+    Report.objects.create(
+        reporter=request.user if request.user.is_authenticated else None,
+        content_type="profile",
+        content_id=slug,
+        content_url=url,
+        reason=f"[REMOVAL REQUEST] {profile_type}: {name}\n\n{reason}\n\nFrom: {sender}",
+    )
+
+    from django.conf import settings as conf
+    from django.core.mail import send_mail
+    admin_emails = [e for _, e in getattr(conf, "ADMINS", [])]
+    if admin_emails:
+        site_name = getattr(conf, "WAGTAIL_SITE_NAME", "Oil Region Creative Hub")
+        send_mail(
+            subject=f"[{site_name}] Removal request: {name}",
+            message=(
+                f"A removal request was submitted for {profile_type} '{name}' ({url}).\n\n"
+                f"Reason: {reason}\n\nFrom: {sender}"
+            ),
+            from_email=None,
+            recipient_list=admin_emails,
+            fail_silently=True,
+        )
+
+    msg.success(request, "Thank you. Your request has been submitted and an admin will review it.")
+    return redirect(url)
+
+
+# ---------------------------------------------------------------------------
 # Admin dashboard
 # ---------------------------------------------------------------------------
 
