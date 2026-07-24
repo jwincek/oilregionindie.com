@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
@@ -143,6 +143,16 @@ def rsvp(request, slug):
             {"event": event, **_rsvp_context(event, request.user)},
         )
     return redirect(event.get_absolute_url())
+
+
+@require_GET
+def event_ics(request, slug):
+    """Download a single event as an .ics calendar file (issue #22)."""
+    event = get_object_or_404(Event, slug=slug, is_published=True)
+    base = request.build_absolute_uri("/").rstrip("/")
+    resp = HttpResponse(event.to_ics(base), content_type="text/calendar; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="{event.slug}.ics"'
+    return resp
 
 
 @require_GET
